@@ -1,5 +1,7 @@
 #![feature(concat_idents)]
 
+mod day_1;
+
 macro_rules! print_solutions {
     ($([$day:ident $(, $part_2:ident)?]),*) => {
         $(
