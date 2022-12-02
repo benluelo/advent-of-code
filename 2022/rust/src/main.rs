@@ -1,39 +1,38 @@
-#![feature(concat_idents)]
-
 mod day_1;
 
 macro_rules! print_solutions {
-    ($([$day:ident $(, $part_2:ident)?]),*) => {
+    ($([$day:literal-1 $(, $part_2_day:literal-2)?])*) => {
         $(
-            {
-                use $day::*;
+            paste::paste! {
+                {
+                    use [< day_ $day >]::*;
 
-                let input = std::fs::read_to_string(
-                    std::path::PathBuf::from_iter([
-                        "..",
-                        "inputs",
-                        &stringify!($day).replace('_', "-")
-                    ])
-                ).unwrap();
+                    let input = std::fs::read_to_string(
+                        std::path::PathBuf::from_iter([
+                            "..",
+                            "inputs",
+                            &format!("day-{}.txt", $day)
+                        ])
+                    ).unwrap();
 
-                let day_number = &stringify!($day)
-                    .split("-")
-                    .nth(2)
-                    .unwrap();
+                    $(
+                        const _: [(); $day] = [(); $part_2_day];
+                    )?
 
-                println!(
-                    "{}-1 solution: {}",
-                    day_number,
-                    solution(input.clone())
-                );
-
-                $(
                     println!(
-                        "{}-2 solution: {}",
-                        day_number,
-                        concat_idents!(solution, _, $part_2) (input)
+                        "{}-1 solution: {}",
+                        $day,
+                        solution(input.clone())
                     );
-                )?
+
+                    $(
+                        println!(
+                            "{}-2 solution: {}",
+                            $part_2_day,
+                            solution_part_2(input)
+                        );
+                    )?
+                }
             }
         )*
     }
@@ -41,6 +40,6 @@ macro_rules! print_solutions {
 
 fn main() {
     print_solutions! {
-        [day_1]
+        [1-1, 1-2]
     }
 }
