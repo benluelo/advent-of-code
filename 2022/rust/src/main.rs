@@ -44,6 +44,6 @@ macro_rules! print_solutions {
 fn main() {
     print_solutions! {
         [1-1, 1-2]
-        [2-1]
+        [2-1, 2-2]
     }
 }
