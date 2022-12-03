@@ -1,6 +1,3 @@
-{-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE GADTs #-}
-
 module Main where
 
 import Data.Function
@@ -27,33 +24,29 @@ getDayAndInput fp = do
 getDayFromPath :: FilePath -> Integer
 getDayFromPath fp = splitAt 4 (takeBaseName fp) & snd & read
 
-data Showable where Showable :: forall a. Show a => a -> Showable
-
-instance Show Showable where
-  show (Showable x) = show x
-
 data DayOutput = DayOutput {
   day :: Integer,
-  part1 :: Showable,
-  part2 :: Showable
+  part1 :: String,
+  part2 :: String
 }
 
 instance Show DayOutput where
   show output = "day " ++ show (day output) ++ "\n"
-                ++ "part 1: " ++ show (part1 output) ++ "\n"
-                ++ "part 2: " ++ show (part2 output) ++ "\n"
+                ++ "part 1: " ++ part1 output ++ "\n"
+                ++ "part 2: " ++ part2 output ++ "\n"
 
-runDay :: (Integer, String) -> Showable
-runDay (1, input) = Showable DayOutput {
+runDay :: (Integer, String) -> DayOutput
+
+runDay (1, input) = DayOutput {
   day = 1,
   part1 = parse input
     & sortBy (flip compare)
     & maximum
-    & Showable,
+    & show,
   part2 = parse input
     & take 3
     & foldr (+) 0
-    & Showable
+    & show
 } where
     parse :: String -> [Integer] 
     parse input =
@@ -68,4 +61,4 @@ runDay (1, input) = Showable DayOutput {
       (acc : finished, Just curr) -> acc + curr : finished
       (accumulated, Nothing) -> 0 : accumulated
 
-runDay (dayNum, input) = Showable ("day " ++ show (dayNum) ++ " not yet implemented")
+runDay (dayNum, input) = undefined ("day " ++ show (dayNum) ++ " not yet implemented")
