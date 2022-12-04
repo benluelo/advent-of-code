@@ -2,6 +2,7 @@ module Main where
 
 import Data.Function
 import Data.List
+-- import qualified Data.List.Split as Split
 import qualified Data.Set as Set
 import Data.Char (isUpper, isLower, isSpace)
 import Text.Read
@@ -43,8 +44,8 @@ instance Show DayOutput where
     part1 = part1,
     part2 = part2
   }) = "day " ++ show (day) ++ "\n"
-                ++ "part 1: " ++ part1 ++ "\n"
-                ++ "part 2: " ++ part2 ++ "\n"
+    ++ "part 1: " ++ part1 ++ "\n"
+    ++ "part 2: " ++ part2 ++ "\n"
   show (Unimplemented day) = "day " ++ show (day) ++ " not yet implemented\n"
 
 runDay :: (Int, String) -> DayOutput
@@ -78,28 +79,31 @@ runDay (1, input) = DayOutput {
 runDay (3, input) = DayOutput {
   day = 3,
   part1 = input
-    & parse
-    & map (getDuplicate . (mapTuple $ Set.map (priority)))
-    & sum
+    & parse (\x -> map (splitInHalf) x)
     & show,
-  part2 = ""
+  part2 = input
+    & parse (chunks3)
+    & show
 } where
-    parse :: String -> [(Set.Set Char, Set.Set Char)] 
-    parse input = input
+    parse ::
+    -- [String]    [[String]]
+      ([[Char]] -> [[[Char]]]) -- ^Transform the input into a list of lists of chars. This has had all spaces removed.
+      -> String -- ^The actual input. This will be split per line and passed to the callback function.
+      -> Int
+    parse doStuff input = doStuff (input
       & lines
+      & map (filter $ not . isSpace))
       & map (
-        mapTuple Set.fromList
-        . mapTuple (filter $ not . isSpace)
-        . splitInHalf
+        map Set.fromList
+        . map (map priority)
       )
+      & map (findDuplicate)
+      & sum
 
-    getDuplicate :: (Set.Set Int, Set.Set Int) -> Int
-    getDuplicate (a, b) = case Set.toList $ Set.intersection a b of
+    findDuplicate :: [Set.Set Int] -> Int
+    findDuplicate sets = case Set.toList $ foldr1 Set.intersection sets of
       [x] -> x
-      _ -> error ("bad input: " ++ show a ++ show b)
-
-    mapTuple :: Show a => Show b => (a -> b) -> (a, a) -> (b, b)
-    mapTuple f (a1, a2) = {- traceShow (a1, a2) -} (f a1, f a2)
+      _ -> error ("bad input: " ++ show sets)
     
     priority :: Char -> Int
     priority c = case c of
@@ -107,7 +111,16 @@ runDay (3, input) = DayOutput {
       c | isLower c -> fromEnum c - 96
       _ -> error ("bad input: '" ++ ['\'', c])
 
-    splitInHalf :: [Char] -> ([Char], [Char])
-    splitInHalf s = splitAt (length s `div` 2) s
+    splitInHalf :: String -> [[Char]]
+    splitInHalf s =
+      let
+        (a, b) = splitAt (length s `div` 2) s
+      in
+        [a, b]
+
+    chunks3 :: Show a => [a] -> [[a]]
+    chunks3 [x, y, z] = [[x, y, z]]
+    chunks3 (x:y:z:tail) = [x, y, z]:chunks3 tail
+    chunks3 bad = error ("bad input: " ++ show (bad))
 
 runDay (dayNum, input) = Unimplemented dayNum
