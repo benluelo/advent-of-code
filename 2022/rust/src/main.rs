@@ -2,6 +2,7 @@
 
 mod day_1;
 mod day_2;
+mod day_4;
 
 macro_rules! print_solutions {
     ($([$day:literal-1 $(, $part_2_day:literal-2)?])*) => {
@@ -45,5 +46,6 @@ fn main() {
     print_solutions! {
         [1-1, 1-2]
         [2-1, 2-2]
+        [4-1]
     }
 }
