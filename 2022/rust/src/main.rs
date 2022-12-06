@@ -1,6 +1,10 @@
 #![feature(iter_next_chunk)]
+#![cfg_attr(feature = "type-level-solutions", allow(incomplete_features))]
+#![cfg_attr(feature = "type-level-solutions", feature(generic_const_exprs))]
+#![cfg_attr(feature = "type-level-solutions", recursion_limit = "1000")]
 
 mod day_1;
+#[cfg(feature = "type-level-solutions")]
 mod day_1_alternate;
 mod day_2;
 mod day_4;
