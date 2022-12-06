@@ -1,29 +1,44 @@
 use std::{
-    collections::{BTreeMap, VecDeque},
+    collections::BTreeMap,
     convert::Infallible,
     iter::Peekable,
     str::{Chars, FromStr},
 };
 
 pub fn solution(input: String) -> String {
+    parse(input, |mut crates, Action { mov, from, to }| {
+        for _ in 0..mov {
+            let moved = crates.get_mut(&from).unwrap().pop().unwrap();
+            crates.get_mut(&to).unwrap().push(moved);
+        }
+        crates
+    })
+}
+
+pub fn solution_part_2(input: String) -> String {
+    parse(input, |mut crates, Action { mov, from, to }| {
+        let from_stack = crates.get_mut(&from).unwrap();
+
+        let moved = from_stack.split_off(from_stack.len() - mov as usize);
+
+        let to_stack = crates.get_mut(&to).unwrap();
+
+        to_stack.extend(moved);
+
+        crates
+    })
+}
+
+fn parse(input: String, actions_fn: fn(CrateStacks, Action) -> CrateStacks) -> String {
     let [crates, actions] = input.split("\n\n").next_chunk().unwrap();
+    let crates = parse_crate_stack(crates);
 
-    let mut crates = parse_crate_stack(crates);
-
-    actions
+    let crates = actions
         .lines()
         .map(|s| str::parse::<Action>(s).unwrap())
-        .for_each(|Action { mov, from, to }| {
-            for _ in 0..mov {
-                let moved = crates.get_mut(&from).unwrap().pop_front().unwrap();
-                crates.get_mut(&to).unwrap().push_front(moved);
-            }
-        });
+        .fold(crates, actions_fn);
 
-    crates
-        .into_values()
-        .map(|mut v| v.pop_front().unwrap())
-        .collect()
+    crates.into_values().map(|mut v| v.pop().unwrap()).collect()
 }
 
 #[derive(Debug)]
@@ -46,16 +61,16 @@ impl FromStr for Action {
         };
 
         Ok(Action {
-            mov: str::parse(mov).unwrap(),
-            from: str::parse(from).unwrap(),
-            to: str::parse(to).unwrap(),
+            mov: mov.parse().unwrap(),
+            from: from.parse().unwrap(),
+            to: to.parse().unwrap(),
         })
     }
 }
 
-fn parse_crate_stack(crates: &str) -> BTreeMap<u8, VecDeque<char>> {
-    println!("{crates}");
+type CrateStacks = BTreeMap<u8, Vec<char>>;
 
+fn parse_crate_stack(crates: &str) -> CrateStacks {
     let mut output = BTreeMap::new();
 
     let mut chars = crates.chars().peekable();
@@ -76,15 +91,16 @@ fn parse_crate_stack(crates: &str) -> BTreeMap<u8, VecDeque<char>> {
     loop {
         match chars.next_chunk().unwrap() {
             ['[', c, ']'] => {
-                output
-                    .entry(column)
-                    .or_insert_with(VecDeque::new)
-                    .push_back(c);
-
+                output.entry(column).or_insert_with(Vec::new).push(c);
                 next_column(&mut chars, &mut column);
             }
             [' ', ' ', ' '] => next_column(&mut chars, &mut column),
-            [' ', '1', ' '] => return output,
+            [' ', '1', ' '] => {
+                for (_, v) in output.iter_mut() {
+                    v.reverse();
+                }
+                return output;
+            }
             bad => panic!("bad input: {bad:?}"),
         }
     }
