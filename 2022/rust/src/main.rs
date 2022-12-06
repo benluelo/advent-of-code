@@ -3,12 +3,14 @@
 mod day_1;
 mod day_2;
 mod day_4;
+mod day_5;
 
 fn main() {
     print_solutions! {
         [1-1, 1-2]
         [2-1, 2-2]
         [4-1, 4-2]
+        [5-1]
     }
 }
 
