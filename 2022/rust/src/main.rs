@@ -1,9 +1,10 @@
-#![feature(iter_next_chunk)]
+#![feature(iter_next_chunk, array_windows)]
 
 mod day_1;
 mod day_2;
 mod day_4;
 mod day_5;
+mod day_6;
 
 fn main() {
     print_solutions! {
@@ -11,6 +12,7 @@ fn main() {
         [2-1, 2-2]
         [4-1, 4-2]
         [5-1, 5-2]
+        [6-1]
     }
 }
 
