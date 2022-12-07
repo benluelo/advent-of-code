@@ -1,7 +1,6 @@
 #![feature(iter_next_chunk)]
 
 mod day_1;
-mod day_1_alternate;
 mod day_2;
 mod day_4;
 mod day_5;
