@@ -16,8 +16,8 @@ impl Rps {
     }
 
     fn outcome(&self, other: &Self) -> RpsOutcome {
-        use Rps::*;
-        use RpsOutcome::*;
+        use Rps::{Paper, Rock, Scissors};
+        use RpsOutcome::{Draw, Loss, Win};
 
         match (self, other) {
             (Rock, Rock) | (Paper, Paper) | (Scissors, Scissors) => Draw,
@@ -61,7 +61,7 @@ impl FromStr for Round {
         let [opponent, you] = s
             .split(' ')
             .next_chunk()
-            .map_err(|iter| iter.collect::<String>())?;
+            .map_err(Iterator::collect::<String>)?;
 
         Ok(Round {
             opponent: match opponent {
@@ -87,19 +87,13 @@ struct IncompleteRound {
 
 impl From<IncompleteRound> for Round {
     fn from(value: IncompleteRound) -> Self {
-        use Rps::*;
-        use RpsOutcome::*;
+        use Rps::{Paper, Rock, Scissors};
+        use RpsOutcome::{Draw, Loss, Win};
 
         let you = match (&value.opponent, value.desired_outcome) {
-            (Rock, Win) => Paper,
-            (Rock, Loss) => Scissors,
-            (Rock, Draw) => Rock,
-            (Paper, Win) => Scissors,
-            (Paper, Loss) => Rock,
-            (Paper, Draw) => Paper,
-            (Scissors, Win) => Rock,
-            (Scissors, Loss) => Paper,
-            (Scissors, Draw) => Scissors,
+            (Rock, Loss) | (Paper, Win) | (Scissors, Draw) => Scissors,
+            (Rock, Draw) | (Paper, Loss) | (Scissors, Win) => Rock,
+            (Paper, Draw) | (Rock, Win) | (Scissors, Loss) => Paper,
         };
 
         Round {
@@ -116,7 +110,7 @@ impl FromStr for IncompleteRound {
         let [opponent, you] = s
             .split(' ')
             .next_chunk()
-            .map_err(|iter| iter.collect::<String>())?;
+            .map_err(Iterator::collect::<String>)?;
 
         Ok(IncompleteRound {
             opponent: match opponent {
@@ -135,7 +129,7 @@ impl FromStr for IncompleteRound {
     }
 }
 
-pub fn solution(input: String) -> u32 {
+pub fn solution(input: &str) -> u32 {
     input
         .trim()
         .lines()
@@ -143,7 +137,7 @@ pub fn solution(input: String) -> u32 {
         .fold(0, |acc, curr| acc + curr.score())
 }
 
-pub fn solution_part_2(input: String) -> u32 {
+pub fn solution_part_2(input: &str) -> u32 {
     input
         .trim()
         .lines()

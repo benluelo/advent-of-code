@@ -1,4 +1,5 @@
 #![feature(iter_next_chunk, array_windows)]
+#![warn(clippy::pedantic)]
 
 mod day_1;
 mod day_2;
@@ -24,6 +25,10 @@ macro_rules! print_solutions {
         $(
             paste::paste! {
                 {
+                    $(
+                        const _: [(); $day] = [(); $part_2_day];
+                    )?
+
                     use [< day_ $day >]::*;
 
                     let input = std::fs::read_to_string(
@@ -34,21 +39,17 @@ macro_rules! print_solutions {
                         ])
                     ).unwrap();
 
-                    $(
-                        const _: [(); $day] = [(); $part_2_day];
-                    )?
-
                     println!(
                         "{}-1 solution: {}",
                         $day,
-                        solution(input.clone())
+                        solution(&input)
                     );
 
                     $(
                         println!(
                             "{}-2 solution: {}",
                             $part_2_day,
-                            solution_part_2(input)
+                            solution_part_2(&input)
                         );
                     )?
                 }

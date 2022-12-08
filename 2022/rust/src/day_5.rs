@@ -5,7 +5,7 @@ use std::{
     str::{Chars, FromStr},
 };
 
-pub fn solution(input: String) -> String {
+pub fn solution(input: &str) -> String {
     parse(input, |mut crates, Action { mov, from, to }| {
         for _ in 0..mov {
             let moved = crates.get_mut(&from).unwrap().pop().unwrap();
@@ -15,7 +15,7 @@ pub fn solution(input: String) -> String {
     })
 }
 
-pub fn solution_part_2(input: String) -> String {
+pub fn solution_part_2(input: &str) -> String {
     parse(input, |mut crates, Action { mov, from, to }| {
         let from_stack = crates.get_mut(&from).unwrap();
 
@@ -29,7 +29,7 @@ pub fn solution_part_2(input: String) -> String {
     })
 }
 
-fn parse(input: String, actions_fn: fn(CrateStacks, Action) -> CrateStacks) -> String {
+fn parse(input: &str, actions_fn: fn(CrateStacks, Action) -> CrateStacks) -> String {
     let [crates, actions] = input.split("\n\n").next_chunk().unwrap();
     let crates = parse_crate_stack(crates);
 
@@ -96,7 +96,7 @@ fn parse_crate_stack(crates: &str) -> CrateStacks {
             }
             [' ', ' ', ' '] => next_column(&mut chars, &mut column),
             [' ', '1', ' '] => {
-                for (_, v) in output.iter_mut() {
+                for v in output.values_mut() {
                     v.reverse();
                 }
                 return output;
