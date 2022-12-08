@@ -1,14 +1,14 @@
 use std::ops::RangeInclusive;
 
-pub fn solution(input: String) -> usize {
-    parse(&input, |[range_a, range_b]| {
+pub fn solution(input: &str) -> usize {
+    parse(input, |[range_a, range_b]| {
         (range_a.contains(range_b.start()) && range_a.contains(range_b.end()))
             || (range_b.contains(range_a.start()) && range_b.contains(range_a.end()))
     })
 }
 
-pub fn solution_part_2(input: String) -> usize {
-    parse(&input, |[range_a, range_b]| {
+pub fn solution_part_2(input: &str) -> usize {
+    parse(input, |[range_a, range_b]| {
         range_a.contains(range_b.start())
             || range_a.contains(range_b.end())
             || range_b.contains(range_a.start())

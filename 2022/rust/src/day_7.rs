@@ -1,23 +1,23 @@
-pub fn solution(input: String) -> u32 {
-    let ft = FileTree::parse(&input);
+pub fn solution(input: &str) -> u32 {
+    let ft = FileTree::parse(input);
 
     let mut total = 0_u32;
 
     ft.post_order(&mut |dir| {
         let size = dir.size();
         if size <= 100_000 {
-            total += size
+            total += size;
         }
     });
 
     total
 }
 
-pub fn solution_part_2(input: String) -> u32 {
+pub fn solution_part_2(input: &str) -> u32 {
     const DISK_SIZE: u32 = 70_000_000;
     const REQUIRED_SPACE_FOR_UPDATE: u32 = 30_000_000;
 
-    let root = FileTree::parse(&input);
+    let root = FileTree::parse(input);
 
     let space_necessary = REQUIRED_SPACE_FOR_UPDATE - (DISK_SIZE - root.size());
 
@@ -29,7 +29,7 @@ pub fn solution_part_2(input: String) -> u32 {
             match smallest_viable.as_mut() {
                 Some(sv) => {
                     if size < *sv {
-                        *sv = size
+                        *sv = size;
                     }
                 }
                 None => smallest_viable = Some(size),
@@ -59,11 +59,10 @@ impl<'a> FileTree<'a> {
                     TermOutputLine::CdToParent => return FileTree::Dir(Dir(parent_dir, trees)),
                     TermOutputLine::CdToDir(dir) => trees.push(from_term_output_lines(dir, lines)),
                     TermOutputLine::File(size, file) => {
-                        trees.push(FileTree::File(File(size, file)))
+                        trees.push(FileTree::File(File(size, file)));
                     }
                     // these can be ignored since they don't provide any new information
-                    TermOutputLine::Ls => {}
-                    TermOutputLine::Dir(_) => {}
+                    TermOutputLine::Ls | TermOutputLine::Dir(_) => {}
                 }
             }
 
@@ -89,8 +88,8 @@ impl<'a> FileTree<'a> {
             FileTree::Dir(dir) => {
                 f(dir);
 
-                for ft in dir.1.iter() {
-                    ft.post_order(f)
+                for ft in &dir.1 {
+                    ft.post_order(f);
                 }
             }
             FileTree::File(File(_, _)) => {}
