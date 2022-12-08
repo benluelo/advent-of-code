@@ -1,7 +1,5 @@
 pub fn solution(input: String) -> u32 {
-    let lines = input.lines().map(TermOutputLine::from_str);
-
-    let ft = FileTree::from_term_output_lines(lines);
+    let ft = FileTree::parse(&input);
 
     let mut total = 0_u32;
 
@@ -15,6 +13,33 @@ pub fn solution(input: String) -> u32 {
     total
 }
 
+pub fn solution_part_2(input: String) -> u32 {
+    const DISK_SIZE: u32 = 70_000_000;
+    const REQUIRED_SPACE_FOR_UPDATE: u32 = 30_000_000;
+
+    let root = FileTree::parse(&input);
+
+    let space_necessary = REQUIRED_SPACE_FOR_UPDATE - (DISK_SIZE - root.size());
+
+    let mut smallest_viable = None;
+
+    root.post_order(&mut |dir| {
+        let size = dir.size();
+        if size > space_necessary {
+            match smallest_viable.as_mut() {
+                Some(sv) => {
+                    if size < *sv {
+                        *sv = size
+                    }
+                }
+                None => smallest_viable = Some(size),
+            }
+        }
+    });
+
+    smallest_viable.unwrap()
+}
+
 #[derive(Debug)]
 enum FileTree<'a> {
     Dir(Dir<'a>),
@@ -22,10 +47,8 @@ enum FileTree<'a> {
 }
 
 impl<'a> FileTree<'a> {
-    fn from_term_output_lines<'b>(
-        mut lines: impl Iterator<Item = TermOutputLine<'b>>,
-    ) -> FileTree<'b> {
-        fn from_term_output_lines_inner<'inner>(
+    fn parse(input: &str) -> FileTree<'_> {
+        fn from_term_output_lines<'inner>(
             parent_dir: &'inner str,
             lines: &mut impl Iterator<Item = TermOutputLine<'inner>>,
         ) -> FileTree<'inner> {
@@ -34,9 +57,7 @@ impl<'a> FileTree<'a> {
             while let Some(line) = lines.next() {
                 match line {
                     TermOutputLine::CdToParent => return FileTree::Dir(Dir(parent_dir, trees)),
-                    TermOutputLine::CdToDir(dir) => {
-                        trees.push(from_term_output_lines_inner(dir, lines))
-                    }
+                    TermOutputLine::CdToDir(dir) => trees.push(from_term_output_lines(dir, lines)),
                     TermOutputLine::File(size, file) => {
                         trees.push(FileTree::File(File(size, file)))
                     }
@@ -49,9 +70,11 @@ impl<'a> FileTree<'a> {
             return FileTree::Dir(Dir(parent_dir, trees));
         }
 
-        let TermOutputLine::CdToDir(dir) = lines.next().unwrap() else { panic!() };
+        let mut lines = input.lines().map(TermOutputLine::from_str);
 
-        from_term_output_lines_inner(dir, &mut lines)
+        let TermOutputLine::CdToDir(dir @ "/") = lines.next().unwrap() else { panic!("missing root directory") };
+
+        from_term_output_lines(dir, &mut lines)
     }
 
     fn size(&self) -> u32 {
@@ -96,7 +119,6 @@ impl<'a> File<'a> {
 #[derive(Debug)]
 enum TermOutputLine<'a> {
     CdToParent,
-    // CdHome,
     CdToDir(&'a str),
     Ls,
     Dir(&'a str),
@@ -109,7 +131,7 @@ impl TermOutputLine<'_> {
             ("$", "ls") => TermOutputLine::Ls,
             ("$", cd) => match cd.split_once(' ').unwrap() {
                 ("cd", "..") => TermOutputLine::CdToParent,
-                // ("cd", "/") => TermOutputLine::CdHome,
+                // treat "/" like a normal dir
                 ("cd", dir) if !dir.contains(' ') => TermOutputLine::CdToDir(dir),
                 _ => panic!("bad input"),
             },
