@@ -1,4 +1,4 @@
-#![feature(iter_next_chunk, array_windows)]
+#![feature(iter_next_chunk, array_windows, iter_intersperse, iter_repeat_n)]
 #![warn(clippy::pedantic)]
 
 mod day_1;
@@ -7,6 +7,7 @@ mod day_4;
 mod day_5;
 mod day_6;
 mod day_7;
+mod day_8;
 
 fn main() {
     print_solutions! {
@@ -16,6 +17,7 @@ fn main() {
         [5-1, 5-2]
         [6-1, 6-2]
         [7-1, 7-2]
+        [8-1]
     }
 }
 
