@@ -2,7 +2,7 @@ use core::slice;
 use std::{
     borrow::Borrow,
     fmt::Debug,
-    iter::{self, Enumerate, Map, RepeatN, Rev, Zip},
+    iter::{self, Enumerate, Map, Repeat, RepeatN, Rev, Zip},
     marker::PhantomData,
 };
 
@@ -15,27 +15,166 @@ pub fn solution(input: &str) -> usize {
         .map(|row| row.iter().map(|_| false).collect::<Vec<_>>())
         .collect::<Vec<_>>();
 
-    print_bool_matrix(&visible_trees);
+    // uncomment the following calls to `print_bool_matrix` for some funky terminal
+    // output showing the traces
 
-    trace(forest.iter::<Column>(), &mut visible_trees);
-    print_bool_matrix(&visible_trees);
+    trace_for_visible_trees(forest.iter::<Column>(), &mut visible_trees);
+    // print_bool_matrix(&visible_trees);
 
-    trace(forest.iter::<(Column, Backwards)>(), &mut visible_trees);
-    print_bool_matrix(&visible_trees);
+    trace_for_visible_trees(forest.iter::<(Column, Backwards)>(), &mut visible_trees);
+    // print_bool_matrix(&visible_trees);
 
-    trace(forest.iter::<Row>(), &mut visible_trees);
-    print_bool_matrix(&visible_trees);
+    trace_for_visible_trees(forest.iter::<Row>(), &mut visible_trees);
+    // print_bool_matrix(&visible_trees);
 
-    trace(forest.iter::<(Row, Backwards)>(), &mut visible_trees);
-    print_bool_matrix(&visible_trees);
-
-    dbg!(visible_trees.iter().flatten().count());
-    dbg!(forest.height, forest.width);
+    trace_for_visible_trees(forest.iter::<(Row, Backwards)>(), &mut visible_trees);
+    // print_bool_matrix(&visible_trees);
 
     visible_trees.iter().flatten().filter(|b| **b).count()
 }
 
-fn trace<I, II, U8, T: Copy, U: Copy>(iter: I, visible_trees: &mut [Vec<bool>])
+pub fn solution_part_2(input: &str) -> u32 {
+    let forest = Forest::parse(input);
+
+    let column_scores = forest
+        .iter::<Column>()
+        .into_iter()
+        .map(calculate_scores_in_lines::<Column>);
+
+    let row_scores = forest
+        .iter::<Row>()
+        .into_iter()
+        .map(calculate_scores_in_lines::<Row>);
+
+    let mut tree_visibility_scores = forest
+        .trees
+        .iter()
+        .map(|row| row.iter().map(|_| TreeScore::default()).collect::<Vec<_>>())
+        .collect::<Vec<_>>();
+
+    for (outer_idx, iter) in column_scores {
+        for (inner_idx, score) in iter {
+            (outer_idx, inner_idx)
+                .index_in_to(&mut tree_visibility_scores)
+                .column = score;
+        }
+    }
+
+    for (outer_idx, iter) in row_scores {
+        for (inner_idx, score) in iter {
+            (outer_idx, inner_idx)
+                .index_in_to(&mut tree_visibility_scores)
+                .row = score;
+        }
+    }
+
+    tree_visibility_scores
+        .into_iter()
+        .flatten()
+        .map(TreeScore::total)
+        .max()
+        .unwrap()
+}
+
+// fn find_best_tree(forest) -> u32 {}
+
+#[allow(clippy::type_complexity)]
+fn calculate_scores_in_lines<Type: ForestIterType>(
+    (outer_idx, tree_line): (OuterIdxOf<Type>, TreeLineOf<'_, Type>),
+) -> (
+    OuterIdxOf<Type>,
+    Map<Zip<TreeLineOf<'_, Type>, Repeat<TreeLineOf<'_, Type>>>, CalculateLineScoresFn<Type>>,
+) {
+    let line_scores = tree_line
+        .clone()
+        .zip(iter::repeat(tree_line.clone()))
+        .map(calculate_line_scores::<Type> as _);
+
+    (outer_idx, line_scores)
+}
+
+type CalculateLineScoresFn<Type> = fn(
+    (
+        (InnerIdxOf<Type>, TreeHeightOf<'_, Type>),
+        TreeLineOf<'_, Type>,
+    ),
+) -> (InnerIdxOf<Type>, TreeScoreInLine<Type>);
+
+fn calculate_line_scores<Type: ForestIterType>(
+    ((inner_idx, tree_height), mut tree_line_clone): (
+        (InnerIdxOf<Type>, TreeHeightOf<'_, Type>),
+        TreeLineOf<'_, Type>,
+    ),
+) -> (<Type as ForestIterType>::InnerIdx, TreeScoreInLine<Type>) {
+    use std::ops::ControlFlow::{Break, Continue};
+
+    let calculate_score_on_side_of_tree =
+        |acc, (curr_inner_idx, curr_height): (_, TreeHeightOf<'_, Type>)| {
+            if inner_idx == curr_inner_idx {
+                Break(acc)
+            } else {
+                Continue(if curr_height.borrow() >= tree_height.borrow() {
+                    1
+                } else {
+                    acc + 1
+                })
+            }
+        };
+
+    let (Continue(in_front) | Break(in_front)) = tree_line_clone
+        .by_ref()
+        .try_rfold(0_u32, calculate_score_on_side_of_tree);
+    let (Continue(behind) | Break(behind)) =
+        tree_line_clone.try_fold(0_u32, calculate_score_on_side_of_tree);
+
+    (
+        inner_idx,
+        TreeScoreInLine {
+            in_front,
+            behind,
+            _type: PhantomData,
+        },
+    )
+}
+
+#[derive(Default)]
+struct TreeScore {
+    column: TreeScoreInLine<Column>,
+    row: TreeScoreInLine<Row>,
+}
+
+impl TreeScore {
+    fn total(self) -> u32 {
+        self.column.in_front * self.column.behind * self.row.in_front * self.row.behind
+    }
+}
+
+struct TreeScoreInLine<T: ForestIterType> {
+    in_front: u32,
+    behind: u32,
+    _type: PhantomData<T>,
+}
+
+impl<T: ForestIterType> Debug for TreeScoreInLine<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("TreeScoreInLine")
+            .field("in_front", &self.in_front)
+            .field("behind", &self.behind)
+            .finish()
+    }
+}
+
+impl<T: ForestIterType> Default for TreeScoreInLine<T> {
+    fn default() -> Self {
+        Self {
+            in_front: u32::default(),
+            behind: u32::default(),
+            _type: PhantomData,
+        }
+    }
+}
+
+fn trace_for_visible_trees<I, II, U8, T: Copy, U: Copy>(iter: I, visible_trees: &mut [Vec<bool>])
 where
     I: Iterator<Item = (T, II)>,
     II: IntoIterator<Item = (U, U8)> + Clone,
@@ -46,9 +185,6 @@ where
     let mut tree_lines = iter.peekable();
 
     while let Some((line_idx, tree_line)) = tree_lines.next() {
-        // dbg!(tree_line.clone().into_iter().collect::<Vec<_>>());
-        // panic!();
-
         let mut tree_line = tree_line.into_iter().peekable();
 
         // CASE: first tree line - all visible
@@ -64,8 +200,8 @@ where
         }
         // CASE: not the last line
         // NOTE: the actual values in the next (i.e. peeked) line aren't important, since parallel
-        // lines don't affect each other when "looking down" them; all that matters is that there
-        // *is* another line.
+        // lines don't affect each other when "looking down"/ traversing them; all that matters is
+        // that there *is* another line.
         else if tree_lines.peek().is_some() {
             // state for the following loop:
             let mut is_first_tree = true;
@@ -101,6 +237,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 fn print_bool_matrix(matrix: &[Vec<bool>]) {
     let output = matrix
         .iter()
@@ -125,7 +262,6 @@ fn print_bool_matrix(matrix: &[Vec<bool>]) {
 /// ```
 struct Forest {
     trees: Vec<Vec<u8>>,
-    // visible_trees: Vec<Vec<bool>>,
     height: usize,
     width: usize,
 }
@@ -151,7 +287,7 @@ impl Forest {
         }
     }
 
-    fn iter<How: ToTypeAndDirection>(&self) -> ForestIter<'_, How> {
+    fn iter<TypeAndDirection: ToTypeAndDirection>(&self) -> ForestIter<'_, TypeAndDirection> {
         ForestIter {
             forest: self,
             current: 0,
@@ -216,12 +352,15 @@ impl<T: ForestIterType> ToTypeAndDirection for T {
     type Direction = Forwards;
 }
 
-impl<T: ForestIterType, D: TreeLineIterationDirection> ToTypeAndDirection for (T, D) {
-    type Type = T;
-    type Direction = D;
+impl<Type: ForestIterType, Direction: TreeLineIterationDirection> ToTypeAndDirection
+    for (Type, Direction)
+{
+    type Type = Type;
+    type Direction = Direction;
 }
 
 enum Forwards {}
+
 enum Backwards {}
 
 trait TreeLineIterationDirection {
@@ -253,9 +392,15 @@ struct ForestIter<'a, Type> {
 }
 
 trait ForestIterType: Sized {
-    type TreeLine<'a>: DoubleEndedIterator;
+    type TreeLine<'a>: DoubleEndedIterator<Item = (Self::InnerIdx, Self::TreeHeight<'a>)> + Clone;
 
-    type OtherIdx: From<usize>;
+    type TreeHeight<'a>: Borrow<u8> + PartialEq + Debug;
+
+    /// The "inner" index type
+    type InnerIdx: From<usize> + PartialEq + Debug + Copy;
+
+    /// The "outer" index type
+    type OuterIdx: From<usize> + PartialEq + Debug + Copy;
 
     fn bound<T>(fi: &ForestIter<'_, T>) -> usize
     where
@@ -266,14 +411,24 @@ trait ForestIterType: Sized {
         T: ToTypeAndDirection<Type = Self>;
 }
 
+type InnerIdxOf<T> = <T as ForestIterType>::InnerIdx;
+type OuterIdxOf<T> = <T as ForestIterType>::OuterIdx;
+type TreeHeightOf<'a, T> = <T as ForestIterType>::TreeHeight<'a>;
+type TreeLineOf<'a, T> = <T as ForestIterType>::TreeLine<'a>;
+
 struct Column;
 
-type ColumnMapFn = for<'f> fn((usize, (&'f Vec<u8>, usize))) -> (RowIdx, u8);
-
 impl ForestIterType for Column {
-    type TreeLine<'a> = Map<Enumerate<Zip<slice::Iter<'a, Vec<u8>>, RepeatN<usize>>>, ColumnMapFn>;
+    type TreeLine<'a> = Map<
+        Enumerate<Zip<slice::Iter<'a, Vec<u8>>, RepeatN<usize>>>,
+        for<'f> fn((usize, (&'f Vec<u8>, usize))) -> (RowIdx, u8),
+    >;
 
-    type OtherIdx = ColIdx;
+    type TreeHeight<'a> = u8;
+
+    type InnerIdx = RowIdx;
+
+    type OuterIdx = ColIdx;
 
     fn bound<T>(fi: &ForestIter<'_, T>) -> usize
     where
@@ -299,9 +454,13 @@ struct Row;
 
 impl ForestIterType for Row {
     type TreeLine<'a> =
-        Map<Enumerate<slice::Iter<'a, u8>>, for<'f> fn((usize, &'f u8)) -> (ColIdx, &'f u8)>;
+        Map<Enumerate<slice::Iter<'a, u8>>, fn((usize, &'a u8)) -> (ColIdx, &'a u8)>;
 
-    type OtherIdx = RowIdx;
+    type TreeHeight<'a> = &'a u8;
+
+    type InnerIdx = ColIdx;
+
+    type OuterIdx = RowIdx;
 
     fn bound<T>(fi: &ForestIter<'_, T>) -> usize
     where
@@ -320,37 +479,43 @@ impl ForestIterType for Row {
             .unwrap()
             .iter()
             .enumerate()
-            .map(|(col, vec)| (ColIdx(col), vec))
+            .map(|(col, height)| (ColIdx(col), height))
     }
 }
 
 trait TreeLineIter: Sized {
     type TreeLine<'a>;
 
-    type OtherIdx;
+    type ForestIterTypeInnerIdx;
+
+    type ForestIterTypeOuterIdx;
 
     fn next_fn<'iter, 'forest: 'iter>(
         forest_iter: &'iter mut ForestIter<'forest, Self>,
-    ) -> Option<(Self::OtherIdx, Self::TreeLine<'forest>)>;
+    ) -> Option<(Self::ForestIterTypeOuterIdx, Self::TreeLine<'forest>)>;
 }
 
-impl<How: ToTypeAndDirection> TreeLineIter for How {
-    type TreeLine<'a> = <How::Direction as TreeLineIterationDirection>::MaybeReversed<
-        <How::Type as ForestIterType>::TreeLine<'a>,
+impl<TypeAndDirection: ToTypeAndDirection> TreeLineIter for TypeAndDirection {
+    type TreeLine<'a> = <TypeAndDirection::Direction as TreeLineIterationDirection>::MaybeReversed<
+        <TypeAndDirection::Type as ForestIterType>::TreeLine<'a>,
     >;
 
-    type OtherIdx = <How::Type as ForestIterType>::OtherIdx;
+    type ForestIterTypeInnerIdx = InnerIdxOf<TypeAndDirection::Type>;
+
+    type ForestIterTypeOuterIdx = OuterIdxOf<TypeAndDirection::Type>;
 
     fn next_fn<'iter, 'forest: 'iter>(
         forest_iter: &'iter mut ForestIter<'forest, Self>,
-    ) -> Option<(Self::OtherIdx, Self::TreeLine<'forest>)> {
+    ) -> Option<(Self::ForestIterTypeOuterIdx, Self::TreeLine<'forest>)> {
         forest_iter
             .current
-            .lt(&(How::Type::bound(forest_iter)))
+            .lt(&(TypeAndDirection::Type::bound(forest_iter)))
             .then(|| {
-                let current = Self::OtherIdx::from(forest_iter.current);
-                let tree_line = How::Type::current_line(forest_iter);
-                let tl = <How::Direction as TreeLineIterationDirection>::maybe_reverse(tree_line);
+                let current = Self::ForestIterTypeOuterIdx::from(forest_iter.current);
+                let tree_line = TypeAndDirection::Type::current_line(forest_iter);
+                let tl = <TypeAndDirection::Direction as TreeLineIterationDirection>::maybe_reverse(
+                    tree_line,
+                );
 
                 forest_iter.current += 1;
 
@@ -359,163 +524,16 @@ impl<How: ToTypeAndDirection> TreeLineIter for How {
     }
 }
 
-impl<'a, How> Iterator for ForestIter<'a, How>
+impl<'a, TypeAndDirection> Iterator for ForestIter<'a, TypeAndDirection>
 where
-    How: ToTypeAndDirection + 'static,
+    TypeAndDirection: ToTypeAndDirection + 'static,
 {
     type Item = (
-        <How as TreeLineIter>::OtherIdx,
-        <How as TreeLineIter>::TreeLine<'a>,
+        <TypeAndDirection as TreeLineIter>::ForestIterTypeOuterIdx,
+        <TypeAndDirection as TreeLineIter>::TreeLine<'a>,
     );
 
     fn next(&mut self) -> Option<Self::Item> {
-        How::next_fn(self)
-    }
-}
-
-#[cfg(test)]
-mod test {
-    use crate::day_8::{print_bool_matrix, trace, Backwards, Column, Row};
-
-    use super::{ColIdx, Forest, RowIdx};
-
-    const INPUT: &str = "
-123
-789
-345
-912";
-
-    fn collect_column<I>((i, iter): (ColIdx, I)) -> (ColIdx, Vec<(RowIdx, u8)>)
-    where
-        I: Iterator<Item = (RowIdx, u8)>,
-    {
-        (i, iter.collect::<Vec<_>>())
-    }
-
-    fn collect_row<'a, I>((i, iter): (RowIdx, I)) -> (RowIdx, Vec<(ColIdx, u8)>)
-    where
-        I: Iterator<Item = (ColIdx, &'a u8)>,
-    {
-        (i, iter.map(|(a, &b)| (a, b)).collect::<Vec<_>>())
-    }
-
-    #[test]
-    pub(crate) fn column_iter() {
-        let forest = Forest::parse(INPUT);
-        let column_iter = forest
-            .iter::<Column>()
-            .map(collect_column)
-            .collect::<Vec<_>>();
-
-        // assert_eq!(
-        //     column_iter,
-        //     vec![
-        //         // row 0, column 0 = 1
-        //         // row 0, column 1 = 7
-        //         (0, vec![(0, 1), (1, 7), (2, 3), (3, 9)]),
-        //         (1, vec![(0, 2), (1, 8), (2, 4), (3, 1)]),
-        //         (2, vec![(0, 3), (1, 9), (2, 5), (3, 2)]),
-        //     ]
-        // );
-
-        for (i, tl) in column_iter {
-            for (j, height) in tl {
-                assert_eq!(forest.trees[j.0][i.0], height);
-            }
-        }
-    }
-
-    #[test]
-    pub(crate) fn column_iter_iteration() {
-        let column_iter = Forest::parse(INPUT)
-            .iter::<(Column, Backwards)>()
-            .map(collect_column)
-            .collect::<Vec<_>>();
-
-        assert_eq!(column_iter, vec![]);
-    }
-
-    #[test]
-    pub(crate) fn column_trace() {
-        let forest = Forest::parse(INPUT);
-
-        let mut visible_trees = forest
-            .trees
-            .iter()
-            .map(|row| row.iter().map(|_| true).collect::<Vec<_>>())
-            .collect::<Vec<_>>();
-
-        trace(forest.iter::<Column>(), &mut visible_trees);
-
-        let mut visible_trees_with_reversed = forest
-            .trees
-            .iter()
-            .map(|row| row.iter().map(|_| true).collect::<Vec<_>>())
-            .collect::<Vec<_>>();
-
-        trace(
-            forest.iter::<(Column, Backwards)>(),
-            &mut visible_trees_with_reversed,
-        );
-
-        assert_ne!(visible_trees, visible_trees_with_reversed);
-
-        print_bool_matrix(&visible_trees);
-        println!();
-        print_bool_matrix(&visible_trees_with_reversed);
-    }
-
-    #[test]
-    pub(crate) fn row_iter() {
-        let forest = Forest::parse(INPUT);
-        let row_iter = forest.iter::<Row>().map(collect_row).collect::<Vec<_>>();
-
-        // assert_eq!(row_iter, vec![]);
-
-        for (row_idx, tree_line) in row_iter {
-            for (col_idx, height) in tree_line {
-                assert_eq!(forest.trees[row_idx.0][col_idx.0], height);
-            }
-        }
-    }
-
-    #[test]
-    pub(crate) fn row_iter_iteration() {
-        let row_iter = Forest::parse(INPUT)
-            .iter::<(Row, Backwards)>()
-            .map(collect_row)
-            .collect::<Vec<_>>();
-
-        assert_eq!(row_iter, vec![]);
-    }
-
-    #[test]
-    pub(crate) fn row_trace() {
-        let forest = Forest::parse(INPUT);
-
-        let mut visible_trees = forest
-            .trees
-            .iter()
-            .map(|row| row.iter().map(|_| true).collect::<Vec<_>>())
-            .collect::<Vec<_>>();
-
-        trace(forest.iter::<Row>(), &mut visible_trees);
-
-        let mut visible_trees_with_reversed = forest
-            .trees
-            .iter()
-            .map(|row| row.iter().map(|_| true).collect::<Vec<_>>())
-            .collect::<Vec<_>>();
-
-        trace(
-            forest.iter::<(Row, Backwards)>(),
-            &mut visible_trees_with_reversed,
-        );
-
-        assert_ne!(visible_trees, visible_trees_with_reversed);
-
-        print_bool_matrix(&visible_trees);
-        println!();
-        print_bool_matrix(&visible_trees_with_reversed);
+        TypeAndDirection::next_fn(self)
     }
 }
