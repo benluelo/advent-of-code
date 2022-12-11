@@ -36,7 +36,9 @@ macro_rules! print_solutions {
                     let input = std::fs::read_to_string(
                         std::path::PathBuf::from_iter([
                             "..",
+                            "..",
                             "inputs",
+                            "2022",
                             &format!("day-{}.txt", $day)
                         ])
                     ).unwrap();

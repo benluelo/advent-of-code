@@ -12,8 +12,8 @@ import Debug.Trace
 
 main :: IO ()
 main = do
-  fileNames <- listDirectory "../inputs/"
-  let qualifiedFileNames = map ("../inputs/" ++) fileNames
+  fileNames <- listDirectory "../../inputs/2022/"
+  let qualifiedFileNames = map ("../../inputs/2022/" ++) fileNames
   -- mapM_ print qualifiedFileNames
   fileContents <- mapM getDayAndInput qualifiedFileNames
   let

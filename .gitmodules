@@ -1,0 +1,4 @@
+[submodule "inputs"]
+	path = inputs
+	url = git@github.com:benluelo/advent-of-code-inputs.git
+	branch = main
