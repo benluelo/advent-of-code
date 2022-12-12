@@ -1,4 +1,4 @@
-use std::{convert::Infallible, str::FromStr};
+use std::{convert::Infallible, iter, str::FromStr};
 
 pub fn solution(input: &str) -> i32 {
     let checkpoint_intervals = [20_usize, 40, 40, 40, 40, 40];
@@ -26,6 +26,32 @@ pub fn solution(input: &str) -> i32 {
             },
         )
         .1
+}
+
+pub fn solution_part_2(input: &str) -> String {
+    Cpu::new(
+        input
+            .trim()
+            .lines()
+            .map(|line| line.parse::<Instruction>().unwrap()),
+    )
+    .array_chunks::<40>()
+    .flat_map(|chunk| {
+        iter::once('\n').chain(chunk.into_iter().enumerate().map(|(cycle, position)| {
+            #[allow(
+                clippy::cast_possible_wrap,
+                clippy::cast_possible_truncation,
+                clippy::range_plus_one
+            )]
+            // cycle within [position + 1, position - 1]
+            if (position - cycle as i32).abs() < 2 {
+                '#'
+            } else {
+                '.'
+            }
+        }))
+    })
+    .collect()
 }
 
 struct Cpu<I: Iterator<Item = Instruction>> {

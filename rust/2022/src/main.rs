@@ -1,4 +1,5 @@
 #![feature(
+    iter_array_chunks,
     iter_next_chunk,
     array_windows,
     iter_intersperse,
@@ -28,7 +29,7 @@ fn main() {
         [7-1, 7-2]
         [8-1, 8-2]
         [9-1, 9-2]
-        [10-1]
+        [10-1, 10-2]
     }
 }
 
