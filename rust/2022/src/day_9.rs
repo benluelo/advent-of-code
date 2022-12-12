@@ -1,22 +1,60 @@
-use std::{collections::BTreeSet, convert::Infallible, str::FromStr};
+use std::{cell::Cell, collections::BTreeSet, convert::Infallible, str::FromStr};
 
 pub fn solution(input: &str) -> usize {
-    let output = parse(input).fold(
-        (BTreeSet::<(i32, i32)>::new(), (0, 0), (0, 0)),
-        |(mut visited_positions, mut head_position, mut tail_position), (direction, count)| {
-            for _ in 0..count {
-                direction.move_pos(&mut head_position);
+    get_tail_movements::<2>(input)
+}
 
-                move_towards(&mut tail_position, head_position);
+pub fn solution_part_2(input: &str) -> usize {
+    get_tail_movements::<10>(input)
+}
 
-                visited_positions.insert(tail_position);
-            }
+fn get_tail_movements<const ROPE_LEN: usize>(input: &str) -> usize {
+    parse(input)
+        .fold(
+            (BTreeSet::new(), [(0, 0); ROPE_LEN]),
+            |(mut visited_positions, mut rope), (direction, count)| {
+                for _ in 0..count {
+                    // [a, b, c, d, e]
+                    //
+                    // [a, b]
+                    // move a
+                    // b towards a
+                    //
+                    // [b, c], [c, d], [d, e]
+                    //
+                    // b towards c
+                    // c towards d
+                    // d towards e
+                    //
+                    // [.., e]
+                    // add e to visited positions
 
-            (visited_positions, head_position, tail_position)
-        },
-    );
+                    for (idx, [head, next]) in Cell::from_mut(&mut rope)
+                        .as_array_of_cells()
+                        .windows(2)
+                        .map(|slice| match slice {
+                            [a, b] => [a, b],
+                            _ => unreachable!(),
+                        })
+                        .enumerate()
+                    {
+                        if idx == 0 {
+                            head.set(direction.move_pos(head.get()));
+                        }
 
-    output.0.len()
+                        next.set(move_towards(next.get(), head.get()));
+                    }
+
+                    let [.., tail] = rope.as_slice() else { panic!("bad input") };
+
+                    visited_positions.insert(*tail);
+                }
+
+                (visited_positions, rope)
+            },
+        )
+        .0
+        .len()
 }
 
 fn parse(input: &str) -> impl Iterator<Item = (Direction, u32)> + '_ {
@@ -29,38 +67,23 @@ fn parse(input: &str) -> impl Iterator<Item = (Direction, u32)> + '_ {
     })
 }
 
-fn move_towards(tail_position: &mut (i32, i32), head_position: (i32, i32)) {
-    let difference = (
-        head_position.0 - tail_position.0,
-        head_position.1 - tail_position.1,
-    );
-
-    dbg!(difference);
+fn move_towards((x, y): (i32, i32), to: (i32, i32)) -> (i32, i32) {
+    let difference = (to.0 - x, to.1 - y);
 
     match difference {
         (-1..=1, -1..=1) => {
             // tail is within 1 of head, don't move the tail
+            (x, y)
         }
-        (2, y) => {
-            tail_position.0 += 1;
-            tail_position.1 += y;
-        }
-        (-2, y) => {
-            tail_position.0 -= 1;
-            tail_position.1 += y;
-        }
-        (x, 2) => {
-            tail_position.1 += 1;
-            tail_position.0 += x;
-        }
-        (x, -2) => {
-            tail_position.1 -= 1;
-            tail_position.0 += x;
-        }
+        (2, dy) => (x + 1, y + dy.clamp(-1, 1)),
+        (-2, dy) => (x - 1, y + dy.clamp(-1, 1)),
+        (dx, 2) => (x + dx.clamp(-1, 1), y + 1),
+        (dx, -2) => (x + dx.clamp(-1, 1), y - 1),
         _ => panic!("bad input"),
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 enum Direction {
     Right,
     Left,
@@ -69,12 +92,12 @@ enum Direction {
 }
 
 impl Direction {
-    fn move_pos(&self, pos: &mut (i32, i32)) {
+    fn move_pos(self, (x, y): (i32, i32)) -> (i32, i32) {
         match self {
-            Direction::Right => pos.0 += 1,
-            Direction::Left => pos.0 -= 1,
-            Direction::Up => pos.1 += 1,
-            Direction::Down => pos.1 -= 1,
+            Direction::Right => (x + 1, y),
+            Direction::Left => (x - 1, y),
+            Direction::Up => (x, y + 1),
+            Direction::Down => (x, y - 1),
         }
     }
 }
@@ -95,11 +118,6 @@ impl FromStr for Direction {
 
 #[test]
 fn test_movement() {
-    let steps = parse(
-        "R 1
-R 1",
-    );
-
     //  3 . . . . . .
     //  2 . . . . . .
     //  1 . . . . . .
@@ -116,7 +134,7 @@ R 1",
     // -1 . . . . . .
     // -2 . . . . . .
     //   -2-1 0 1 2 3
-    move_towards(&mut tail, (1, 0));
+    tail = move_towards(tail, (1, 0));
     assert_eq!(tail, (0, 0));
 
     //  3 . . . . . .
@@ -126,7 +144,7 @@ R 1",
     // -1 . . . . . .
     // -2 . . . . . .
     //   -2-1 0 1 2 3
-    move_towards(&mut tail, (2, 0));
+    tail = move_towards(tail, (2, 0));
     assert_eq!(tail, (1, 0));
 
     //  3 . . . . . .
@@ -136,7 +154,7 @@ R 1",
     // -1 . . . . . .
     // -2 . . . . . .
     //   -2-1 0 1 2 3
-    move_towards(&mut tail, (2, 1));
+    tail = move_towards(tail, (2, 1));
     assert_eq!(tail, (1, 0));
 
     //  3 . . . . . .
@@ -146,7 +164,7 @@ R 1",
     // -1 . . . . . .
     // -2 . . . . . .
     //   -2-1 0 1 2 3
-    move_towards(&mut tail, (2, 2));
+    tail = move_towards(tail, (2, 2));
     assert_eq!(tail, (2, 1));
 
     //  3 . . . . . .
@@ -156,7 +174,7 @@ R 1",
     // -1 . . . . . .
     // -2 . . . . . .
     //   -2-1 0 1 2 3
-    move_towards(&mut tail, (2, 1));
+    tail = move_towards(tail, (2, 1));
     assert_eq!(tail, (2, 1));
 
     //  3 . . . . . .
@@ -166,7 +184,7 @@ R 1",
     // -1 . . . . . .
     // -2 . . . . . .
     //   -2-1 0 1 2 3
-    move_towards(&mut tail, (2, 0));
+    tail = move_towards(tail, (2, 0));
     assert_eq!(tail, (2, 1));
 
     //  3 . . . . . .
@@ -176,7 +194,7 @@ R 1",
     // -1 . . . . . .
     // -2 . . . . . .
     //   -2-1 0 1 2 3
-    move_towards(&mut tail, (1, 0));
+    tail = move_towards(tail, (1, 0));
     assert_eq!(tail, (2, 1));
 
     //  3 . . . . . .
@@ -186,6 +204,6 @@ R 1",
     // -1 . . . H . .
     // -2 . . . . . .
     //   -2-1 0 1 2 3
-    move_towards(&mut tail, (1, -1));
+    tail = move_towards(tail, (1, -1));
     assert_eq!(tail, (1, 0));
 }

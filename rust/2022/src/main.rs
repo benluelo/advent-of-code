@@ -1,4 +1,10 @@
-#![feature(iter_next_chunk, array_windows, iter_intersperse, iter_repeat_n)]
+#![feature(
+    iter_next_chunk,
+    array_windows,
+    iter_intersperse,
+    iter_repeat_n,
+    as_array_of_cells
+)]
 #![warn(clippy::pedantic)]
 
 mod day_1;
@@ -19,7 +25,7 @@ fn main() {
         [6-1, 6-2]
         [7-1, 7-2]
         [8-1, 8-2]
-        [9-1]
+        [9-1, 9-2]
     }
 }
 
