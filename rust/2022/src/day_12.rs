@@ -1,15 +1,41 @@
 use std::{
+    borrow::Borrow,
     cmp::Reverse,
     collections::{BTreeMap, BinaryHeap},
 };
 
 pub fn solution(input: &str) -> u32 {
-    let ParsedMap { start, end, edges } = parse(input);
+    let ParsedMap {
+        start, end, edges, ..
+    } = parse(input);
 
-    dijkstra(start, end, &edges).unwrap()
+    dijkstra(start, |pos| pos == end, |pos| edges[&pos].iter()).unwrap()
+}
+
+pub fn solution_part_2(input: &str) -> u32 {
+    let ParsedMap {
+        grid, end, edges, ..
+    } = parse(input);
+
+    dijkstra(
+        end,
+        |pos| Height::from(grid_at_position(&grid, pos).unwrap()) == Height::ZERO,
+        |pos| {
+            // this is terribly ineficient
+            // but it works!
+            edges.iter().filter_map(move |(position, edges)| {
+                edges
+                    .iter()
+                    .any(|edge| edge.to == pos)
+                    .then_some(Edge { to: *position })
+            })
+        },
+    )
+    .unwrap()
 }
 
 struct ParsedMap {
+    grid: Vec<Vec<char>>,
     start: Position,
     end: Position,
     edges: BTreeMap<Position, Vec<Edge>>,
@@ -51,7 +77,12 @@ fn parse(input: &str) -> ParsedMap {
         })
         .collect();
 
-    ParsedMap { start, end, edges }
+    ParsedMap {
+        grid,
+        start,
+        end,
+        edges,
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
@@ -103,28 +134,24 @@ fn find_char(grid: &[Vec<char>], char: char) -> Position {
         .unwrap()
 }
 
-fn dijkstra(
+fn dijkstra<Edges>(
     start: Position,
-    end: Position,
-    adj_list: &BTreeMap<Position, Vec<Edge>>,
-) -> Option<u32> {
+    end_fn: impl Fn(Position) -> bool,
+    get_edges: impl Fn(Position) -> Edges,
+) -> Option<u32>
+where
+    Edges: Iterator,
+    <Edges as Iterator>::Item: Borrow<Edge>,
+{
     #[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
     struct State {
         cost: u32,
         position: Position,
     }
 
-    // dist[node] = current shortest distance from `start` to `node`
-    // let mut dist: Vec<_> = grid
-    //     .iter()
-    //     .map(|v| v.iter().map(|_| None).collect::<Vec<_>>())
-    //     .collect::<Vec<_>>();
-
     let mut dist = BTreeMap::new();
-
     let mut heap = BinaryHeap::new();
 
-    // We're at `start`, with a zero cost
     dist.insert(start, 0);
 
     heap.push(Reverse(State {
@@ -132,57 +159,41 @@ fn dijkstra(
         position: start,
     }));
 
-    // Examine the frontier with lower cost nodes first (min-heap)
     while let Some(Reverse(State { cost, position })) = heap.pop() {
-        // dbg!(&dist);
-        // dbg!(&heap);
-
-        // Alternatively we could have continued to find all shortest paths
-        if position == end {
+        if end_fn(position) {
             return Some(cost);
         }
 
-        // Important as we may have already found a better way
         if dist.get(&position).is_some_and(|c| cost > *c) {
             continue;
         }
 
-        // For each node we can reach, see if we can find a way with
-        // a lower cost going through this node
-        // dbg!(adj_list);
-        for edge in &adj_list[&position] {
+        for edge in get_edges(position) {
+            let edge = edge.borrow();
+
             let next = State {
                 cost: cost + 1,
                 position: edge.to,
             };
 
-            // If so, add it to the frontier and continue
             let use_next_node = match dist.get(&edge.to) {
                 Some(current_next) => next.cost < *current_next,
                 None => true,
             };
             if use_next_node {
                 heap.push(Reverse(next.clone()));
-                // Relaxation, we have now found a better way
                 dist.insert(next.position, next.cost);
             }
         }
     }
 
-    // Goal not reachable
     None
 }
 
 fn get_edge_if_traversable(from: Position, to: Position, grid: &[Vec<char>]) -> Option<Edge> {
-    // destination can be one larger than the current position or any value less
-    // 5 -> 6 - ok
-    // 5 -> 5 - ok
-    // 5 -> 2 - ok
-    // 5 -> 7 - not ok, destination is 2 greater than the current position
-    (char_to_height(grid[from.y][from.x]) + 1 >= char_to_height(*grid.get(to.y)?.get(to.x)?))
-        .then_some(Edge {
-            to: Position { x: to.x, y: to.y },
-        })
+    Height::from(grid_at_position(grid, from).unwrap())
+        .can_access(&grid_at_position(grid, to)?.into())
+        .then_some(Edge { to })
 }
 
 #[derive(Debug)]
@@ -190,8 +201,38 @@ struct Edge {
     to: Position,
 }
 
-pub fn solution_part_2(_input: &str) -> u32 {
-    todo!();
+fn grid_at_position(grid: &[Vec<char>], pos: Position) -> Option<char> {
+    grid.get(pos.y)?.get(pos.x).copied()
+}
+
+// would be intersting to benchmark with these enabled:
+// #[rustc_layout_scalar_valid_range_start(0)]
+// #[rustc_layout_scalar_valid_range_end(25)]
+#[derive(PartialEq, PartialOrd)]
+struct Height(u8);
+
+impl Height {
+    const ZERO: Self = Self(0);
+
+    // destination can be one larger than the current position or any value less
+    // 5 -> 6 - ok
+    // 5 -> 5 - ok
+    // 5 -> 2 - ok
+    // 5 -> 7 - not ok, destination is 2 greater than the current position
+    fn can_access(self, other: &Self) -> bool {
+        self.0 + 1 >= other.0
+    }
+}
+
+impl From<char> for Height {
+    fn from(c: char) -> Self {
+        match c {
+            'a'..='z' => Self(c as u8 - 97),
+            'S' => Self::from('a'),
+            'E' => Self::from('z'),
+            _ => panic!("bad input: {c}"),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -199,44 +240,15 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_dijkstra() {
-        // let map = r#"Sab
-        //              abb
-        //              ccE"#;
-
+    fn test_basic_map() {
         let map = "SbcdefghijklmnopqrstuvwxyE";
 
-        let ParsedMap { start, end, edges } = parse(map);
+        let ParsedMap {
+            start, end, edges, ..
+        } = parse(map);
 
         dbg!(&edges);
 
-        dbg!(dijkstra(start, end, &edges));
-
-        // dbg!(char_to_height('a'));
-    }
-
-    // #[test]
-    // fn test_is_valid_neighbour() {
-    //     let map = r#"Sab
-    //                  abb
-    //                  ccE"#;
-
-    //     let ParsedMap {
-    //         grid,
-    //         start,
-    //         end,
-    //         edges,
-    //     } = parse(map);
-
-    //     assert!(get_edge_if_traversable().is_some())
-    // }
-}
-
-fn char_to_height(c: char) -> u8 {
-    match c {
-        'a'..='z' => c as u8 - 97,
-        'S' => char_to_height('a'),
-        'E' => char_to_height('z'),
-        _ => panic!("bad input: {c}"),
+        dbg!(dijkstra(start, |pos| pos == end, |pos| edges[&pos].iter()));
     }
 }
