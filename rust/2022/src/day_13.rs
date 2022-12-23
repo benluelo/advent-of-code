@@ -1,4 +1,5 @@
 use std::{
+    cmp::Ordering,
     convert::Infallible,
     fmt::Debug,
     iter::{self, Peekable},
@@ -26,12 +27,36 @@ pub fn solution(input: &str) -> u32 {
         .sum()
 }
 
-pub fn solution_part_2(_input: &str) -> ! {
-    todo!()
-    //
+pub fn solution_part_2(input: &str) -> usize {
+    let packet_data_2 = "[[2]]".parse::<PacketData>().unwrap();
+    let packet_data_6 = "[[6]]".parse::<PacketData>().unwrap();
+
+    let mut vec = input
+        .split("\n\n")
+        .flat_map(|packets| {
+            packets
+                .trim()
+                .split('\n')
+                .map(|packet| packet.parse::<PacketData>().unwrap())
+        })
+        .chain([packet_data_2.clone(), packet_data_6.clone()])
+        .collect::<Vec<_>>();
+
+    vec.sort_unstable_by(|a, b| match a.check_if_in_order(b) {
+        ControlFlow::Continue(()) => Ordering::Equal,
+        ControlFlow::Break(true) => Ordering::Less,
+        ControlFlow::Break(false) => Ordering::Greater,
+    });
+
+    vec.into_iter()
+        .zip(1..)
+        .filter_map(|(packed_data, idx)| {
+            (packed_data == packet_data_2 || packed_data == packet_data_6).then_some(idx)
+        })
+        .product()
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 enum PacketData {
     Int(u8),
     List(Vec<PacketData>),
@@ -162,6 +187,16 @@ mod tests {
                 Int(10),
                 List(vec![Int(33), Int(1), List(vec![])])
             ])
+        );
+    }
+
+    #[test]
+    fn double_list_one_item() {
+        use super::PacketData::{Int, List};
+
+        assert_eq!(
+            "[[2]]".parse::<PacketData>().unwrap(),
+            List(vec![List(vec![Int(10)])])
         );
     }
 }
