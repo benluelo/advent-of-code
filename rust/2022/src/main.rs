@@ -6,7 +6,8 @@
     iter_repeat_n,
     as_array_of_cells,
     int_roundings,
-    is_some_and
+    is_some_and,
+    control_flow_enum
 )]
 #![warn(clippy::pedantic)]
 
@@ -22,6 +23,7 @@ mod day_9;
 mod day_10;
 mod day_11;
 mod day_12;
+mod day_13;
 
 fn main() {
     print_solutions! {
@@ -36,6 +38,7 @@ fn main() {
         [10-1, 10-2]
         [11-1, 11-2]
         [12-1, 12-2]
+        [13-1, 13-2]
     }
 }
 
