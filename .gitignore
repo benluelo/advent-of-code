@@ -1,2 +1,2 @@
-rust/*/target
+rust/target
 haskell/*/dist-newstyle

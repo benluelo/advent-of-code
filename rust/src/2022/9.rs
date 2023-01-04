@@ -1,11 +1,18 @@
 use std::{cell::Cell, collections::BTreeSet, convert::Infallible, str::FromStr};
 
-pub fn solution(input: &str) -> usize {
-    get_tail_movements::<2>(input)
-}
+use crate::{Day, DaySolution};
 
-pub fn solution_part_2(input: &str) -> usize {
-    get_tail_movements::<10>(input)
+impl DaySolution for Day<2022, 9> {
+    type Part1Output = usize;
+    type Part2Output = usize;
+
+    fn part_1(input: &str) -> Self::Part1Output {
+        get_tail_movements::<2>(input)
+    }
+
+    fn part_2(input: &str) -> Self::Part2Output {
+        get_tail_movements::<10>(input)
+    }
 }
 
 fn get_tail_movements<const ROPE_LEN: usize>(input: &str) -> usize {

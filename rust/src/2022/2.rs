@@ -1,5 +1,28 @@
 use std::str::FromStr;
 
+use crate::{Day, DaySolution};
+
+impl DaySolution for Day<2022, 2> {
+    type Part1Output = u32;
+    type Part2Output = u32;
+
+    fn part_1(input: &str) -> Self::Part1Output {
+        input
+            .trim()
+            .lines()
+            .map(|s| s.parse::<Round>().unwrap())
+            .fold(0, |acc, curr| acc + curr.score())
+    }
+
+    fn part_2(input: &str) -> Self::Part2Output {
+        input
+            .trim()
+            .lines()
+            .map::<Round, _>(|s| s.parse::<IncompleteRound>().unwrap().into())
+            .fold(0, |acc, curr| acc + curr.score())
+    }
+}
+
 enum Rps {
     Rock,
     Paper,
@@ -127,20 +150,4 @@ impl FromStr for IncompleteRound {
             },
         })
     }
-}
-
-pub fn solution(input: &str) -> u32 {
-    input
-        .trim()
-        .lines()
-        .map(|s| s.parse::<Round>().unwrap())
-        .fold(0, |acc, curr| acc + curr.score())
-}
-
-pub fn solution_part_2(input: &str) -> u32 {
-    input
-        .trim()
-        .lines()
-        .map::<Round, _>(|s| s.parse::<IncompleteRound>().unwrap().into())
-        .fold(0, |acc, curr| acc + curr.score())
 }

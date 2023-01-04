@@ -6,77 +6,82 @@ use std::{
     marker::PhantomData,
 };
 
-pub fn solution(input: &str) -> usize {
-    let forest = Forest::parse(input);
+use crate::{Day, DaySolution};
 
-    let mut visible_trees = forest
-        .trees
-        .iter()
-        .map(|row| row.iter().map(|_| false).collect::<Vec<_>>())
-        .collect::<Vec<_>>();
+impl DaySolution for Day<2022, 8> {
+    type Part1Output = usize;
+    type Part2Output = u32;
 
-    // uncomment the following calls to `print_bool_matrix` for some funky terminal
-    // output showing the traces
+    fn part_1(input: &str) -> Self::Part1Output {
+        let forest = Forest::parse(input);
 
-    trace_for_visible_trees(forest.iter::<Column>(), &mut visible_trees);
-    // print_bool_matrix(&visible_trees);
+        let mut visible_trees = forest
+            .trees
+            .iter()
+            .map(|row| row.iter().map(|_| false).collect::<Vec<_>>())
+            .collect::<Vec<_>>();
 
-    trace_for_visible_trees(forest.iter::<(Column, Backwards)>(), &mut visible_trees);
-    // print_bool_matrix(&visible_trees);
+        // uncomment the following calls to `print_bool_matrix` for some funky terminal
+        // output showing the traces
 
-    trace_for_visible_trees(forest.iter::<Row>(), &mut visible_trees);
-    // print_bool_matrix(&visible_trees);
+        trace_for_visible_trees(forest.iter::<Column>(), &mut visible_trees);
+        // print_bool_matrix(&visible_trees);
 
-    trace_for_visible_trees(forest.iter::<(Row, Backwards)>(), &mut visible_trees);
-    // print_bool_matrix(&visible_trees);
+        trace_for_visible_trees(forest.iter::<(Column, Backwards)>(), &mut visible_trees);
+        // print_bool_matrix(&visible_trees);
 
-    visible_trees.iter().flatten().filter(|b| **b).count()
-}
+        trace_for_visible_trees(forest.iter::<Row>(), &mut visible_trees);
+        // print_bool_matrix(&visible_trees);
 
-pub fn solution_part_2(input: &str) -> u32 {
-    let forest = Forest::parse(input);
+        trace_for_visible_trees(forest.iter::<(Row, Backwards)>(), &mut visible_trees);
+        // print_bool_matrix(&visible_trees);
 
-    let column_scores = forest
-        .iter::<Column>()
-        .into_iter()
-        .map(calculate_scores_in_lines::<Column>);
-
-    let row_scores = forest
-        .iter::<Row>()
-        .into_iter()
-        .map(calculate_scores_in_lines::<Row>);
-
-    let mut tree_visibility_scores = forest
-        .trees
-        .iter()
-        .map(|row| row.iter().map(|_| TreeScore::default()).collect::<Vec<_>>())
-        .collect::<Vec<_>>();
-
-    for (outer_idx, iter) in column_scores {
-        for (inner_idx, score) in iter {
-            (outer_idx, inner_idx)
-                .index_in_to(&mut tree_visibility_scores)
-                .column = score;
-        }
+        visible_trees.iter().flatten().filter(|b| **b).count()
     }
 
-    for (outer_idx, iter) in row_scores {
-        for (inner_idx, score) in iter {
-            (outer_idx, inner_idx)
-                .index_in_to(&mut tree_visibility_scores)
-                .row = score;
+    fn part_2(input: &str) -> Self::Part2Output {
+        let forest = Forest::parse(input);
+
+        let column_scores = forest
+            .iter::<Column>()
+            .into_iter()
+            .map(calculate_scores_in_lines::<Column>);
+
+        let row_scores = forest
+            .iter::<Row>()
+            .into_iter()
+            .map(calculate_scores_in_lines::<Row>);
+
+        let mut tree_visibility_scores = forest
+            .trees
+            .iter()
+            .map(|row| row.iter().map(|_| TreeScore::default()).collect::<Vec<_>>())
+            .collect::<Vec<_>>();
+
+        for (outer_idx, iter) in column_scores {
+            for (inner_idx, score) in iter {
+                (outer_idx, inner_idx)
+                    .index_in_to(&mut tree_visibility_scores)
+                    .column = score;
+            }
         }
+
+        for (outer_idx, iter) in row_scores {
+            for (inner_idx, score) in iter {
+                (outer_idx, inner_idx)
+                    .index_in_to(&mut tree_visibility_scores)
+                    .row = score;
+            }
+        }
+
+        tree_visibility_scores
+            .into_iter()
+            .flatten()
+            .map(TreeScore::total)
+            .max()
+            .unwrap()
     }
-
-    tree_visibility_scores
-        .into_iter()
-        .flatten()
-        .map(TreeScore::total)
-        .max()
-        .unwrap()
 }
-
-// fn find_best_tree(forest) -> u32 {}
 
 #[allow(clippy::type_complexity)]
 fn calculate_scores_in_lines<Type: ForestIterType>(

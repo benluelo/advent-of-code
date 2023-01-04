@@ -4,34 +4,41 @@ use std::{
     collections::{BTreeMap, BinaryHeap},
 };
 
-pub fn solution(input: &str) -> u32 {
-    let ParsedMap {
-        start, end, edges, ..
-    } = parse(input);
+use crate::{Day, DaySolution};
 
-    dijkstra(start, |pos| pos == end, |pos| edges[&pos].iter()).unwrap()
-}
+impl DaySolution for Day<2022, 12> {
+    type Part1Output = u32;
+    type Part2Output = u32;
 
-pub fn solution_part_2(input: &str) -> u32 {
-    let ParsedMap {
-        grid, end, edges, ..
-    } = parse(input);
+    fn part_1(input: &str) -> Self::Part1Output {
+        let ParsedMap {
+            start, end, edges, ..
+        } = parse(input);
 
-    dijkstra(
-        end,
-        |pos| Height::from(grid_at_position(&grid, pos).unwrap()) == Height::ZERO,
-        |pos| {
-            // this is terribly ineficient
-            // but it works!
-            edges.iter().filter_map(move |(position, edges)| {
-                edges
-                    .iter()
-                    .any(|edge| edge.to == pos)
-                    .then_some(Edge { to: *position })
-            })
-        },
-    )
-    .unwrap()
+        dijkstra(start, |pos| pos == end, |pos| edges[&pos].iter()).unwrap()
+    }
+
+    fn part_2(input: &str) -> Self::Part2Output {
+        let ParsedMap {
+            grid, end, edges, ..
+        } = parse(input);
+
+        dijkstra(
+            end,
+            |pos| Height::from(grid_at_position(&grid, pos).unwrap()) == Height::ZERO,
+            |pos| {
+                // this is terribly ineficient
+                // but it works!
+                edges.iter().filter_map(move |(position, edges)| {
+                    edges
+                        .iter()
+                        .any(|edge| edge.to == pos)
+                        .then_some(Edge { to: *position })
+                })
+            },
+        )
+        .unwrap()
+    }
 }
 
 struct ParsedMap {

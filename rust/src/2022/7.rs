@@ -1,43 +1,50 @@
-pub fn solution(input: &str) -> u32 {
-    let ft = FileTree::parse(input);
+use crate::{Day, DaySolution};
 
-    let mut total = 0_u32;
+impl DaySolution for Day<2022, 7> {
+    type Part1Output = u32;
+    type Part2Output = u32;
 
-    ft.post_order(&mut |dir| {
-        let size = dir.size();
-        if size <= 100_000 {
-            total += size;
-        }
-    });
+    fn part_1(input: &str) -> Self::Part1Output {
+        let ft = FileTree::parse(input);
 
-    total
-}
+        let mut total = 0_u32;
 
-pub fn solution_part_2(input: &str) -> u32 {
-    const DISK_SIZE: u32 = 70_000_000;
-    const REQUIRED_SPACE_FOR_UPDATE: u32 = 30_000_000;
-
-    let root = FileTree::parse(input);
-
-    let space_necessary = REQUIRED_SPACE_FOR_UPDATE - (DISK_SIZE - root.size());
-
-    let mut smallest_viable = None;
-
-    root.post_order(&mut |dir| {
-        let size = dir.size();
-        if size > space_necessary {
-            match smallest_viable.as_mut() {
-                Some(sv) => {
-                    if size < *sv {
-                        *sv = size;
-                    }
-                }
-                None => smallest_viable = Some(size),
+        ft.post_order(&mut |dir| {
+            let size = dir.size();
+            if size <= 100_000 {
+                total += size;
             }
-        }
-    });
+        });
 
-    smallest_viable.unwrap()
+        total
+    }
+
+    fn part_2(input: &str) -> Self::Part2Output {
+        const DISK_SIZE: u32 = 70_000_000;
+        const REQUIRED_SPACE_FOR_UPDATE: u32 = 30_000_000;
+
+        let root = FileTree::parse(input);
+
+        let space_necessary = REQUIRED_SPACE_FOR_UPDATE - (DISK_SIZE - root.size());
+
+        let mut smallest_viable = None;
+
+        root.post_order(&mut |dir| {
+            let size = dir.size();
+            if size > space_necessary {
+                match smallest_viable.as_mut() {
+                    Some(sv) => {
+                        if size < *sv {
+                            *sv = size;
+                        }
+                    }
+                    None => smallest_viable = Some(size),
+                }
+            }
+        });
+
+        smallest_viable.unwrap()
+    }
 }
 
 #[derive(Debug)]

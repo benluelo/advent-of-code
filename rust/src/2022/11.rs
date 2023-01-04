@@ -1,12 +1,18 @@
 use std::{cmp::Ordering, collections::BTreeMap, ops::Rem};
 
-// 110220
-pub fn solution(input: &str) -> u64 {
-    parse_and_solve(input, 20, Some(3))
-}
+use crate::{Day, DaySolution};
 
-pub fn solution_part_2(input: &str) -> u64 {
-    parse_and_solve(input, 10_000, None)
+impl DaySolution for Day<2022, 11> {
+    type Part1Output = u64;
+    type Part2Output = u64;
+
+    fn part_1(input: &str) -> Self::Part1Output {
+        parse_and_solve(input, 20, Some(3))
+    }
+
+    fn part_2(input: &str) -> Self::Part2Output {
+        parse_and_solve(input, 10_000, None)
+    }
 }
 
 fn parse_and_solve(

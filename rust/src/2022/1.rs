@@ -1,16 +1,23 @@
-pub fn solution(input: &str) -> u32 {
-    parse_input(input)
-        .into_iter()
-        .max()
-        .expect("input contained no numbers")
-}
+use crate::{Day, DaySolution};
 
-pub fn solution_part_2(input: &str) -> u32 {
-    let mut parsed_input = parse_input(input);
+impl DaySolution for Day<2022, 1> {
+    type Part1Output = u32;
+    type Part2Output = u32;
 
-    parsed_input.sort_by(|a, b| b.cmp(a));
+    fn part_1(input: &str) -> Self::Part1Output {
+        parse_input(input)
+            .into_iter()
+            .max()
+            .expect("input contained no numbers")
+    }
 
-    parsed_input[0..3].iter().sum()
+    fn part_2(input: &str) -> Self::Part2Output {
+        let mut parsed_input = parse_input(input);
+
+        parsed_input.sort_by(|a, b| b.cmp(a));
+
+        parsed_input[0..3].iter().sum()
+    }
 }
 
 fn parse_input(input: &str) -> Vec<u32> {

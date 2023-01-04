@@ -1,12 +1,19 @@
+use crate::{Day, DaySolution};
+
 const START_OF_PACKET_MARKER_LENGTH: usize = 4;
 const START_OF_MESSAGE_MARKER_LENGTH: usize = 14;
 
-pub fn solution(input: &str) -> usize {
-    parse::<START_OF_PACKET_MARKER_LENGTH>(input)
-}
+impl DaySolution for Day<2022, 6> {
+    type Part1Output = usize;
+    type Part2Output = usize;
 
-pub fn solution_part_2(input: &str) -> usize {
-    parse::<START_OF_MESSAGE_MARKER_LENGTH>(input)
+    fn part_1(input: &str) -> Self::Part1Output {
+        parse::<START_OF_PACKET_MARKER_LENGTH>(input)
+    }
+
+    fn part_2(input: &str) -> Self::Part2Output {
+        parse::<START_OF_MESSAGE_MARKER_LENGTH>(input)
+    }
 }
 
 fn parse<const MARKER_LENGTH: usize>(input: &str) -> usize {

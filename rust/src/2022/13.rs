@@ -7,53 +7,60 @@ use std::{
     str::FromStr,
 };
 
-pub fn solution(input: &str) -> u32 {
-    input
-        .split("\n\n")
-        .map(|packets| {
-            packets
-                .split('\n')
-                .map(|packet| packet.parse::<PacketData>().unwrap())
-                .next_chunk()
-                .unwrap()
-        })
-        .zip(1..)
-        .filter_map(|([lhs, rhs], idx)| {
-            lhs.check_if_in_order(&rhs)
-                .break_value()
-                .unwrap()
-                .then_some(idx)
-        })
-        .sum()
-}
+use crate::{Day, DaySolver};
 
-pub fn solution_part_2(input: &str) -> usize {
-    let packet_data_2 = "[[2]]".parse::<PacketData>().unwrap();
-    let packet_data_6 = "[[6]]".parse::<PacketData>().unwrap();
+impl DaySolver for Day<2022, 13> {
+    type Part1Output = u32;
+    type Part2Output = usize;
 
-    let mut vec = input
-        .split("\n\n")
-        .flat_map(|packets| {
-            packets
-                .trim()
-                .split('\n')
-                .map(|packet| packet.parse::<PacketData>().unwrap())
-        })
-        .chain([packet_data_2.clone(), packet_data_6.clone()])
-        .collect::<Vec<_>>();
+    fn part_1(input: &str) -> Self::Part1Output {
+        input
+            .split("\n\n")
+            .map(|packets| {
+                packets
+                    .split('\n')
+                    .map(|packet| packet.parse::<PacketData>().unwrap())
+                    .next_chunk()
+                    .unwrap()
+            })
+            .zip(1..)
+            .filter_map(|([lhs, rhs], idx)| {
+                lhs.check_if_in_order(&rhs)
+                    .break_value()
+                    .unwrap()
+                    .then_some(idx)
+            })
+            .sum()
+    }
 
-    vec.sort_unstable_by(|a, b| match a.check_if_in_order(b) {
-        ControlFlow::Continue(()) => Ordering::Equal,
-        ControlFlow::Break(true) => Ordering::Less,
-        ControlFlow::Break(false) => Ordering::Greater,
-    });
+    fn part_2(input: &str) -> Self::Part2Output {
+        let packet_data_2 = "[[2]]".parse::<PacketData>().unwrap();
+        let packet_data_6 = "[[6]]".parse::<PacketData>().unwrap();
 
-    vec.into_iter()
-        .zip(1..)
-        .filter_map(|(packed_data, idx)| {
-            (packed_data == packet_data_2 || packed_data == packet_data_6).then_some(idx)
-        })
-        .product()
+        let mut vec = input
+            .split("\n\n")
+            .flat_map(|packets| {
+                packets
+                    .trim()
+                    .split('\n')
+                    .map(|packet| packet.parse::<PacketData>().unwrap())
+            })
+            .chain([packet_data_2.clone(), packet_data_6.clone()])
+            .collect::<Vec<_>>();
+
+        vec.sort_unstable_by(|a, b| match a.check_if_in_order(b) {
+            ControlFlow::Continue(()) => Ordering::Equal,
+            ControlFlow::Break(true) => Ordering::Less,
+            ControlFlow::Break(false) => Ordering::Greater,
+        });
+
+        vec.into_iter()
+            .zip(1..)
+            .filter_map(|(packed_data, idx)| {
+                (packed_data == packet_data_2 || packed_data == packet_data_6).then_some(idx)
+            })
+            .product()
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]

@@ -5,28 +5,35 @@ use std::{
     str::{Chars, FromStr},
 };
 
-pub fn solution(input: &str) -> String {
-    parse(input, |mut crates, Action { mov, from, to }| {
-        for _ in 0..mov {
-            let moved = crates.get_mut(&from).unwrap().pop().unwrap();
-            crates.get_mut(&to).unwrap().push(moved);
-        }
-        crates
-    })
-}
+use crate::{Day, DaySolution};
 
-pub fn solution_part_2(input: &str) -> String {
-    parse(input, |mut crates, Action { mov, from, to }| {
-        let from_stack = crates.get_mut(&from).unwrap();
+impl DaySolution for Day<2022, 5> {
+    type Part1Output = String;
+    type Part2Output = String;
 
-        let moved = from_stack.split_off(from_stack.len() - mov as usize);
+    fn part_1(input: &str) -> Self::Part1Output {
+        parse(input, |mut crates, Action { mov, from, to }| {
+            for _ in 0..mov {
+                let moved = crates.get_mut(&from).unwrap().pop().unwrap();
+                crates.get_mut(&to).unwrap().push(moved);
+            }
+            crates
+        })
+    }
 
-        let to_stack = crates.get_mut(&to).unwrap();
+    fn part_2(input: &str) -> Self::Part2Output {
+        parse(input, |mut crates, Action { mov, from, to }| {
+            let from_stack = crates.get_mut(&from).unwrap();
 
-        to_stack.extend(moved);
+            let moved = from_stack.split_off(from_stack.len() - mov as usize);
 
-        crates
-    })
+            let to_stack = crates.get_mut(&to).unwrap();
+
+            to_stack.extend(moved);
+
+            crates
+        })
+    }
 }
 
 fn parse(input: &str, actions_fn: fn(CrateStacks, Action) -> CrateStacks) -> String {
