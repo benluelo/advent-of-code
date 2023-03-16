@@ -7,9 +7,10 @@ use std::{
     str::FromStr,
 };
 
-use crate::{Day, DaySolver};
+use crate::Day;
+use crate::DaySolution;
 
-impl DaySolver for Day<2022, 13> {
+impl DaySolution for Day<2022, 13> {
     type Part1Output = u32;
     type Part2Output = usize;
 
@@ -150,9 +151,7 @@ impl FromStr for PacketData {
 
 #[cfg(test)]
 mod tests {
-    use crate::day_13::PacketData;
-
-    use super::solution;
+    use crate::{year_2022::day_13::PacketData, Day, DaySolution};
 
     const TEST_INPUT: &str = "[1,1,3,1,1]
 [1,1,5,1,1]
@@ -180,7 +179,7 @@ mod tests {
 
     #[test]
     fn test() {
-        assert_eq!(solution(TEST_INPUT), 13);
+        assert_eq!(Day::<2022, 13>::part_1(TEST_INPUT), 13);
     }
 
     #[test]

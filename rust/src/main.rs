@@ -69,7 +69,7 @@ const fn input<const YEAR: u16, const DAY: u8>() -> &'static str {
     unreachable!();
 }
 
-/// Calls `$f` for every year, day pair that's feature is enabled.
+/// Calls `$f` for every (year, day) pair that's feature is enabled.
 #[macro_export]
 macro_rules! for_each_day {
     (
