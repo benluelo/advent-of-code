@@ -44,13 +44,9 @@ impl DaySolution for Day<2022, 8> {
 
         let column_scores = forest
             .iter::<Column>()
-            .into_iter()
             .map(calculate_scores_in_lines::<Column>);
 
-        let row_scores = forest
-            .iter::<Row>()
-            .into_iter()
-            .map(calculate_scores_in_lines::<Row>);
+        let row_scores = forest.iter::<Row>().map(calculate_scores_in_lines::<Row>);
 
         let mut tree_visibility_scores = forest
             .trees

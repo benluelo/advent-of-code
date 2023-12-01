@@ -59,11 +59,7 @@ impl FromStr for Action {
     type Err = Infallible;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let ["move", mov, "from", from, "to", to] = s
-            .split(' ')
-            .next_chunk()
-            .unwrap()
-        else {
+        let ["move", mov, "from", from, "to", to] = s.split(' ').next_chunk().unwrap() else {
             panic!()
         };
 

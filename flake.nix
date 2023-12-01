@@ -4,6 +4,10 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
+    treefmt-nix = {
+      url = "github:unionlabs/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -17,11 +21,16 @@
       flake = false;
     };
   };
-  outputs = inputs@{ self, nixpkgs, rust-overlay, flake-parts, aoc-inputs, ... }:
+
+  outputs = inputs@{ self, nixpkgs, rust-overlay, flake-parts, aoc-inputs, treefmt-nix, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
         
+      imports = [
+        treefmt-nix.flakeModule
+      ];
+
       perSystem = { config, self', inputs', pkgs, system, ... }:
         let
           crane = rec {
@@ -100,6 +109,17 @@
                 ++ (with pkgs; [
                   rnix-lsp
                 ]);
+            nativeBuildInputs = [ config.treefmt.build.wrapper ]
+              ++ pkgs.lib.attrsets.attrValues config.treefmt.build.programs;
+            };
+          };
+
+          treefmt = {
+            projectRootFile = "flake.nix";
+            programs.nixpkgs-fmt.enable = true;
+            programs.rustfmt = {
+              enable = true;
+              package = rust-nightly;
             };
           };
         };

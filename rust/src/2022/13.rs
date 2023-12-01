@@ -143,7 +143,9 @@ impl FromStr for PacketData {
 
         let mut chars = s.chars().peekable();
 
-        let '[' = chars.next().unwrap() else { panic!("bad input") };
+        let '[' = chars.next().unwrap() else {
+            panic!("bad input")
+        };
 
         Ok(PacketData::List(list(&mut chars)))
     }

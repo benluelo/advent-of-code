@@ -78,7 +78,9 @@ impl<'a> FileTree<'a> {
 
         let mut lines = input.lines().map(TermOutputLine::from_str);
 
-        let TermOutputLine::CdToDir(dir @ "/") = lines.next().unwrap() else { panic!("missing root directory") };
+        let TermOutputLine::CdToDir(dir @ "/") = lines.next().unwrap() else {
+            panic!("missing root directory")
+        };
 
         from_term_output_lines(dir, &mut lines)
     }

@@ -54,34 +54,38 @@ struct MonkeyId(u32);
 
 impl Monkey {
     fn from_str(s: &str) -> (MonkeyId, Self) {
-        let Ok([
-            monkey,
-            items,
-            operation,
-            test,
-            if_true,
-            if_false
-        ]) = s.lines().next_chunk()
+        let Ok([monkey, items, operation, test, if_true, if_false]) = s.lines().next_chunk() else {
+            panic!("bad input")
+        };
+
+        let Some(("Monkey", monkey_id)) = monkey.trim_end_matches(':').split_once(' ') else {
+            panic!("bad input")
+        };
+
+        let Some(("Starting items", items)) = items.trim().split_once(": ") else {
+            panic!("bad input")
+        };
+
+        let Ok(["Operation:", "new", "=", "old", op, x]) = operation.trim().split(' ').next_chunk()
         else {
             panic!("bad input")
         };
 
-        let Some(("Monkey", monkey_id)) = monkey.trim_end_matches(':').split_once(' ')
-        else { panic!("bad input") };
-
-        let Some(("Starting items", items)) = items.trim().split_once(": ")
-        else { panic!("bad input") };
-
-        let Ok(["Operation:", "new", "=", "old", op, x]) = operation.trim().split(' ').next_chunk()
-        else { panic!("bad input") };
-
         let Ok(["Test:", "divisible", "by", test_divisor]) = test.trim().split(' ').next_chunk()
-        else { panic!("bad input") };
+        else {
+            panic!("bad input")
+        };
 
-        let Ok(["If", "true:", "throw", "to", "monkey", if_true_monkey]) = if_true.trim().split(' ').next_chunk()
-        else { panic!("bad input") };
-        let Ok(["If", "false:", "throw", "to", "monkey", if_false_monkey]) = if_false.trim().split(' ').next_chunk()
-        else { panic!("bad input") };
+        let Ok(["If", "true:", "throw", "to", "monkey", if_true_monkey]) =
+            if_true.trim().split(' ').next_chunk()
+        else {
+            panic!("bad input")
+        };
+        let Ok(["If", "false:", "throw", "to", "monkey", if_false_monkey]) =
+            if_false.trim().split(' ').next_chunk()
+        else {
+            panic!("bad input")
+        };
 
         (
             MonkeyId(monkey_id.parse().unwrap()),
@@ -115,7 +119,6 @@ impl Monkey {
     ) -> impl Iterator<Item = (MonkeyId, u128)> + '_ {
         self.items
             .drain(..)
-            .into_iter()
             .map(|item| {
                 self.total_inspections += 1;
 

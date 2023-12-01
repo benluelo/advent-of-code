@@ -52,7 +52,9 @@ fn get_tail_movements<const ROPE_LEN: usize>(input: &str) -> usize {
                         next.set(move_towards(next.get(), head.get()));
                     }
 
-                    let [.., tail] = rope.as_slice() else { panic!("bad input") };
+                    let [.., tail] = rope.as_slice() else {
+                        panic!("bad input")
+                    };
 
                     visited_positions.insert(*tail);
                 }
