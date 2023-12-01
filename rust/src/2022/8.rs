@@ -247,7 +247,7 @@ fn print_bool_matrix(matrix: &[Vec<bool>]) {
                 .map(|b| if *b { "▓▓" } else { "░░" })
                 .collect::<String>()
         })
-        .intersperse("\n".to_string())
+        .intersperse("\n".to_owned())
         .collect::<String>();
 
     println!("{output}\n");
@@ -474,10 +474,7 @@ impl ForestIterType for Row {
     where
         T: ToTypeAndDirection<Type = Self>,
     {
-        fi.forest
-            .trees
-            .get(fi.current)
-            .unwrap()
+        fi.forest.trees[fi.current]
             .iter()
             .enumerate()
             .map(|(col, height)| (ColIdx(col), height))

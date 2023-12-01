@@ -59,9 +59,7 @@ impl CfgPredicateLiteral {
             |ts| {
                 let mut tts = ts.into_iter().collect::<Vec<_>>();
 
-                if tts.len() != 1 {
-                    panic!()
-                }
+                assert!(!tts.len() != 1);
 
                 match tts.pop().unwrap() {
                     TokenTree::Group(group) => {

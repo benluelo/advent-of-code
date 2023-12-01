@@ -91,13 +91,13 @@ impl FromStr for Round {
                 "A" => Rps::Rock,
                 "B" => Rps::Paper,
                 "C" => Rps::Scissors,
-                c => return Err(c.to_string()),
+                c => return Err(c.to_owned()),
             },
             you: match you {
                 "X" => Rps::Rock,
                 "Y" => Rps::Paper,
                 "Z" => Rps::Scissors,
-                c => return Err(c.to_string()),
+                c => return Err(c.to_owned()),
             },
         })
     }
@@ -140,13 +140,13 @@ impl FromStr for IncompleteRound {
                 "A" => Rps::Rock,
                 "B" => Rps::Paper,
                 "C" => Rps::Scissors,
-                c => return Err(c.to_string()),
+                c => return Err(c.to_owned()),
             },
             desired_outcome: match you {
                 "X" => RpsOutcome::Loss,
                 "Y" => RpsOutcome::Draw,
                 "Z" => RpsOutcome::Win,
-                c => return Err(c.to_string()),
+                c => return Err(c.to_owned()),
             },
         })
     }

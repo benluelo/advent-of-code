@@ -9,13 +9,17 @@ edition = "2021"
 [dependencies]
 cfg-proc = { path = "cfg-proc" }
 
+[lints.clippy]
+pedantic = "deny"
+get_unwrap = "deny"
+str_to_string = "deny"
+
 [profile.release]
 # TODO: Use PGO
 lto = "fat"
 opt-level = 3
 panic = "abort"
 strip = "symbols"
-target-cpu = "native"
 overflow-checks = false
 
 [features]
