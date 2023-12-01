@@ -63,13 +63,16 @@
                 cp ${crane.lib.configureCargoVendoredDepsHook}/nix-support/setup-hook $out/setup-hook
                 source $out/setup-hook
 
+                mkdir $out/.cargo
+                touch "$out/.cargo/config.toml"
+
                 configureCargoVendoredDepsHook ${vendored} "$out/.cargo/config.toml"
 
                 cp -r ${aoc-inputs} $out/inputs
 
                 cd $out/rust
 
-                cargo build --release --no-default-features -F static-inputs -F ${toString year}-${toString day} -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort -j1
+                cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort -j1
               '';
 
               CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
