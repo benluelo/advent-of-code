@@ -4,17 +4,21 @@ use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2023, 1> {
     fn part_1() -> impl Display {
-        parse(split::<{ count_newlines(Self::INPUT.as_bytes()) }>(
-            Self::INPUT.as_bytes(),
-        ))
+        SOLUTION_PART_1
     }
 
     fn part_2() -> impl Display {
-        parse2(split::<{ count_newlines(Self::INPUT.as_bytes()) }>(
-            Self::INPUT.as_bytes(),
-        ))
+        SOLUTION_PART_2
     }
 }
+
+const SOLUTION_PART_1: u32 = parse(
+    split::<{ count_newlines(Day::<2023, 1>::INPUT.as_bytes()) }>(Day::<2023, 1>::INPUT.as_bytes()),
+);
+
+const SOLUTION_PART_2: u32 = parse2(
+    split::<{ count_newlines(Day::<2023, 1>::INPUT.as_bytes()) }>(Day::<2023, 1>::INPUT.as_bytes()),
+);
 
 const fn parse<const LEN: usize>(bytes: [&[u8]; LEN]) -> u32 {
     let mut res = 0;
