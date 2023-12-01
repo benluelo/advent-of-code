@@ -117,6 +117,7 @@
           treefmt = {
             projectRootFile = "flake.nix";
             programs.nixpkgs-fmt.enable = true;
+            programs.taplo.enable = true;
             programs.rustfmt = {
               enable = true;
               package = rust-nightly;
