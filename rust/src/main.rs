@@ -1,3 +1,5 @@
+// #![cfg_attr(not(feature = "std"), no_std)]
+#![no_main]
 #![feature(
     iter_array_chunks,
     iter_next_chunk,
@@ -11,26 +13,37 @@
     trace_macros
 )]
 #![warn(clippy::pedantic)]
-#![allow(dead_code, unused_macros)]
 
 #[path = "2022/mod.rs"]
 mod year_2022;
 #[path = "2023/mod.rs"]
 mod year_2023;
 
-use std::fmt::Display;
+use core::fmt::Display;
+use std::{fs::File, io::Write, os::unix::io::FromRawFd};
 
-fn main() {
+#[no_mangle]
+pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
+    let mut stdout = unsafe { File::from_raw_fd(1) };
+
+    macro_rules! run_solution {
+        ($YEAR:literal, $DAY:literal) => {
+            solve::<$YEAR, $DAY>(&mut stdout);
+        };
+    }
+
     for_each_day! {
         run_solution
     };
 }
 
-#[macro_export]
-macro_rules! run_solution {
-    ($YEAR:literal, $DAY:literal) => {
-        solve::<$YEAR, $DAY>();
-    };
+#[inline]
+fn solve<const YEAR: u16, const DAY: u8>(stdout: &mut File)
+where
+    Day<YEAR, DAY>: DaySolution,
+{
+    writeln!(stdout, "{}/{}-1: {}", YEAR, DAY, Day::<YEAR, DAY>::part_1()).unwrap();
+    writeln!(stdout, "{}/{}-2: {}", YEAR, DAY, Day::<YEAR, DAY>::part_2()).unwrap();
 }
 
 struct Day<const YEAR: u16, const DAY: u8>;
@@ -113,12 +126,4 @@ macro_rules! for_each_day {
             }
         )+
     };
-}
-
-fn solve<const YEAR: u16, const DAY: u8>()
-where
-    Day<YEAR, DAY>: DaySolution,
-{
-    println!("{YEAR}/{DAY}-1: {}", Day::<YEAR, DAY>::part_1());
-    println!("{YEAR}/{DAY}-2: {}", Day::<YEAR, DAY>::part_2());
 }

@@ -1,4 +1,4 @@
 rust/target
 haskell/*/dist-newstyle
-result/
-rust/result/
+result
+rust/result

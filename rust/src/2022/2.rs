@@ -1,4 +1,4 @@
-use std::{fmt::Display, str::FromStr};
+use core::{fmt::Display, str::FromStr};
 
 use crate::{Day, DaySolution, Input};
 

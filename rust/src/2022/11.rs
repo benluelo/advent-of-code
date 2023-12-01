@@ -1,4 +1,5 @@
-use std::{cmp::Ordering, collections::BTreeMap, fmt::Display, ops::Rem};
+use core::{cmp::Ordering, fmt::Display, ops::Rem};
+use std::collections::BTreeMap;
 
 use crate::{Day, DaySolution, Input};
 

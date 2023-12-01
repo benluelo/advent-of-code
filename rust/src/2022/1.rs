@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use core::fmt::Display;
 
 use crate::{Day, DaySolution, Input};
 
@@ -29,12 +29,12 @@ fn parse_input(input: &str) -> Vec<u32> {
             ([finished @ .., acc], Some(curr)) => finished
                 .iter()
                 .copied()
-                .chain(std::iter::once(acc + curr))
+                .chain(core::iter::once(acc + curr))
                 .collect(),
             (accumulated, None) => accumulated
                 .iter()
                 .copied()
-                .chain(std::iter::once(0))
+                .chain(core::iter::once(0))
                 .collect(),
         })
 }

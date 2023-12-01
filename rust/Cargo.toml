@@ -13,6 +13,7 @@ cfg-proc = { path = "cfg-proc" }
 pedantic = "deny"
 get_unwrap = "deny"
 str_to_string = "deny"
+std_instead_of_core = "deny"
 
 [profile.release]
 # TODO: Use PGO

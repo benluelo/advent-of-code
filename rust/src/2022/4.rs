@@ -1,4 +1,4 @@
-use std::{fmt::Display, ops::RangeInclusive};
+use core::{fmt::Display, ops::RangeInclusive};
 
 use crate::{Day, DaySolution, Input};
 

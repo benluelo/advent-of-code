@@ -1,9 +1,9 @@
-use core::slice;
-use std::{
+use core::{
     borrow::Borrow,
     fmt::{Debug, Display},
     iter::{self, Enumerate, Map, Repeat, RepeatN, Rev, Zip},
     marker::PhantomData,
+    slice,
 };
 
 use crate::{Day, DaySolution, Input};
@@ -104,7 +104,7 @@ fn calculate_line_scores<Type: ForestIterType>(
         TreeLineOf<'_, Type>,
     ),
 ) -> (<Type as ForestIterType>::InnerIdx, TreeScoreInLine<Type>) {
-    use std::ops::ControlFlow::{Break, Continue};
+    use core::ops::ControlFlow::{Break, Continue};
 
     let calculate_score_on_side_of_tree =
         |acc, (curr_inner_idx, curr_height): (_, TreeHeightOf<'_, Type>)| {
@@ -154,7 +154,7 @@ struct TreeScoreInLine<T: ForestIterType> {
 }
 
 impl<T: ForestIterType> Debug for TreeScoreInLine<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.debug_struct("TreeScoreInLine")
             .field("in_front", &self.in_front)
             .field("behind", &self.behind)
@@ -212,7 +212,7 @@ where
                     *(line_idx, tree_idx).index_in_to(visible_trees) = true;
                 }
 
-                highest_tree_so_far = std::cmp::max(*tree_height.borrow(), highest_tree_so_far);
+                highest_tree_so_far = core::cmp::max(*tree_height.borrow(), highest_tree_so_far);
 
                 if let Some((next_idx, next)) = tree_line.peek() {
                     let next_tree_visibility = (line_idx, *next_idx).index_in_to(visible_trees);

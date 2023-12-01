@@ -53,6 +53,7 @@
 
           mkAocDay = year: day: pkgs.stdenv.mkDerivation {
             name = "advent-of-code-${toString year}-${toString day}";
+            buildInputs = [ pkgs.elfkickers ];
             src = pkgs.stdenv.mkDerivation {
               name = "${toString year}-${toString day}";
               src = ./.;
@@ -72,16 +73,24 @@
 
                 cd $out/rust
 
-                cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort -j1
-              '';
+                ls $out
+                ls $out/inputs
 
-              CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
-              CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
+                RUSTFLAGS="-C target-feature=+crt-static -Z location-detail=none -C relocation-model=static" cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=std,core,alloc,panic_abort,proc_macro,compiler_builtins --target="x86_64-unknown-linux-musl" -Z build-std-features=panic_immediate_abort -j1
+              '';
             };
             installPhase = ''
               mkdir -p $out/bin
 
-              cp $src/rust/target/x86_64-unknown-linux-musl/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
+              cp --no-preserve=mode $src/rust/target/x86_64-unknown-linux-musl/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
+
+              ls -al $out/bin
+
+              sstrip -z "$out/bin/advent-of-code-${toString year}-${toString day}"
+
+              ls -al $out/bin
+
+              chmod +x "$out/bin/advent-of-code-${toString year}-${toString day}"
             '';
 
             meta.mainProgram = "advent-of-code-${toString year}-${toString day}";
@@ -111,6 +120,7 @@
               buildInputs = [ rust-nightly ]
                 ++ (with pkgs; [
                   rnix-lsp
+                  cargo-flamegraph
                 ]);
             nativeBuildInputs = [ config.treefmt.build.wrapper ]
               ++ pkgs.lib.attrsets.attrValues config.treefmt.build.programs;

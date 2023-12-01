@@ -1,9 +1,5 @@
-use std::{
-    borrow::Borrow,
-    cmp::Reverse,
-    collections::{BTreeMap, BinaryHeap},
-    fmt::Display,
-};
+use core::{borrow::Borrow, cmp::Reverse, fmt::Display};
+use std::collections::{BTreeMap, BinaryHeap};
 
 use crate::{Day, DaySolution, Input};
 

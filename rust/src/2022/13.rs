@@ -1,4 +1,4 @@
-use std::{
+use core::{
     cmp::Ordering,
     convert::Infallible,
     fmt::{Debug, Display},
@@ -11,23 +11,7 @@ use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 13> {
     fn part_1() -> impl Display {
-        Self::INPUT
-            .split("\n\n")
-            .map(|packets| {
-                packets
-                    .split('\n')
-                    .map(|packet| packet.parse::<PacketData>().unwrap())
-                    .next_chunk()
-                    .unwrap()
-            })
-            .zip(1..)
-            .filter_map(|([lhs, rhs], idx)| {
-                lhs.check_if_in_order(&rhs)
-                    .break_value()
-                    .unwrap()
-                    .then_some(idx)
-            })
-            .sum::<u32>()
+        part_1(Self::INPUT)
     }
 
     fn part_2() -> impl Display {
@@ -60,6 +44,25 @@ impl DaySolution for Day<2022, 13> {
     }
 }
 
+fn part_1(s: &str) -> u32 {
+    s.split("\n\n")
+        .map(|packets| {
+            packets
+                .split('\n')
+                .map(|packet| packet.parse::<PacketData>().unwrap())
+                .next_chunk()
+                .unwrap()
+        })
+        .zip(1..)
+        .filter_map(|([lhs, rhs], idx)| {
+            lhs.check_if_in_order(&rhs)
+                .break_value()
+                .unwrap()
+                .then_some(idx)
+        })
+        .sum::<u32>()
+}
+
 #[derive(Debug, PartialEq, Clone)]
 enum PacketData {
     Int(u8),
@@ -68,7 +71,7 @@ enum PacketData {
 
 impl PacketData {
     fn check_if_in_order(&self, other: &Self) -> ControlFlow<bool, ()> {
-        use std::{
+        use core::{
             cmp::Ordering::{Equal, Greater, Less},
             ops::ControlFlow::{Break, Continue},
         };
@@ -152,7 +155,7 @@ impl FromStr for PacketData {
 
 #[cfg(test)]
 mod tests {
-    use crate::year_2022::day_13::PacketData;
+    use super::*;
 
     const TEST_INPUT: &str = "[1,1,3,1,1]
 [1,1,5,1,1]
@@ -180,7 +183,7 @@ mod tests {
 
     #[test]
     fn test() {
-        // assert_eq!(Day::<2022, 13>::part_1(TEST_INPUT), 13);
+        assert_eq!(part_1(TEST_INPUT), 13);
     }
 
     #[test]
