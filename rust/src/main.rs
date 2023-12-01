@@ -6,7 +6,6 @@
     iter_repeat_n,
     as_array_of_cells,
     int_roundings,
-    is_some_and,
     control_flow_enum,
     lint_reasons,
     trace_macros

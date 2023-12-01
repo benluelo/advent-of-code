@@ -2,40 +2,21 @@
   "nodes": {
     "crane": {
       "inputs": {
-        "flake-compat": "flake-compat",
-        "flake-utils": "flake-utils",
         "nixpkgs": [
           "nixpkgs"
-        ],
-        "rust-overlay": "rust-overlay"
+        ]
       },
       "locked": {
-        "lastModified": 1680063688,
-        "narHash": "sha256-hVt0i96VjwxKb/PvPfxM2otfvz923b8JHQ/l5XWeDIM=",
+        "lastModified": 1701386725,
+        "narHash": "sha256-w4aBlMYh9Y8co1V80m5LzEKMijUJ7CBTq209WbqVwUU=",
         "owner": "ipetkov",
         "repo": "crane",
-        "rev": "6736e8be8e451b49954213241360e3b72529e47f",
+        "rev": "8b9bad9b30bd7a9ed08782e64846b7485f9d0a38",
         "type": "github"
       },
       "original": {
         "owner": "ipetkov",
         "repo": "crane",
-        "type": "github"
-      }
-    },
-    "flake-compat": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1673956053,
-        "narHash": "sha256-4gtG9iQuiKITOjNQQeQIpoIB6b16fm+504Ch3sNKLd8=",
-        "owner": "edolstra",
-        "repo": "flake-compat",
-        "rev": "35bb57c0c8d8b62bbfd284272c928ceb64ddbde9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "edolstra",
-        "repo": "flake-compat",
         "type": "github"
       }
     },
@@ -58,27 +39,15 @@
       }
     },
     "flake-utils": {
-      "locked": {
-        "lastModified": 1676283394,
-        "narHash": "sha256-XX2f9c3iySLCw54rJ/CZs+ZK6IQy7GXNY4nSOyu2QG4=",
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "rev": "3db36a8b464d0c4532ba1c7dda728f4576d6d073",
-        "type": "github"
+      "inputs": {
+        "systems": "systems"
       },
-      "original": {
-        "owner": "numtide",
-        "repo": "flake-utils",
-        "type": "github"
-      }
-    },
-    "flake-utils_2": {
       "locked": {
-        "lastModified": 1659877975,
-        "narHash": "sha256-zllb8aq3YO3h8B/U0/J1WBgAL8EX5yWf5pMj3G0NAmc=",
+        "lastModified": 1681202837,
+        "narHash": "sha256-H+Rh19JDwRtpVPAWp64F+rlEtxUWBAQW28eAi3SRSzg=",
         "owner": "numtide",
         "repo": "flake-utils",
-        "rev": "c0e246b9b83f637f4681389ecabcb2681b4f3af0",
+        "rev": "cfacdce06f30d2b68473a46042957675eebb3401",
         "type": "github"
       },
       "original": {
@@ -126,26 +95,22 @@
         "crane": "crane",
         "flake-parts": "flake-parts",
         "nixpkgs": "nixpkgs",
-        "rust-overlay": "rust-overlay_2"
+        "rust-overlay": "rust-overlay"
       }
     },
     "rust-overlay": {
       "inputs": {
-        "flake-utils": [
-          "crane",
-          "flake-utils"
-        ],
+        "flake-utils": "flake-utils",
         "nixpkgs": [
-          "crane",
           "nixpkgs"
         ]
       },
       "locked": {
-        "lastModified": 1677812689,
-        "narHash": "sha256-EakqhgRnjVeYJv5+BJx/NZ7/eFTMBxc4AhICUNquhUg=",
+        "lastModified": 1701397143,
+        "narHash": "sha256-nYUJxZXwCWWVBYZXPgRxGDuQcZRhKTtD/Jp5Jl+9EWU=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "e53e8853aa7b0688bc270e9e6a681d22e01cf299",
+        "rev": "bb71557c93cad40f5921b2342d7fd69f9e6497ab",
         "type": "github"
       },
       "original": {
@@ -154,24 +119,18 @@
         "type": "github"
       }
     },
-    "rust-overlay_2": {
-      "inputs": {
-        "flake-utils": "flake-utils_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
+    "systems": {
       "locked": {
-        "lastModified": 1680142912,
-        "narHash": "sha256-o28gi3WKSsVeXg3wDSR2kGpawrDO5lzGG4eUsLTPglw=",
-        "owner": "oxalica",
-        "repo": "rust-overlay",
-        "rev": "f20680efa5faf2b7aa164e8f8bc0e69e5be5e8de",
+        "lastModified": 1681028828,
+        "narHash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768=",
+        "owner": "nix-systems",
+        "repo": "default",
+        "rev": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
         "type": "github"
       },
       "original": {
-        "owner": "oxalica",
-        "repo": "rust-overlay",
+        "owner": "nix-systems",
+        "repo": "default",
         "type": "github"
       }
     }
