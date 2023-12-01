@@ -1,11 +1,10 @@
-use crate::{Day, DaySolution};
+use std::fmt::Display;
+
+use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 7> {
-    type Part1Output = u32;
-    type Part2Output = u32;
-
-    fn part_1(input: &str) -> Self::Part1Output {
-        let ft = FileTree::parse(input);
+    fn part_1() -> impl Display {
+        let ft = FileTree::parse(Self::INPUT);
 
         let mut total = 0_u32;
 
@@ -19,11 +18,11 @@ impl DaySolution for Day<2022, 7> {
         total
     }
 
-    fn part_2(input: &str) -> Self::Part2Output {
+    fn part_2() -> impl Display {
         const DISK_SIZE: u32 = 70_000_000;
         const REQUIRED_SPACE_FOR_UPDATE: u32 = 30_000_000;
 
-        let root = FileTree::parse(input);
+        let root = FileTree::parse(Self::INPUT);
 
         let space_necessary = REQUIRED_SPACE_FOR_UPDATE - (DISK_SIZE - root.size());
 

@@ -1,21 +1,18 @@
-use std::str::FromStr;
+use std::{fmt::Display, str::FromStr};
 
-use crate::{Day, DaySolution};
+use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 2> {
-    type Part1Output = u32;
-    type Part2Output = u32;
-
-    fn part_1(input: &str) -> Self::Part1Output {
-        input
+    fn part_1() -> impl Display {
+        Self::INPUT
             .trim()
             .lines()
             .map(|s| s.parse::<Round>().unwrap())
             .fold(0, |acc, curr| acc + curr.score())
     }
 
-    fn part_2(input: &str) -> Self::Part2Output {
-        input
+    fn part_2() -> impl Display {
+        Self::INPUT
             .trim()
             .lines()
             .map::<Round, _>(|s| s.parse::<IncompleteRound>().unwrap().into())

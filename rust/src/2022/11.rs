@@ -1,17 +1,14 @@
-use std::{cmp::Ordering, collections::BTreeMap, ops::Rem};
+use std::{cmp::Ordering, collections::BTreeMap, fmt::Display, ops::Rem};
 
-use crate::{Day, DaySolution};
+use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 11> {
-    type Part1Output = u64;
-    type Part2Output = u64;
-
-    fn part_1(input: &str) -> Self::Part1Output {
-        parse_and_solve(input, 20, Some(3))
+    fn part_1() -> impl Display {
+        parse_and_solve(Self::INPUT, 20, Some(3))
     }
 
-    fn part_2(input: &str) -> Self::Part2Output {
-        parse_and_solve(input, 10_000, None)
+    fn part_2() -> impl Display {
+        parse_and_solve(Self::INPUT, 10_000, None)
     }
 }
 

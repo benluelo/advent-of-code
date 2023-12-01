@@ -1,16 +1,13 @@
-use std::{convert::Infallible, iter, str::FromStr};
+use std::{convert::Infallible, fmt::Display, iter, str::FromStr};
 
-use crate::{Day, DaySolution};
+use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 10> {
-    type Part1Output = i32;
-    type Part2Output = String;
-
-    fn part_1(input: &str) -> Self::Part1Output {
+    fn part_1() -> impl Display {
         let checkpoint_intervals = [20_usize, 40, 40, 40, 40, 40];
 
         let mut cpu = Cpu::new(
-            input
+            Self::INPUT
                 .trim()
                 .lines()
                 .map(|line| line.parse::<Instruction>().unwrap()),
@@ -34,9 +31,9 @@ impl DaySolution for Day<2022, 10> {
             .1
     }
 
-    fn part_2(input: &str) -> Self::Part2Output {
+    fn part_2() -> impl Display {
         Cpu::new(
-            input
+            Self::INPUT
                 .trim()
                 .lines()
                 .map(|line| line.parse::<Instruction>().unwrap()),
@@ -57,7 +54,7 @@ impl DaySolution for Day<2022, 10> {
                 }
             }))
         })
-        .collect()
+        .collect::<String>()
     }
 }
 

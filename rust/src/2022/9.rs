@@ -1,17 +1,14 @@
-use std::{cell::Cell, collections::BTreeSet, convert::Infallible, str::FromStr};
+use std::{cell::Cell, collections::BTreeSet, convert::Infallible, fmt::Display, str::FromStr};
 
-use crate::{Day, DaySolution};
+use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 9> {
-    type Part1Output = usize;
-    type Part2Output = usize;
-
-    fn part_1(input: &str) -> Self::Part1Output {
-        get_tail_movements::<2>(input)
+    fn part_1() -> impl Display {
+        get_tail_movements::<2>(Self::INPUT)
     }
 
-    fn part_2(input: &str) -> Self::Part2Output {
-        get_tail_movements::<10>(input)
+    fn part_2() -> impl Display {
+        get_tail_movements::<10>(Self::INPUT)
     }
 }
 

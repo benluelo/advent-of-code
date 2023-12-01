@@ -1,18 +1,17 @@
-use crate::{Day, DaySolution};
+use std::fmt::Display;
+
+use crate::{Day, DaySolution, Input};
 
 const START_OF_PACKET_MARKER_LENGTH: usize = 4;
 const START_OF_MESSAGE_MARKER_LENGTH: usize = 14;
 
 impl DaySolution for Day<2022, 6> {
-    type Part1Output = usize;
-    type Part2Output = usize;
-
-    fn part_1(input: &str) -> Self::Part1Output {
-        parse::<START_OF_PACKET_MARKER_LENGTH>(input)
+    fn part_1() -> impl Display {
+        parse::<START_OF_PACKET_MARKER_LENGTH>(Self::INPUT)
     }
 
-    fn part_2(input: &str) -> Self::Part2Output {
-        parse::<START_OF_MESSAGE_MARKER_LENGTH>(input)
+    fn part_2() -> impl Display {
+        parse::<START_OF_MESSAGE_MARKER_LENGTH>(Self::INPUT)
     }
 }
 

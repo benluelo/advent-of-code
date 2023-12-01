@@ -1,19 +1,16 @@
 use core::slice;
 use std::{
     borrow::Borrow,
-    fmt::Debug,
+    fmt::{Debug, Display},
     iter::{self, Enumerate, Map, Repeat, RepeatN, Rev, Zip},
     marker::PhantomData,
 };
 
-use crate::{Day, DaySolution};
+use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 8> {
-    type Part1Output = usize;
-    type Part2Output = u32;
-
-    fn part_1(input: &str) -> Self::Part1Output {
-        let forest = Forest::parse(input);
+    fn part_1() -> impl Display {
+        let forest = Forest::parse(Self::INPUT);
 
         let mut visible_trees = forest
             .trees
@@ -39,8 +36,8 @@ impl DaySolution for Day<2022, 8> {
         visible_trees.iter().flatten().filter(|b| **b).count()
     }
 
-    fn part_2(input: &str) -> Self::Part2Output {
-        let forest = Forest::parse(input);
+    fn part_2() -> impl Display {
+        let forest = Forest::parse(Self::INPUT);
 
         let column_scores = forest
             .iter::<Column>()

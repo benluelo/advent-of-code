@@ -1,20 +1,17 @@
-use std::ops::RangeInclusive;
+use std::{fmt::Display, ops::RangeInclusive};
 
-use crate::{Day, DaySolution};
+use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 4> {
-    type Part1Output = usize;
-    type Part2Output = usize;
-
-    fn part_1(input: &str) -> Self::Part1Output {
-        parse(input, |[range_a, range_b]| {
+    fn part_1() -> impl Display {
+        parse(Self::INPUT, |[range_a, range_b]| {
             (range_a.contains(range_b.start()) && range_a.contains(range_b.end()))
                 || (range_b.contains(range_a.start()) && range_b.contains(range_a.end()))
         })
     }
 
-    fn part_2(input: &str) -> Self::Part2Output {
-        parse(input, |[range_a, range_b]| {
+    fn part_2() -> impl Display {
+        parse(Self::INPUT, |[range_a, range_b]| {
             range_a.contains(range_b.start())
                 || range_a.contains(range_b.end())
                 || range_b.contains(range_a.start())

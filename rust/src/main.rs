@@ -15,6 +15,8 @@
 
 #[path = "2022/mod.rs"]
 mod year_2022;
+#[path = "2023/mod.rs"]
+mod year_2023;
 
 use std::fmt::Display;
 
@@ -34,39 +36,32 @@ macro_rules! run_solution {
 struct Day<const YEAR: u16, const DAY: u8>;
 
 /// An abstraction over [`Day`] allowing it to be used in generic contexts.
-trait DaySolution {
-    type Part1Output: Display;
-    type Part2Output: Display;
-
-    fn part_1(input: &str) -> Self::Part1Output;
-    fn part_2(input: &str) -> Self::Part2Output;
+trait DaySolution: Input {
+    fn part_1() -> impl Display;
+    fn part_2() -> impl Display;
 }
 
-#[cfg(not(feature = "static-inputs"))]
-fn input<const YEAR: u16, const DAY: u8>() -> String {
-    std::fs::read_to_string(format!("../inputs/{YEAR}/{DAY}.txt")).unwrap()
+trait Input {
+    const INPUT: &'static str;
 }
 
-#[cfg(feature = "static-inputs")]
-const fn input<const YEAR: u16, const DAY: u8>() -> &'static str {
-    macro_rules! static_input {
-        ($YEAR:literal, $DAY:literal) => {
-            if YEAR == $YEAR && DAY == $DAY {
-                return include_str!(concat!(
-                    "../../inputs/",
-                    stringify!($YEAR),
-                    "/",
-                    stringify!($DAY),
-                    ".txt"
-                ));
-            }
-        };
-    }
+macro_rules! static_input {
+    ($YEAR:literal, $DAY:literal) => {
+        impl Input for Day<$YEAR, $DAY> {
+            const INPUT: &'static str = include_str!(concat!(
+                "../../inputs/",
+                stringify!($YEAR),
+                "/",
+                stringify!($DAY),
+                ".txt"
+            ));
+        }
+    };
+}
 
+const _: () = {
     for_each_day! { static_input }
-
-    unreachable!();
-}
+};
 
 /// Calls `$f` for every (year, day) pair that's feature is enabled.
 #[macro_export]
@@ -76,7 +71,7 @@ macro_rules! for_each_day {
     ) => {
         for_each_day! {
             $f
-            @YEARS (2022)
+            @YEARS (2022,2023)
         }
     };
 
@@ -124,11 +119,6 @@ fn solve<const YEAR: u16, const DAY: u8>()
 where
     Day<YEAR, DAY>: DaySolution,
 {
-    let input = input::<YEAR, DAY>();
-
-    #[cfg_attr(feature = "static-inputs", expect(clippy::needless_borrow))]
-    {
-        println!("{YEAR}/{DAY}-1: {}", Day::<YEAR, DAY>::part_1(&input));
-        println!("{YEAR}/{DAY}-2: {}", Day::<YEAR, DAY>::part_2(&input));
-    }
+    println!("{YEAR}/{DAY}-1: {}", Day::<YEAR, DAY>::part_1());
+    println!("{YEAR}/{DAY}-2: {}", Day::<YEAR, DAY>::part_2());
 }

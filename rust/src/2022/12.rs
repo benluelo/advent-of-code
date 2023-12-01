@@ -2,26 +2,24 @@ use std::{
     borrow::Borrow,
     cmp::Reverse,
     collections::{BTreeMap, BinaryHeap},
+    fmt::Display,
 };
 
-use crate::{Day, DaySolution};
+use crate::{Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 12> {
-    type Part1Output = u32;
-    type Part2Output = u32;
-
-    fn part_1(input: &str) -> Self::Part1Output {
+    fn part_1() -> impl Display {
         let ParsedMap {
             start, end, edges, ..
-        } = parse(input);
+        } = parse(Self::INPUT);
 
         dijkstra(start, |pos| pos == end, |pos| edges[&pos].iter()).unwrap()
     }
 
-    fn part_2(input: &str) -> Self::Part2Output {
+    fn part_2() -> impl Display {
         let ParsedMap {
             grid, end, edges, ..
-        } = parse(input);
+        } = parse(Self::INPUT);
 
         dijkstra(
             end,
