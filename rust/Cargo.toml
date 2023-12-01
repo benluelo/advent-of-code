@@ -16,6 +16,7 @@ opt-level = 3
 panic = "abort"
 strip = "symbols"
 target-cpu = "native"
+overflow-checks = false
 
 [features]
 default = ["static-inputs", "2022"]

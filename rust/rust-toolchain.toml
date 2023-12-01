@@ -1,3 +1,4 @@
 [toolchain]
 channel = "nightly-2023-11-30"
 components = [ "rustfmt", "rustc", "cargo", "rust-analyzer", "clippy", "rust-src" ]
+targets = [ "x86_64-unknown-linux-musl" ]

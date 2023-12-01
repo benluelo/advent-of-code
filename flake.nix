@@ -12,8 +12,12 @@
       url = "github:ipetkov/crane";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    aoc-inputs = {
+      url = "git+ssh://git@github.com/benluelo/advent-of-code-inputs.git";
+      flake = false;
+    };
   };
-  outputs = inputs@{ self, nixpkgs, rust-overlay, flake-parts, ... }:
+  outputs = inputs@{ self, nixpkgs, rust-overlay, flake-parts, aoc-inputs, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
@@ -22,7 +26,53 @@
         let
           crane = rec {
             lib = self.inputs.crane.lib.${system};
-            nightly = lib.overrideToolchain self'.packages.rust-nightly;
+            nightly = lib.overrideToolchain rust-nightly;
+          };
+
+          rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust/rust-toolchain.toml;
+
+          vendored = crane.lib.vendorMultipleCargoDeps {
+            inherit (crane.lib.findCargoFiles ./rust) cargoConfigs;
+            cargoLockList = [
+              ./rust/Cargo.lock
+              "${rust-nightly.passthru.availableComponents.rust-src}/lib/rustlib/src/rust/Cargo.lock"
+            ];
+          };
+
+          years = [ 2022 2023 ];
+          days = [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ];
+
+          mkAocDay = year: day: pkgs.stdenv.mkDerivation {
+            name = "advent-of-code-${toString year}-${toString day}";
+            src = pkgs.stdenv.mkDerivation {
+              name = "${toString year}-${toString day}";
+              src = ./.;
+              buildInputs = [ rust-nightly ];
+              buildPhase = ''
+                cp -r --no-preserve=mode . $out
+
+                cp ${crane.lib.configureCargoVendoredDepsHook}/nix-support/setup-hook $out/setup-hook
+                source $out/setup-hook
+
+                configureCargoVendoredDepsHook ${vendored} "$out/.cargo/config.toml"
+
+                cp -r ${aoc-inputs} $out/inputs
+
+                cd $out/rust
+
+                cargo build --release --no-default-features -F static-inputs -F ${toString year}-${toString day} -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort -j1
+              '';
+
+              CARGO_BUILD_TARGET = "x86_64-unknown-linux-musl";
+              CARGO_BUILD_RUSTFLAGS = "-C target-feature=+crt-static";
+            };
+            installPhase = ''
+              mkdir -p $out/bin
+
+              cp $src/rust/target/x86_64-unknown-linux-musl/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
+            '';
+
+            meta.mainProgram = "advent-of-code-${toString year}-${toString day}";
           };
         in {
           _module.args.pkgs = import nixpkgs {
@@ -32,21 +82,23 @@
             ];
           };
         
-          packages = {
-            rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust/rust-toolchain.toml;
-            default = crane.nightly.buildPackage {
-              src = ./.;
-              cargoBuildCommand = "cargo build --release";
-            };
-          };
+          packages = builtins.listToAttrs (
+            map
+              ({ year, day }: {
+                name = "rust-${toString year}-${toString day}";
+                value = mkAocDay year day;
+              })
+              (pkgs.lib.cartesianProductOfSets {
+                year = years;
+                day = days;
+              })
+            );
+
           devShells = {
             default = pkgs.mkShell {
-              buildInputs = [ self'.packages.rust-nightly ]
+              buildInputs = [ rust-nightly ]
                 ++ (with pkgs; [
-                  # bacon
                   rnix-lsp
-                  # hyperfine
-                  # cargo-flamegraph
                 ]);
             };
           };
