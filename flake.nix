@@ -56,7 +56,7 @@
             buildInputs = [ pkgs.elfkickers ];
             src = pkgs.stdenv.mkDerivation {
               name = "${toString year}-${toString day}";
-              src = ./.;
+              src = crane.lib.cleanCargoSource ./.;
               buildInputs = [ rust-nightly ];
               buildPhase = ''
                 cp -r --no-preserve=mode . $out
@@ -75,7 +75,7 @@
 
                 cd $out/rust
 
-                RUSTFLAGS="-C target-feature=+crt-static -Z location-detail=none -C relocation-model=static" cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=std,core,alloc,panic_abort,proc_macro,compiler_builtins --target="x86_64-unknown-linux-musl" -Z build-std-features=panic_immediate_abort -j1
+                RUSTFLAGS="-C link-args=-lc -C target-feature=+crt-static -Z location-detail=none -C relocation-model=static" cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=std,core,alloc,panic_abort,proc_macro,compiler_builtins -Z build-std-features=panic_immediate_abort --target="x86_64-unknown-linux-musl" -j1
               '';
             };
             installPhase = ''

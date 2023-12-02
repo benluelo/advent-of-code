@@ -1,7 +1,7 @@
 use core::fmt::Display;
 
 use crate::{
-    const_helpers::{slice, split},
+    const_helpers::{max, parse_int, read_until, slice, split},
     Day, DaySolution, Input,
 };
 
@@ -57,16 +57,6 @@ const fn parse2(bytes: &'static [&'static [u8]]) -> u32 {
     }
 
     res
-}
-
-const fn read_until(bytes: &'static [u8], start: usize, char: u8) -> &'static [u8] {
-    let mut i = start;
-
-    while i < bytes.len() && bytes[i] != char {
-        i += 1;
-    }
-
-    slice(bytes, start, i)
 }
 
 const fn parse_line(input: &'static [u8]) -> (u32, Game) {
@@ -129,26 +119,4 @@ const fn parse_line(input: &'static [u8]) -> (u32, Game) {
     }
 
     (parse_int(game_number), game)
-}
-
-#[allow(clippy::cast_possible_truncation)]
-const fn parse_int(bz: &[u8]) -> u32 {
-    let mut res = 0;
-
-    let mut i = 0;
-    while i < bz.len() {
-        assert!(bz[i].is_ascii_digit());
-        res += (bz[i] - 48) as usize * 10_usize.pow((bz.len() - i - 1) as u32);
-        i += 1;
-    }
-
-    res as u32
-}
-
-const fn max(a: u32, b: u32) -> u32 {
-    if a >= b {
-        a
-    } else {
-        b
-    }
 }
