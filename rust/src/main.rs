@@ -1,5 +1,5 @@
 // #![cfg_attr(not(feature = "std"), no_std)]
-#![no_main]
+#![cfg_attr(not(test), no_main)]
 #![feature(
     iter_array_chunks,
     iter_next_chunk,
@@ -20,10 +20,21 @@ mod year_2022;
 mod year_2023;
 
 use core::fmt::Display;
-use std::{fs::File, io::Write, os::unix::io::FromRawFd};
 
 #[no_mangle]
+#[cfg(not(test))]
 pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
+    use std::{fs::File, io::Write, os::unix::io::FromRawFd};
+
+    #[inline]
+    fn solve<const YEAR: u16, const DAY: u8>(stdout: &mut File)
+    where
+        Day<YEAR, DAY>: DaySolution,
+    {
+        writeln!(stdout, "{}/{}-1: {}", YEAR, DAY, Day::<YEAR, DAY>::part_1()).unwrap();
+        writeln!(stdout, "{}/{}-2: {}", YEAR, DAY, Day::<YEAR, DAY>::part_2()).unwrap();
+    }
+
     let mut stdout = unsafe { File::from_raw_fd(1) };
 
     macro_rules! run_solution {
@@ -37,14 +48,8 @@ pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
     };
 }
 
-#[inline]
-fn solve<const YEAR: u16, const DAY: u8>(stdout: &mut File)
-where
-    Day<YEAR, DAY>: DaySolution,
-{
-    writeln!(stdout, "{}/{}-1: {}", YEAR, DAY, Day::<YEAR, DAY>::part_1()).unwrap();
-    writeln!(stdout, "{}/{}-2: {}", YEAR, DAY, Day::<YEAR, DAY>::part_2()).unwrap();
-}
+#[cfg(test)]
+fn main() {}
 
 struct Day<const YEAR: u16, const DAY: u8>;
 

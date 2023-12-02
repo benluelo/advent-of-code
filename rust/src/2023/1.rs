@@ -182,8 +182,11 @@ const fn split<const LEN: usize>(bytes: &'static [u8]) -> [&'static [u8]; LEN] {
 }
 
 #[test]
-fn split_t() {
+fn split_works() {
     const INPUT: &[u8] = b"hello\nworld\n";
 
-    dbg!(split::<{ count_newlines(INPUT) }>(INPUT));
+    assert_eq!(
+        split::<{ count_newlines(INPUT) }>(INPUT),
+        [b"hello", b"world"]
+    );
 }

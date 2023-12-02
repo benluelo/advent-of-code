@@ -206,7 +206,7 @@ mod tests {
 
         assert_eq!(
             "[[2]]".parse::<PacketData>().unwrap(),
-            List(vec![List(vec![Int(10)])])
+            List(vec![List(vec![Int(2)])])
         );
     }
 }
