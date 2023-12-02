@@ -10,7 +10,8 @@
     int_roundings,
     control_flow_enum,
     lint_reasons,
-    trace_macros
+    trace_macros,
+    byte_slice_trim_ascii
 )]
 
 #[cfg(windows)]
@@ -20,6 +21,8 @@ compile_error!("windows is not supported");
 mod year_2022;
 #[path = "2023/mod.rs"]
 mod year_2023;
+
+pub(crate) mod const_helpers;
 
 extern crate alloc;
 
@@ -113,7 +116,7 @@ impl Write for Stdout {
 }
 
 #[no_mangle]
-// #[cfg(not(test))]
+#[cfg(not(test))]
 pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
     #[inline]
     fn solve<const YEAR: u16, const DAY: u8>()

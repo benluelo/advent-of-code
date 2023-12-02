@@ -1,6 +1,9 @@
 use core::fmt::Display;
 
-use crate::{Day, DaySolution, Input};
+use crate::{
+    const_helpers::{slice, split},
+    Day, DaySolution, Input,
+};
 
 impl DaySolution for Day<2023, 1> {
     fn part_1() -> impl Display {
@@ -12,19 +15,17 @@ impl DaySolution for Day<2023, 1> {
     }
 }
 
-const SOLUTION_PART_1: u32 = parse(
-    split::<{ count_newlines(Day::<2023, 1>::INPUT.as_bytes()) }>(Day::<2023, 1>::INPUT.as_bytes()),
-);
+const SOLUTION_PART_1: u32 =
+    parse(split!(Day::<2023, 1>::INPUT.as_bytes(), b'\n', true).as_slice());
 
-const SOLUTION_PART_2: u32 = parse2(
-    split::<{ count_newlines(Day::<2023, 1>::INPUT.as_bytes()) }>(Day::<2023, 1>::INPUT.as_bytes()),
-);
+const SOLUTION_PART_2: u32 =
+    parse2(split!(Day::<2023, 1>::INPUT.as_bytes(), b'\n', true).as_slice());
 
-const fn parse<const LEN: usize>(bytes: [&[u8]; LEN]) -> u32 {
+const fn parse(bytes: &'static [&'static [u8]]) -> u32 {
     let mut res = 0;
 
     let mut i = 0;
-    while i < LEN {
+    while i < bytes.len() {
         let left_digit = parse_line::<false>(bytes[i]);
         let right_digit = parse_line::<true>(bytes[i]);
 
@@ -57,11 +58,11 @@ const fn parse_line<const REVERSE: bool>(bz: &[u8]) -> u32 {
     panic!()
 }
 
-const fn parse2<const LEN: usize>(bytes: [&[u8]; LEN]) -> u32 {
+const fn parse2(bytes: &'static [&'static [u8]]) -> u32 {
     let mut res = 0;
 
     let mut i = 0;
-    while i < LEN {
+    while i < bytes.len() {
         let left_digit = parse_line2::<false>(bytes[i]);
         let right_digit = parse_line2::<true>(bytes[i]);
 
@@ -136,57 +137,9 @@ const fn parse_line2<const REVERSE: bool>(bz: &[u8]) -> u32 {
     panic!()
 }
 
-const fn slice(bytes: &[u8], idx_start: usize, idx_curr: usize) -> &[u8] {
-    let first_split = &bytes.split_at(idx_start).1;
-    let line = first_split.split_at(idx_curr - idx_start).0;
-    line
-}
-
-const fn count_newlines(bz: &'static [u8]) -> usize {
-    let len = bz.len();
-
-    let mut newlines = 0;
-    let mut i = 0;
-
-    while i < len {
-        if bz[i] == b'\n' {
-            newlines += 1;
-        }
-        i += 1;
-    }
-
-    newlines
-}
-
-const fn split<const LEN: usize>(bytes: &'static [u8]) -> [&'static [u8]; LEN] {
-    let mut res: [&[u8]; LEN] = [b""; LEN];
-
-    let mut idx_start = 0;
-    let mut idx_curr = 0;
-
-    let mut i = 0;
-
-    while i < LEN {
-        while idx_curr < bytes.len() && bytes[idx_curr] != b'\n' {
-            idx_curr += 1;
-        }
-
-        res[i] = slice(bytes, idx_start, idx_curr);
-
-        idx_curr += 1;
-        idx_start = idx_curr;
-        i += 1;
-    }
-
-    res
-}
-
 #[test]
 fn split_works() {
-    const INPUT: &[u8] = b"hello\nworld\n";
+    const INPUT: &[u8] = b"hello\nworld";
 
-    assert_eq!(
-        split::<{ count_newlines(INPUT) }>(INPUT),
-        [b"hello", b"world"]
-    );
+    assert_eq!(split!(INPUT, b'\n', false), [b"hello", b"world"]);
 }
