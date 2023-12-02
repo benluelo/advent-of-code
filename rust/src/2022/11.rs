@@ -1,5 +1,5 @@
+use alloc::{collections::BTreeMap, vec::Vec};
 use core::{cmp::Ordering, fmt::Display, ops::Rem};
-use std::collections::BTreeMap;
 
 use crate::{Day, DaySolution, Input};
 

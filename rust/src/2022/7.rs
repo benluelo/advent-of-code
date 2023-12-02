@@ -1,3 +1,4 @@
+use alloc::{vec, vec::Vec};
 use core::fmt::Display;
 
 use crate::{Day, DaySolution, Input};

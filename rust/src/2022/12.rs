@@ -1,5 +1,8 @@
+use alloc::{
+    collections::{BTreeMap, BinaryHeap},
+    vec::Vec,
+};
 use core::{borrow::Borrow, cmp::Reverse, fmt::Display};
-use std::collections::{BTreeMap, BinaryHeap};
 
 use crate::{Day, DaySolution, Input};
 

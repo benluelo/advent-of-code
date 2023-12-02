@@ -1,10 +1,10 @@
+use alloc::{collections::BTreeMap, string::String, vec::Vec};
 use core::{
     convert::Infallible,
     fmt::Display,
     iter::Peekable,
     str::{Chars, FromStr},
 };
-use std::collections::BTreeMap;
 
 use crate::{Day, DaySolution, Input};
 

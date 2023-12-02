@@ -1,3 +1,4 @@
+use alloc::string::String;
 use core::{convert::Infallible, fmt::Display, iter, str::FromStr};
 
 use crate::{Day, DaySolution, Input};

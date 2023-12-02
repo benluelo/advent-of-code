@@ -1,12 +1,13 @@
+use alloc::{borrow::ToOwned, string::String, vec::Vec};
 use core::{
     borrow::Borrow,
-    fmt::{Debug, Display},
+    fmt::{Debug, Display, Write},
     iter::{self, Enumerate, Map, Repeat, RepeatN, Rev, Zip},
     marker::PhantomData,
     slice,
 };
 
-use crate::{Day, DaySolution, Input};
+use crate::{Day, DaySolution, Input, Stdout};
 
 impl DaySolution for Day<2022, 8> {
     fn part_1() -> impl Display {
@@ -247,7 +248,7 @@ fn print_bool_matrix(matrix: &[Vec<bool>]) {
         .intersperse("\n".to_owned())
         .collect::<String>();
 
-    println!("{output}\n");
+    writeln!(&mut Stdout, "{output}\n").unwrap();
 }
 
 /// Represents a forest in this form:

@@ -1,5 +1,5 @@
-// #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(not(test), no_main)]
+#![cfg_attr(not(any(test, debug_assertions)), no_std)]
 #![feature(
     iter_array_chunks,
     iter_next_chunk,
@@ -12,34 +12,135 @@
     lint_reasons,
     trace_macros
 )]
-#![warn(clippy::pedantic)]
+
+#[cfg(windows)]
+compile_error!("windows is not supported");
 
 #[path = "2022/mod.rs"]
 mod year_2022;
 #[path = "2023/mod.rs"]
 mod year_2023;
 
-use core::fmt::Display;
+extern crate alloc;
 
-#[no_mangle]
-#[cfg(not(test))]
-pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
-    use std::{fs::File, io::Write, os::unix::io::FromRawFd};
+use core::{
+    alloc::{GlobalAlloc, Layout},
+    cmp,
+    fmt::{Display, Write},
+    ptr,
+};
+
+use libc::c_void;
+
+#[link(name = "c")]
+extern "C" {}
+
+#[cfg(not(any(test, debug_assertions)))]
+#[panic_handler]
+fn panic_handler<'a, 'b>(_: &'a core::panic::PanicInfo<'b>) -> ! {
+    loop {}
+}
+
+#[global_allocator]
+static A: LibcAlloc = LibcAlloc;
+
+/// Mostly pulled from here: <https://github.com/daniel5151/libc_alloc/blob/master/src/lib.rs>
+pub struct LibcAlloc;
+
+unsafe impl GlobalAlloc for LibcAlloc {
+    #[inline]
+    unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
+        libc::memalign(
+            layout.align().max(core::mem::size_of::<usize>()),
+            layout.size(),
+        )
+        .cast::<u8>()
+    }
 
     #[inline]
-    fn solve<const YEAR: u16, const DAY: u8>(stdout: &mut File)
+    unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
+        // Unfortunately, calloc doesn't make any alignment guarantees, so the memory
+        // has to be manually zeroed-out.
+        let ptr = self.alloc(layout);
+        if !ptr.is_null() {
+            ptr::write_bytes(ptr, 0, layout.size());
+        }
+        ptr
+    }
+
+    #[inline]
+    unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
+        libc::free(ptr.cast::<c_void>());
+    }
+
+    #[inline]
+    unsafe fn realloc(&self, old_ptr: *mut u8, old_layout: Layout, new_size: usize) -> *mut u8 {
+        let new_layout = Layout::from_size_align_unchecked(new_size, old_layout.align());
+        let new_ptr = self.alloc(new_layout);
+        if !new_ptr.is_null() {
+            let size = cmp::min(old_layout.size(), new_size);
+            ptr::copy_nonoverlapping(old_ptr, new_ptr, size);
+            self.dealloc(old_ptr, old_layout);
+        }
+        new_ptr
+    }
+}
+
+pub struct Stdout;
+
+impl Write for Stdout {
+    #[inline]
+    fn write_str(&mut self, s: &str) -> core::fmt::Result {
+        let msg = s.as_bytes();
+
+        let mut written = 0;
+        while written < msg.len() {
+            let bytes: &[u8] = &msg[written..];
+
+            let res = usize::try_from(unsafe {
+                libc::write(1, bytes.as_ptr().cast::<core::ffi::c_void>(), bytes.len())
+            });
+
+            match res {
+                Ok(res) => written += res,
+                // Ignore errors
+                Err(_) => break,
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[no_mangle]
+// #[cfg(not(test))]
+pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
+    #[inline]
+    fn solve<const YEAR: u16, const DAY: u8>()
     where
         Day<YEAR, DAY>: DaySolution,
     {
-        writeln!(stdout, "{}/{}-1: {}", YEAR, DAY, Day::<YEAR, DAY>::part_1()).unwrap();
-        writeln!(stdout, "{}/{}-2: {}", YEAR, DAY, Day::<YEAR, DAY>::part_2()).unwrap();
+        writeln!(
+            &mut Stdout,
+            "{}/{}-1: {}",
+            YEAR,
+            DAY,
+            Day::<YEAR, DAY>::part_1()
+        )
+        .unwrap();
+        writeln!(
+            &mut Stdout,
+            "{}/{}-2: {}",
+            YEAR,
+            DAY,
+            Day::<YEAR, DAY>::part_2()
+        )
+        .unwrap();
     }
-
-    let mut stdout = unsafe { File::from_raw_fd(1) };
 
     macro_rules! run_solution {
         ($YEAR:literal, $DAY:literal) => {
-            solve::<$YEAR, $DAY>(&mut stdout);
+            solve::<$YEAR, $DAY>();
         };
     }
 
@@ -47,9 +148,6 @@ pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
         run_solution
     };
 }
-
-#[cfg(test)]
-fn main() {}
 
 struct Day<const YEAR: u16, const DAY: u8>;
 

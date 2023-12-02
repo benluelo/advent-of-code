@@ -1,3 +1,4 @@
+use alloc::{borrow::ToOwned, string::String};
 use core::{fmt::Display, str::FromStr};
 
 use crate::{Day, DaySolution, Input};

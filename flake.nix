@@ -70,11 +70,10 @@
                 configureCargoVendoredDepsHook ${vendored} "$out/.cargo/config.toml"
 
                 cp -r ${aoc-inputs} $out/inputs
+                # schrodinger's directory: this only exists if i print it's contents
+                ls $out/inputs/*
 
                 cd $out/rust
-
-                ls $out
-                ls $out/inputs
 
                 RUSTFLAGS="-C target-feature=+crt-static -Z location-detail=none -C relocation-model=static" cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=std,core,alloc,panic_abort,proc_macro,compiler_builtins --target="x86_64-unknown-linux-musl" -Z build-std-features=panic_immediate_abort -j1
               '';

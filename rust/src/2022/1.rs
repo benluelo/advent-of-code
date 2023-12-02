@@ -1,3 +1,4 @@
+use alloc::vec::Vec;
 use core::fmt::Display;
 
 use crate::{Day, DaySolution, Input};
@@ -23,8 +24,8 @@ fn parse_input(input: &str) -> Vec<u32> {
     input
         .split("\n\n")
         .map(|s| s.parse::<u32>().ok())
-        .fold(vec![], |acc: Vec<u32>, curr| match (&*acc, curr) {
-            ([], Some(curr)) => vec![curr],
+        .fold([].to_vec(), |acc: Vec<u32>, curr| match (&*acc, curr) {
+            ([], Some(curr)) => [curr].to_vec(),
             ([], None) => acc,
             ([finished @ .., acc], Some(curr)) => finished
                 .iter()

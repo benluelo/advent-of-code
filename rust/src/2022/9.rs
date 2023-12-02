@@ -1,5 +1,5 @@
+use alloc::collections::BTreeSet;
 use core::{cell::Cell, convert::Infallible, fmt::Display, str::FromStr};
-use std::collections::BTreeSet;
 
 use crate::{Day, DaySolution, Input};
 
