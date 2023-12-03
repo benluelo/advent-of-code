@@ -7,7 +7,7 @@ use core::{
     slice,
 };
 
-use crate::{Day, DaySolution, Input, Stdout};
+use crate::{libc_write::Stdout, Day, DaySolution, Input};
 
 impl DaySolution for Day<2022, 8> {
     fn part_1() -> impl Display {

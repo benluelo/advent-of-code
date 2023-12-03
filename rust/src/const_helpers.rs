@@ -79,6 +79,46 @@ pub(crate) const fn max(a: u32, b: u32) -> u32 {
     }
 }
 
+#[allow(clippy::cast_possible_truncation)]
+pub(crate) const fn int_to_str<const LEN: usize>(n: u32) -> [u8; LEN] {
+    // would be nice, but generic_const_exprs is still incomplete
+    // let bz = [0; N.ilog10()];
+
+    assert!(LEN as u32 == n.ilog10() + 1);
+
+    let mut bz = [0; LEN];
+
+    iter! {
+        for i in range(0, LEN) {
+            bz[i] = digit_at_place(n, (LEN - i - 1) as u32) as u8 + 48;
+        }
+    }
+
+    bz
+}
+
+pub(crate) const fn digit_at_place(n: u32, place: u32) -> u32 {
+    (n % 10u32.pow(place + 1) - n % 10u32.pow(place)) / 10u32.pow(place)
+}
+
+pub(crate) const fn utf8(bz: &[u8]) -> &str {
+    match core::str::from_utf8(bz) {
+        Ok(ok) => ok,
+        Err(_) => {
+            panic!()
+        }
+    }
+}
+
+macro_rules! itoa {
+    ($i:expr) => {{
+        const A: &[u8] =
+            $crate::const_helpers::int_to_str::<{ (($i).ilog10() + 1) as usize }>($i).as_slice();
+        A
+    }};
+}
+pub(crate) use itoa;
+
 macro_rules! split {
     ($input:expr, $pat:expr, $trailing:expr) => {
         $crate::const_helpers::split_with_len::<
@@ -108,6 +148,16 @@ macro_rules! iter {
         let mut $i = 0;
         while $i < $slice.len() {
             let $item = $slice[$i];
+            $body
+            $i += 1;
+        }
+    };
+
+    (for $i:ident in range($start:expr, $end:expr)
+        $body:block
+    ) => {
+        let mut $i = $start;
+        while $i < $end {
             $body
             $i += 1;
         }

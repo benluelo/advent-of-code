@@ -27,10 +27,7 @@ pub(crate) mod const_helpers;
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-use core::{
-    self,
-    fmt::{Display, Write},
-};
+use core::{self, fmt::Display};
 
 #[cfg(not(any(test, debug_assertions)))]
 #[panic_handler]
@@ -39,93 +36,46 @@ fn panic_handler<'a, 'b>(_: &'a core::panic::PanicInfo<'b>) -> ! {
 }
 
 #[cfg(feature = "alloc")]
-mod allocator {
-    use core::{
-        self,
-        alloc::{GlobalAlloc, Layout},
-        cmp, ptr,
-    };
+mod allocator;
 
-    use libc::c_void;
+#[cfg(feature = "libc")]
+mod libc_write {
+    use core::fmt::Write;
 
-    #[link(name = "c")]
-    extern "C" {}
+    pub struct Stdout;
 
-    #[global_allocator]
-    pub(crate) static A: LibcAlloc = LibcAlloc;
-
-    /// Mostly pulled from here: <https://github.com/daniel5151/libc_alloc/blob/master/src/lib.rs>
-    pub struct LibcAlloc;
-
-    unsafe impl GlobalAlloc for LibcAlloc {
+    impl Write for Stdout {
         #[inline]
-        unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
-            libc::memalign(
-                layout.align().max(core::mem::size_of::<usize>()),
-                layout.size(),
-            )
-            .cast::<u8>()
-        }
+        fn write_str(&mut self, s: &str) -> core::fmt::Result {
+            let msg = s.as_bytes();
 
-        #[inline]
-        unsafe fn alloc_zeroed(&self, layout: Layout) -> *mut u8 {
-            // Unfortunately, calloc doesn't make any alignment guarantees, so the memory
-            // has to be manually zeroed-out.
-            let ptr = self.alloc(layout);
-            if !ptr.is_null() {
-                ptr::write_bytes(ptr, 0, layout.size());
+            let mut written = 0;
+            while written < msg.len() {
+                let bytes: &[u8] = &msg[written..];
+
+                let res = usize::try_from(unsafe {
+                    libc::write(1, bytes.as_ptr().cast::<core::ffi::c_void>(), bytes.len())
+                });
+
+                match res {
+                    Ok(res) => written += res,
+                    // Ignore errors
+                    Err(_) => break,
+                }
             }
-            ptr
+
+            Ok(())
         }
-
-        #[inline]
-        unsafe fn dealloc(&self, ptr: *mut u8, _layout: Layout) {
-            libc::free(ptr.cast::<c_void>());
-        }
-
-        #[inline]
-        unsafe fn realloc(&self, old_ptr: *mut u8, old_layout: Layout, new_size: usize) -> *mut u8 {
-            let new_layout = Layout::from_size_align_unchecked(new_size, old_layout.align());
-            let new_ptr = self.alloc(new_layout);
-            if !new_ptr.is_null() {
-                let size = cmp::min(old_layout.size(), new_size);
-                ptr::copy_nonoverlapping(old_ptr, new_ptr, size);
-                self.dealloc(old_ptr, old_layout);
-            }
-            new_ptr
-        }
-    }
-}
-
-pub struct Stdout;
-
-impl Write for Stdout {
-    #[inline]
-    fn write_str(&mut self, s: &str) -> core::fmt::Result {
-        let msg = s.as_bytes();
-
-        let mut written = 0;
-        while written < msg.len() {
-            let bytes: &[u8] = &msg[written..];
-
-            let res = usize::try_from(unsafe {
-                libc::write(1, bytes.as_ptr().cast::<core::ffi::c_void>(), bytes.len())
-            });
-
-            match res {
-                Ok(res) => written += res,
-                // Ignore errors
-                Err(_) => break,
-            }
-        }
-
-        Ok(())
     }
 }
 
 #[no_mangle]
-#[cfg(not(test))]
+#[cfg(all(not(test), feature = "alloc"))]
 pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
+    use core::fmt::Write;
+
+    use crate::libc_write::Stdout;
+
     #[inline]
     fn solve<const YEAR: u16, const DAY: u8>()
     where
@@ -160,12 +110,63 @@ pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
     };
 }
 
+#[no_mangle]
+#[cfg(all(
+    target_os = "linux",
+    target_arch = "x86_64",
+    not(test),
+    not(feature = "alloc"),
+    not(feature = "libc")
+))]
+pub extern "C" fn main(_argc: i32, _argv: *const *const u8) {
+    use crate::const_helpers::itoa;
+
+    macro_rules! run_solution {
+        ($YEAR:literal, $DAY:literal) => {{
+            const YEAR: &[u8] = &itoa!($YEAR as u32);
+            const DAY: &[u8] = &itoa!($DAY as u32);
+
+            sys::write(YEAR);
+            sys::write(b"/");
+            sys::write(DAY);
+            sys::write(b"-1: ");
+            sys::write(Day::<$YEAR, $DAY>::PART_1.as_bytes());
+            sys::write(b"\n");
+
+            sys::write(YEAR);
+            sys::write(b"/");
+            sys::write(DAY);
+            sys::write(b"-2: ");
+            sys::write(Day::<$YEAR, $DAY>::PART_2.as_bytes());
+        }};
+    }
+
+    for_each_day! {
+        run_solution
+    };
+}
+
 struct Day<const YEAR: u16, const DAY: u8>;
 
 /// An abstraction over [`Day`] allowing it to be used in generic contexts.
 trait DaySolution: Input {
     fn part_1() -> impl Display;
     fn part_2() -> impl Display;
+}
+
+trait ConstDaySolution: Input {
+    const PART_1: &'static str;
+    const PART_2: &'static str;
+}
+
+impl<T: ConstDaySolution> DaySolution for T {
+    fn part_1() -> impl Display {
+        Self::PART_1
+    }
+
+    fn part_2() -> impl Display {
+        Self::PART_2
+    }
 }
 
 trait Input {
@@ -240,4 +241,36 @@ macro_rules! for_each_day {
             }
         )+
     };
+}
+
+#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
+pub(crate) mod sys {
+    use core::arch::asm;
+
+    const WRITE: u64 = 1;
+
+    /// Wrapper around a Linux syscall with three arguments. It returns
+    /// the syscall result (or error code) that gets stored in rax.
+    unsafe fn syscall_3(num: u64, arg1: u64, arg2: u64, arg3: u64) -> i64 {
+        let res;
+        asm!(
+            // there is no need to write "mov"-instructions, see below
+            "syscall",
+            // from 'in("rax")' the compiler will
+            // generate corresponding 'mov'-instructions
+            in("rax") num,
+            in("rdi") arg1,
+            in("rsi") arg2,
+            in("rdx") arg3,
+            lateout("rax") res,
+        );
+        res
+    }
+
+    pub(crate) fn write(data: &[u8]) {
+        let written = unsafe { syscall_3(WRITE, 1, data.as_ptr() as u64, data.len() as u64) };
+
+        // without this, the output is missing the year in the second line. no clue why
+        assert!(written == data.len() as i64);
+    }
 }

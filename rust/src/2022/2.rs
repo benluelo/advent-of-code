@@ -28,7 +28,7 @@ enum Rps {
 }
 
 impl Rps {
-    fn points(&self) -> u32 {
+    const fn points(&self) -> u32 {
         match self {
             Rps::Rock => 1,
             Rps::Paper => 2,
@@ -36,7 +36,7 @@ impl Rps {
         }
     }
 
-    fn outcome(&self, other: &Self) -> RpsOutcome {
+    const fn outcome(&self, other: &Self) -> RpsOutcome {
         use Rps::{Paper, Rock, Scissors};
         use RpsOutcome::{Draw, Loss, Win};
 
@@ -55,7 +55,7 @@ enum RpsOutcome {
 }
 
 impl RpsOutcome {
-    fn points(&self) -> u32 {
+    const fn points(&self) -> u32 {
         match self {
             RpsOutcome::Win => 6,
             RpsOutcome::Loss => 0,
@@ -70,7 +70,7 @@ struct Round {
 }
 
 impl Round {
-    fn score(self) -> u32 {
+    const fn score(self) -> u32 {
         self.you.points() + self.you.outcome(&self.opponent).points()
     }
 }
