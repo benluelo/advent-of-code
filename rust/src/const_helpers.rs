@@ -57,6 +57,20 @@ pub(crate) const fn read_until(bytes: &'static [u8], start: usize, char: u8) -> 
     slice(bytes, start, i)
 }
 
+pub(crate) const fn bytes_to_array<const LEN: usize>(bz: &'static [u8]) -> [u8; LEN] {
+    assert!(LEN == bz.len());
+
+    let mut out = [0; LEN];
+
+    iter! {
+        for (i, item) in enumerate(bz) {
+            out[i] = item;
+        }
+    }
+
+    out
+}
+
 #[allow(clippy::cast_possible_truncation)]
 pub(crate) const fn parse_int(bz: &[u8]) -> u32 {
     let mut res = 0;
@@ -110,13 +124,37 @@ pub(crate) const fn utf8(bz: &[u8]) -> &str {
     }
 }
 
+pub(crate) const fn array_concat<const LEN_1: usize, const LEN_2: usize, const OUT: usize>(
+    bz1: [u8; LEN_1],
+    bz2: [u8; LEN_2],
+) -> [u8; OUT] {
+    assert!(LEN_1 + LEN_2 == OUT);
+
+    let mut res = [0; OUT];
+
+    iter! {
+        for (i, item) in enumerate(bz1) {
+            res[i] = item;
+        }
+    }
+
+    iter! {
+        for (i, item) in enumerate(bz2) {
+            res[i + LEN_1] = item;
+        }
+    }
+
+    res
+}
+
 macro_rules! itoa {
     ($i:expr) => {{
-        const A: &[u8] =
-            $crate::const_helpers::int_to_str::<{ (($i).ilog10() + 1) as usize }>($i).as_slice();
+        const A: [u8; { (($i).ilog10() + 1) as usize }] =
+            $crate::const_helpers::int_to_str::<{ (($i).ilog10() + 1) as usize }>($i);
         A
     }};
 }
+
 pub(crate) use itoa;
 
 macro_rules! split {
@@ -129,6 +167,15 @@ macro_rules! split {
     };
 }
 pub(crate) use split;
+
+macro_rules! arr {
+    ($i:expr) => {{
+        const ARR: [u8; { ($i).len() }] =
+            $crate::const_helpers::bytes_to_array::<{ ($i).len() }>($i);
+        ARR
+    }};
+}
+pub(crate) use arr;
 
 macro_rules! iter {
     (for $item:pat in $slice:ident
@@ -164,3 +211,38 @@ macro_rules! iter {
     };
 }
 pub(crate) use iter;
+
+/// Pulled from <https://www.reddit.com/r/rust/comments/lz0xsl/concatenating_arrays_at_compiletime_in_rust_151/>
+macro_rules! concat_array_const {
+    (
+        $(const $IDENT:ident: [$T:ident; _] = $($arr:expr),*;)+
+    ) => {
+        $(
+            const $IDENT: [$T; { 0 $( + $arr.len() )* }] = concat_array_const!(@concat
+                $( [$arr ; $arr.len()] )*
+            );
+        )+
+    };
+
+    (@concat [$a:expr; $a_len:expr]) => {
+        $a
+    };
+
+    (@concat [$a:expr; $a_len:expr] [$b:expr; $b_len:expr] $($tail:tt)*) => {
+        concat_array_const!(
+            @concat
+            [$crate::const_helpers::array_concat::<{ $a_len }, { $b_len }, { $a_len + $b_len }>($a, $b); $a_len + $b_len]
+            $($tail)*
+        )
+    };
+}
+pub(crate) use concat_array_const;
+
+#[test]
+fn concat() {
+    concat_array_const! {
+        const CONST: [u8; _] = [1, 2, 3], [4, 5, 6], [7, 8, 9];
+    }
+
+    assert_eq!(CONST, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+}

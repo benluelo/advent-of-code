@@ -71,7 +71,7 @@ mod libc_write {
 
 #[no_mangle]
 #[cfg(all(not(test), feature = "alloc"))]
-pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
+pub extern "Rust" fn _start(_argc: i32, _argv: *const *const u8) {
     use core::fmt::Write;
 
     use crate::libc_write::Stdout;
@@ -114,36 +114,37 @@ pub extern "Rust" fn main(_argc: i32, _argv: *const *const u8) {
 #[cfg(all(
     target_os = "linux",
     target_arch = "x86_64",
+    target_env = "gnu",
     not(test),
     not(feature = "alloc"),
     not(feature = "libc")
 ))]
-pub extern "C" fn main(_argc: i32, _argv: *const *const u8) {
-    use crate::const_helpers::itoa;
+pub extern "C" fn _start(_argc: i32, _argv: *const *const u8) -> ! {
+    use crate::const_helpers::{arr, concat_array_const, itoa};
 
     macro_rules! run_solution {
         ($YEAR:literal, $DAY:literal) => {{
-            const YEAR: &[u8] = &itoa!($YEAR as u32);
-            const DAY: &[u8] = &itoa!($DAY as u32);
+            concat_array_const! {
+                const PREFIX: [u8; _] = itoa!($YEAR as u32), *b"/", itoa!($DAY as u32), *b"-";
+                const PART_1: [u8; _] = *b"1: ", arr!(Day::<$YEAR, $DAY>::PART_1.as_bytes()), *b"\n";
+                const PART_2: [u8; _] = *b"2: ", arr!(Day::<$YEAR, $DAY>::PART_2.as_bytes()), *b"\n";
+                const OUTPUT: [u8; _] = PREFIX, PART_1, PREFIX, PART_2;
+            }
 
-            sys::write(YEAR);
-            sys::write(b"/");
-            sys::write(DAY);
-            sys::write(b"-1: ");
-            sys::write(Day::<$YEAR, $DAY>::PART_1.as_bytes());
-            sys::write(b"\n");
+            // sys::write(PREFIX.as_slice());
+            // sys::write(PART_1.as_slice());
 
-            sys::write(YEAR);
-            sys::write(b"/");
-            sys::write(DAY);
-            sys::write(b"-2: ");
-            sys::write(Day::<$YEAR, $DAY>::PART_2.as_bytes());
+            // sys::write(PREFIX.as_slice());
+            // sys::write(PART_2.as_slice());
+            sys::write(OUTPUT.as_slice());
         }};
     }
 
     for_each_day! {
         run_solution
     };
+
+    sys::exit();
 }
 
 struct Day<const YEAR: u16, const DAY: u8>;
@@ -245,9 +246,10 @@ macro_rules! for_each_day {
 
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 pub(crate) mod sys {
-    use core::arch::asm;
+    use core::{arch::asm, hint::unreachable_unchecked};
 
     const WRITE: u64 = 1;
+    const EXIT: u64 = 60;
 
     /// Wrapper around a Linux syscall with three arguments. It returns
     /// the syscall result (or error code) that gets stored in rax.
@@ -267,10 +269,35 @@ pub(crate) mod sys {
         res
     }
 
+    /// Wrapper around a Linux syscall with three arguments. It returns
+    /// the syscall result (or error code) that gets stored in rax.
+    unsafe fn syscall_1(num: u64, arg1: u64) -> i64 {
+        let res;
+        asm!(
+            // there is no need to write "mov"-instructions, see below
+            "syscall",
+            // from 'in("rax")' the compiler will
+            // generate corresponding 'mov'-instructions
+            in("rax") num,
+            in("rdi") arg1,
+            lateout("rax") res,
+        );
+        res
+    }
+
+    #[inline(always)]
     pub(crate) fn write(data: &[u8]) {
         let written = unsafe { syscall_3(WRITE, 1, data.as_ptr() as u64, data.len() as u64) };
 
-        // without this, the output is missing the year in the second line. no clue why
-        assert!(written == data.len() as i64);
+        // without this, the output is missing the year in the second line. no
+        // clue why
+        // assert!(written == data.len() as i64);
+    }
+
+    pub(crate) fn exit() -> ! {
+        unsafe {
+            syscall_1(EXIT, 0);
+            unreachable_unchecked();
+        };
     }
 }

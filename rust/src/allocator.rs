@@ -6,8 +6,8 @@ use core::{
 
 use libc::c_void;
 
-#[link(name = "c")]
-extern "C" {}
+// #[link(name = "c", cfg(feature = "alloc"))]
+// extern "C" {}
 
 #[global_allocator]
 pub(crate) static A: LibcAlloc = LibcAlloc;

@@ -8,7 +8,7 @@ edition = "2021"
 
 [dependencies]
 cfg-proc = { path = "cfg-proc" }
-libc = { version = "0.2.150", optional = true }
+libc = { version = "0.2.150", default-features = false, optional = true }
 
 [lints.clippy]
 pedantic = "deny"

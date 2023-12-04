@@ -76,19 +76,22 @@
                 cd $out/rust
 
                 # RUSTFLAGS="-C link-args=-lc -C target-feature=+crt-static -Z location-detail=none -C relocation-model=static"
-                cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=core -Z build-std-features=panic_immediate_abort --target="x86_64-unknown-linux-musl" -j1
+                # cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=core -Z build-std-features=panic_immediate_abort --target="x86_64-unknown-linux-musl" -j1
+                # cargo rustc --release --no-default-features -F ${toString year}-${toString day} --target x86_64-unknown-linux-musl -j1 -Z build-std=std,core -Z build-std-features=panic_immediate_abort,core/panic_immediate_abort -- -C link-arg=-nostartfiles -C link-arg=-znoseparate-code
+                # cargo rustc --release --no-default-features -F 2023-1 --target x86_64-unknown-linux-gnu -j1 -Z build-std=std,core -Z build-std-features=panic_immediate_abort,core/panic_immediate_abort -- -C link-arg=-nostartfiles -C link-arg="-Wl,-znoseparate-code" -C link-arg=-Wl,--no-eh-frame-hdr -C link-arg=-Wl,-znorelro -C link-arg=-flinker-output=exec -C link-args='-nodefaultlibs -nostdlib -nolibc -s'
+                RUSTC_LOG=rustc_codegen_ssa::back::link=info cargo rustc -vvv --release --no-default-features -F 2023-1 --target x86_64-unknown-linux-gnu -j1 -Z build-std=core -Z build-std-features=core/panic_immediate_abort -- -C linker=rust-lld -C link-args='-v --no-eh-frame-hdr -z norelro -nostdlib --disable-new-dtags --no-dynamic-linker -z nodefaultlib --hash-style=sysv --no-rosegment -z nognustack -N --icf=all --ignore-data-address-equality --ignore-data-address-equality --noinhibit-exec --print-gc-sections --print-icf-sections'
               '';
             };
             installPhase = ''
               mkdir -p $out/bin
 
-              cp --no-preserve=mode $src/rust/target/x86_64-unknown-linux-musl/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
+              cp --no-preserve=mode $src/rust/target/x86_64-unknown-linux-gnu/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
 
-              ls -al $out/bin
+              ls -l $out/bin
 
               sstrip -z "$out/bin/advent-of-code-${toString year}-${toString day}"
 
-              ls -al $out/bin
+              ls -l $out/bin
 
               chmod +x "$out/bin/advent-of-code-${toString year}-${toString day}"
             '';

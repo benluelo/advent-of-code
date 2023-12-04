@@ -1,18 +1,11 @@
-use core::fmt::Display;
-
 use crate::{
-    const_helpers::{max, parse_int, read_until, slice, split},
-    Day, DaySolution, Input,
+    const_helpers::{itoa, max, parse_int, read_until, slice, split, utf8},
+    ConstDaySolution, Day, Input,
 };
 
-impl DaySolution for Day<2023, 2> {
-    fn part_1() -> impl Display {
-        SOLUTION_PART_1
-    }
-
-    fn part_2() -> impl Display {
-        SOLUTION_PART_2
-    }
+impl ConstDaySolution for Day<2023, 2> {
+    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
+    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
 }
 
 const SOLUTION_PART_1: u32 =

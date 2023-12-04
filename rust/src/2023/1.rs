@@ -4,8 +4,8 @@ use crate::{
 };
 
 impl ConstDaySolution for Day<2023, 1> {
-    const PART_1: &'static str = utf8(itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(itoa!(SOLUTION_PART_2));
+    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
+    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
 }
 
 const SOLUTION_PART_1: u32 =
