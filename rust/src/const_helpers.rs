@@ -47,14 +47,58 @@ pub(crate) const fn split_with_len<const LEN: usize, const PAT: u8, const TRAILI
     res
 }
 
-pub(crate) const fn read_until(bytes: &'static [u8], start: usize, char: u8) -> &'static [u8] {
+pub(crate) const fn read_until<'bz>(bytes: &'bz [u8], start: usize, separator: &[u8]) -> &'bz [u8] {
+    let sep_len = separator.len();
+    let bytes_len = bytes.len();
+
+    assert!(sep_len <= bytes_len, "separator is longer than input");
+    assert!(sep_len > 0, "separator must be > 0");
+
     let mut i = start;
 
-    while i < bytes.len() && bytes[i] != char {
+    while i < bytes_len {
+        if sep_len - 1 <= i - start {
+            let mut j = sep_len;
+            while j != 0 {
+                if bytes[i - (sep_len - j)] != separator[j - 1] {
+                    break;
+                }
+                j -= 1;
+            }
+
+            if j == 0 {
+                // `i` can be 1 less than sep_len here, so add to it before subtracting
+                return slice(bytes, start, i + 1 - sep_len);
+            }
+        }
+
         i += 1;
     }
 
+    // separator not found, read until end
     slice(bytes, start, i)
+}
+
+#[test]
+fn test_read_until() {
+    let bz = b"hello,ABworldAB";
+    assert_eq!(b"hello,", read_until(bz, 0, b"AB"));
+    assert_eq!(
+        b"world",
+        read_until(bz, b"hello,".len() + b"AB".len(), b"AB")
+    );
+
+    let bz = b"no separators here!";
+    assert_eq!(bz, read_until(bz, 0, b"foo"));
+
+    let bz = b"only separator";
+    assert_eq!(b"", read_until(bz, 0, bz));
+
+    let bz = b"trailing separatorFOO";
+    assert_eq!(b"trailing separator", read_until(bz, 0, b"FOO"));
+
+    let bz = b"FOOleading separator";
+    assert_eq!(b"", read_until(bz, 0, b"FOO"));
 }
 
 pub(crate) const fn bytes_to_array<const LEN: usize>(bz: &'static [u8]) -> [u8; LEN] {
@@ -93,14 +137,28 @@ pub(crate) const fn max(a: u32, b: u32) -> u32 {
     }
 }
 
+pub(crate) const fn min(a: usize, b: usize) -> usize {
+    if a <= b {
+        a
+    } else {
+        b
+    }
+}
+
 #[allow(clippy::cast_possible_truncation)]
 pub(crate) const fn int_to_str<const LEN: usize>(n: u32) -> [u8; LEN] {
     // would be nice, but generic_const_exprs is still incomplete
     // let bz = [0; N.ilog10()];
 
-    assert!(LEN as u32 == n.ilog10() + 1);
-
     let mut bz = [0; LEN];
+
+    if n == 0 {
+        assert!(LEN as u32 == 1);
+        bz[0] = b'0';
+        return bz;
+    }
+
+    assert!(LEN as u32 == n.ilog10() + 1);
 
     iter! {
         for i in range(0, LEN) {
@@ -111,8 +169,24 @@ pub(crate) const fn int_to_str<const LEN: usize>(n: u32) -> [u8; LEN] {
     bz
 }
 
+#[test]
+fn test_int_to_str() {
+    assert_eq!(utf8(&itoa!(0)), "0");
+    assert_eq!(utf8(&itoa!(1)), "1");
+    assert_eq!(utf8(&itoa!(12345)), "12345");
+    assert_eq!(utf8(&itoa!(u32::MAX)), u32::MAX.to_string());
+}
+
 pub(crate) const fn digit_at_place(n: u32, place: u32) -> u32 {
-    (n % 10u32.pow(place + 1) - n % 10u32.pow(place)) / 10u32.pow(place)
+    let m = n as u64 % 10u64.pow(place + 1) - n as u64 % 10u64.pow(place);
+    assert!(m <= u32::MAX as u64);
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "can't use try_from in const fns; false positive"
+    )]
+    {
+        m as u32 / 10u32.pow(place)
+    }
 }
 
 pub(crate) const fn utf8(bz: &[u8]) -> &str {
@@ -149,12 +223,14 @@ pub(crate) const fn array_concat<const LEN_1: usize, const LEN_2: usize, const O
 
 macro_rules! itoa {
     ($i:expr) => {{
-        const A: [u8; { (($i).ilog10() + 1) as usize }] =
-            $crate::const_helpers::int_to_str::<{ (($i).ilog10() + 1) as usize }>($i);
+        const I: u32 = $i;
+        const LEN: usize = if I == 0 { 1 } else { (I.ilog10() + 1) as usize };
+
+        const A: [u8; LEN] = $crate::const_helpers::int_to_str::<LEN>(I);
+
         A
     }};
 }
-
 pub(crate) use itoa;
 
 macro_rules! split {
@@ -167,6 +243,13 @@ macro_rules! split {
     };
 }
 pub(crate) use split;
+
+#[test]
+fn split_works() {
+    const INPUT: &[u8] = b"hello\nworld";
+
+    assert_eq!(split!(INPUT, b'\n', false), [b"hello", b"world"]);
+}
 
 macro_rules! arr {
     ($i:expr) => {{
@@ -207,6 +290,18 @@ macro_rules! iter {
         while $i < $end {
             $body
             $i += 1;
+        }
+    };
+
+    (for $line:ident in lines($slice:ident)
+        $body:block
+    ) => {
+        let mut i = 0;
+        while i < $slice.len() {
+            let $line = $crate::const_helpers::read_until($slice, i, b"\n");
+            $body
+
+            i += $line.len() + 1;
         }
     };
 }

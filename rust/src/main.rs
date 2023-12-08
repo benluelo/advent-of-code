@@ -39,35 +39,7 @@ fn panic_handler<'a, 'b>(_: &'a core::panic::PanicInfo<'b>) -> ! {
 mod allocator;
 
 #[cfg(feature = "libc")]
-mod libc_write {
-    use core::fmt::Write;
-
-    pub struct Stdout;
-
-    impl Write for Stdout {
-        #[inline]
-        fn write_str(&mut self, s: &str) -> core::fmt::Result {
-            let msg = s.as_bytes();
-
-            let mut written = 0;
-            while written < msg.len() {
-                let bytes: &[u8] = &msg[written..];
-
-                let res = usize::try_from(unsafe {
-                    libc::write(1, bytes.as_ptr().cast::<core::ffi::c_void>(), bytes.len())
-                });
-
-                match res {
-                    Ok(res) => written += res,
-                    // Ignore errors
-                    Err(_) => break,
-                }
-            }
-
-            Ok(())
-        }
-    }
-}
+mod libc_write;
 
 #[no_mangle]
 #[cfg(all(not(test), feature = "alloc"))]
@@ -156,6 +128,8 @@ trait DaySolution: Input {
 }
 
 trait ConstDaySolution: Input {
+    // could be neat!
+    // const P: fn(&[u8]) -> u32 = parse;
     const PART_1: &'static str;
     const PART_2: &'static str;
 }
