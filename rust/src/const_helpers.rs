@@ -1,12 +1,16 @@
-pub(crate) const fn slice<T>(bytes: &[T], idx_start: usize, idx_curr: usize) -> &[T] {
+pub const fn slice<T>(bytes: &[T], idx_start: usize, idx_curr: usize) -> &[T] {
     let first_split = &bytes.split_at(idx_start).1;
     let line = first_split.split_at(idx_curr - idx_start).0;
     line
 }
 
-pub(crate) const fn count_segments<const PAT: u8, const TRAILING: bool>(
-    bz: &'static [u8],
-) -> usize {
+pub const fn slice_mut<T>(bytes: &mut [T], idx_start: usize, idx_curr: usize) -> &mut [T] {
+    let first_split = bytes.split_at_mut(idx_start).1;
+    let line = first_split.split_at_mut(idx_curr - idx_start).0;
+    line
+}
+
+pub const fn count_segments<const PAT: u8, const TRAILING: bool>(bz: &'static [u8]) -> usize {
     let len = bz.len();
 
     let mut segments = 0;
@@ -22,7 +26,7 @@ pub(crate) const fn count_segments<const PAT: u8, const TRAILING: bool>(
     segments + (!TRAILING as usize)
 }
 
-pub(crate) const fn split_with_len<const LEN: usize, const PAT: u8, const TRAILING: bool>(
+pub const fn split_with_len<const LEN: usize, const PAT: u8, const TRAILING: bool>(
     bytes: &'static [u8],
 ) -> [&'static [u8]; LEN] {
     let mut res: [&[u8]; LEN] = [b""; LEN];
@@ -47,7 +51,7 @@ pub(crate) const fn split_with_len<const LEN: usize, const PAT: u8, const TRAILI
     res
 }
 
-pub(crate) const fn read_until<'bz>(bytes: &'bz [u8], start: usize, separator: &[u8]) -> &'bz [u8] {
+pub const fn read_until<'bz>(bytes: &'bz [u8], start: usize, separator: &[u8]) -> &'bz [u8] {
     let sep_len = separator.len();
     let bytes_len = bytes.len();
 
@@ -79,6 +83,38 @@ pub(crate) const fn read_until<'bz>(bytes: &'bz [u8], start: usize, separator: &
     slice(bytes, start, i)
 }
 
+// pub const fn eat<'bz>(bytes: &'bz [u8], start: usize, separator:
+// &[u8]) -> &'bz [u8] {     let sep_len = separator.len();
+//     let bytes_len = bytes.len();
+
+//     assert!(sep_len <= bytes_len, "separator is longer than input");
+//     assert!(sep_len > 0, "separator must be > 0");
+
+//     let mut i = start;
+
+//     while i < bytes_len {
+//         if sep_len - 1 <= i - start {
+//             let mut j = sep_len;
+//             while j != 0 {
+//                 if bytes[i - (sep_len - j)] != separator[j - 1] {
+//                     break;
+//                 }
+//                 j -= 1;
+//             }
+
+//             if j == 0 {
+//                 // `i` can be 1 less than sep_len here, so add to it before
+// subtracting                 return slice(bytes, start, i + 1 - sep_len);
+//             }
+//         }
+
+//         i += 1;
+//     }
+
+//     // separator not found, read until end
+//     slice(bytes, start, i)
+// }
+
 #[test]
 fn test_read_until() {
     let bz = b"hello,ABworldAB";
@@ -101,7 +137,7 @@ fn test_read_until() {
     assert_eq!(b"", read_until(bz, 0, b"FOO"));
 }
 
-pub(crate) const fn bytes_to_array<const LEN: usize>(bz: &'static [u8]) -> [u8; LEN] {
+pub const fn bytes_to_array<const LEN: usize>(bz: &'static [u8]) -> [u8; LEN] {
     assert!(LEN == bz.len());
 
     let mut out = [0; LEN];
@@ -116,7 +152,7 @@ pub(crate) const fn bytes_to_array<const LEN: usize>(bz: &'static [u8]) -> [u8; 
 }
 
 #[allow(clippy::cast_possible_truncation)]
-pub(crate) const fn parse_int(bz: &[u8]) -> u32 {
+pub const fn parse_int(bz: &[u8]) -> u32 {
     let mut res = 0;
 
     iter! {
@@ -129,7 +165,7 @@ pub(crate) const fn parse_int(bz: &[u8]) -> u32 {
     res as u32
 }
 
-pub(crate) const fn max(a: u32, b: u32) -> u32 {
+pub const fn max(a: u32, b: u32) -> u32 {
     if a >= b {
         a
     } else {
@@ -137,7 +173,7 @@ pub(crate) const fn max(a: u32, b: u32) -> u32 {
     }
 }
 
-pub(crate) const fn min(a: usize, b: usize) -> usize {
+pub const fn min(a: usize, b: usize) -> usize {
     if a <= b {
         a
     } else {
@@ -146,7 +182,7 @@ pub(crate) const fn min(a: usize, b: usize) -> usize {
 }
 
 #[allow(clippy::cast_possible_truncation)]
-pub(crate) const fn int_to_str<const LEN: usize>(n: u32) -> [u8; LEN] {
+pub const fn int_to_str<const LEN: usize>(n: u128) -> [u8; LEN] {
     // would be nice, but generic_const_exprs is still incomplete
     // let bz = [0; N.ilog10()];
 
@@ -160,9 +196,17 @@ pub(crate) const fn int_to_str<const LEN: usize>(n: u32) -> [u8; LEN] {
 
     assert!(LEN as u32 == n.ilog10() + 1);
 
+    let mut n = n;
+
     iter! {
         for i in range(0, LEN) {
-            bz[i] = digit_at_place(n, (LEN - i - 1) as u32) as u8 + 48;
+            let digit = n % 10;
+
+            assert!(digit <= 9);
+
+            bz[LEN - i - 1] = digit as u8 + 48;
+
+            n = n / 10;
         }
     }
 
@@ -174,22 +218,27 @@ fn test_int_to_str() {
     assert_eq!(utf8(&itoa!(0)), "0");
     assert_eq!(utf8(&itoa!(1)), "1");
     assert_eq!(utf8(&itoa!(12345)), "12345");
-    assert_eq!(utf8(&itoa!(u32::MAX)), u32::MAX.to_string());
+    assert_eq!(utf8(&itoa!(u128::MAX)), u128::MAX.to_string());
 }
 
-pub(crate) const fn digit_at_place(n: u32, place: u32) -> u32 {
-    let m = n as u64 % 10u64.pow(place + 1) - n as u64 % 10u64.pow(place);
-    assert!(m <= u32::MAX as u64);
-    #[expect(
-        clippy::cast_possible_truncation,
-        reason = "can't use try_from in const fns; false positive"
-    )]
-    {
-        m as u32 / 10u32.pow(place)
-    }
-}
+// pub const fn digit_at_place(n: u128, place: u32) -> u8 {
+//     const MAX_LEN: u32 = u128::MAX.ilog10();
+//     assert!(place <= MAX_LEN);
 
-pub(crate) const fn utf8(bz: &[u8]) -> &str {
+//     let digit = (n % 10u128.pow(place + 1) - n % 10u128.pow(place)) /
+// 10u128.pow(place);
+
+//     // assert!(m <= u32::MAX as u64);
+//     // #[expect(
+//     //     clippy::cast_possible_truncation,
+//     //     reason = "can't use try_from in const fns; false positive"
+//     // )]
+
+//     assert!(digit <= 9);
+//     digit as u8
+// }
+
+pub const fn utf8(bz: &[u8]) -> &str {
     match core::str::from_utf8(bz) {
         Ok(ok) => ok,
         Err(_) => {
@@ -198,7 +247,7 @@ pub(crate) const fn utf8(bz: &[u8]) -> &str {
     }
 }
 
-pub(crate) const fn array_concat<const LEN_1: usize, const LEN_2: usize, const OUT: usize>(
+pub const fn array_concat<const LEN_1: usize, const LEN_2: usize, const OUT: usize>(
     bz1: [u8; LEN_1],
     bz2: [u8; LEN_2],
 ) -> [u8; OUT] {
@@ -223,11 +272,9 @@ pub(crate) const fn array_concat<const LEN_1: usize, const LEN_2: usize, const O
 
 macro_rules! itoa {
     ($i:expr) => {{
-        const I: u32 = $i;
+        const I: u128 = $i as u128;
         const LEN: usize = if I == 0 { 1 } else { (I.ilog10() + 1) as usize };
-
         const A: [u8; LEN] = $crate::const_helpers::int_to_str::<LEN>(I);
-
         A
     }};
 }

@@ -1,17 +1,28 @@
 #![cfg_attr(not(test), no_main)]
 #![cfg_attr(not(any(test, debug_assertions)), no_std)]
 #![feature(
+    // iterator hackery
     iter_array_chunks,
     iter_next_chunk,
-    array_windows,
     iter_intersperse,
     iter_repeat_n,
+
+    // arrays
+    array_windows,
     as_array_of_cells,
+
+    // misc
     int_roundings,
     control_flow_enum,
+    byte_slice_trim_ascii,
+
+    // cool and handy
     lint_reasons,
     trace_macros,
-    byte_slice_trim_ascii
+
+    // const stuff
+    const_mut_refs,
+    const_slice_split_at_mut
 )]
 
 #[cfg(windows)]

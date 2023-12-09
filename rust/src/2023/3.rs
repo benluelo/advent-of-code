@@ -1,5 +1,5 @@
 use crate::{
-    const_helpers::{iter, itoa, max, min, parse_int, read_until, slice, utf8},
+    const_helpers::{iter, itoa, min, parse_int, read_until, slice, utf8},
     ConstDaySolution, Day, Input,
 };
 
