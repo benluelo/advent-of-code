@@ -16,8 +16,7 @@ const fn parse(bytes: &[u8]) -> u32 {
         let mut i = if REVERSE { bz.len() - 1 } else { 0 };
 
         loop {
-            if let n @ (b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' | b'0') = bz[i]
-            {
+            if let n @ (b'0'..=b'9') = bz[i] {
                 return (n - 48) as _;
             }
 
@@ -55,8 +54,7 @@ const fn parse2(bytes: &[u8]) -> u32 {
         let idx_start = i;
 
         loop {
-            if let n @ (b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' | b'0') = bz[i]
-            {
+            if let n @ (b'0'..=b'9') = bz[i] {
                 return (n - 48) as _;
             }
 
@@ -94,8 +92,6 @@ const fn parse2(bytes: &[u8]) -> u32 {
                     _ => {}
                 }
             }
-
-            // dbg!(String::from_utf8_lossy(slice));
 
             // if that was the last char, break
             if if REVERSE { i == 0 } else { i >= bz.len() - 1 } {

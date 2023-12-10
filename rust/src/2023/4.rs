@@ -108,7 +108,11 @@ const fn parse2(input: &mut [u8]) -> u64 {
             }
         }
 
-        highest_line_reached = max(highest_line_reached as u32, (i + 1) as u32 + matches) as usize;
+        #[expect(clippy::cast_possible_truncation, reason = "false positive")]
+        {
+            highest_line_reached =
+                max(highest_line_reached as u32, (i + 1) as u32 + matches) as usize;
+        };
 
         i += 1;
     }

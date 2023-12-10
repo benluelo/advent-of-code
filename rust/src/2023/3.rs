@@ -54,13 +54,8 @@ const fn parse(input: &[u8]) -> u32 {
 
     iter! {
         for char in input {
-            // dbg!(*char as char);
-            // dbg!(in_number);
-            // dbg!(number_start_idx);
-            // dbg!();
-
             match char {
-                b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' | b'0' => {
+                b'0'..=b'9' => {
                     if !in_number {
                         in_number = true;
                         number_start_idx = x;
@@ -71,12 +66,8 @@ const fn parse(input: &[u8]) -> u32 {
                     if in_number {
                         let mut is_part_number = false;
 
-                        // dbg!(y);
-
-                        // check if by a symbol
                         iter! {
                             for num_x in range(number_start_idx, x) {
-                                // dbg!(num_x, is_part_number);
                                 is_part_number =
                                     any_neighbour_is_symbol(is_part_number, input, num_x, y, line_len);
                             }
@@ -84,7 +75,6 @@ const fn parse(input: &[u8]) -> u32 {
 
                         if is_part_number {
                             let bz = slice(input, number_start_idx + (y * line_len), x + (y * line_len));
-                            // dbg!(mk_str(bz));
                             res += parse_int(bz);
                         }
 
@@ -105,7 +95,6 @@ const fn parse(input: &[u8]) -> u32 {
         }
     }
 
-    // dbg!(res);
     res
 }
 
@@ -121,8 +110,6 @@ const fn parse2(input: &[u8]) -> u32 {
         for char in input {
             match char {
                 b'*' => {
-                    // dbg!(x, y, input[mk_idx(x, y, line_len)] as char);
-
                     let mut gn = GearNumbers::None;
 
                     let max_x = line_len;
@@ -220,7 +207,6 @@ const fn parse2(input: &[u8]) -> u32 {
         }
     }
 
-    // dbg!(res);
     res
 }
 
@@ -238,10 +224,7 @@ const fn any_neighbour_is_symbol(is_part_number: bool, input: &[u8], num_x: usiz
 }
 
 const fn is_symbol(b: u8) -> bool {
-    !matches!(
-        b,
-        b'1' | b'2' | b'3' | b'4' | b'5' | b'6' | b'7' | b'8' | b'9' | b'0' | b'.' | b'\n'
-    )
+    !matches!(b, b'0'..=b'9' | b'.' | b'\n')
 }
 
 // fn mk_str(bz: &[u8]) -> String {
@@ -271,8 +254,6 @@ const fn find_number_in_line(idx: usize, line_len: usize, input: &[u8]) -> u32 {
 
     let bz = slice(input, idx - (x - left), idx + right);
 
-    // dbg!(mk_str(bz));
-
     parse_int(bz)
 }
 
@@ -281,7 +262,6 @@ enum GearNumbers {
     None,
     One(usize),
     Two(usize, usize),
-    // TooMany,
 }
 
 impl GearNumbers {
@@ -289,16 +269,9 @@ impl GearNumbers {
         match self {
             GearNumbers::None => Self::One(n),
             GearNumbers::One(m) => Self::Two(m, n),
-            GearNumbers::Two(m, o) => panic!(),
-            // GearNumbers::Two(m, o) => panic!("{n} {m} {o}"),
-            // GearNumbers::TooMany => Self::TooMany,
+            GearNumbers::Two(_, _) => panic!(),
         }
     }
-}
-
-const fn between(n: usize, a: usize, b: usize) -> bool {
-    assert!(a < b);
-    n > a && n < b
 }
 
 const fn mk_idx(x: usize, y: usize, line_len: usize) -> usize {

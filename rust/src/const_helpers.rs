@@ -206,7 +206,7 @@ pub const fn int_to_str<const LEN: usize>(n: u128) -> [u8; LEN] {
 
             bz[LEN - i - 1] = digit as u8 + 48;
 
-            n = n / 10;
+            n /= 10;
         }
     }
 
@@ -220,23 +220,6 @@ fn test_int_to_str() {
     assert_eq!(utf8(&itoa!(12345)), "12345");
     assert_eq!(utf8(&itoa!(u128::MAX)), u128::MAX.to_string());
 }
-
-// pub const fn digit_at_place(n: u128, place: u32) -> u8 {
-//     const MAX_LEN: u32 = u128::MAX.ilog10();
-//     assert!(place <= MAX_LEN);
-
-//     let digit = (n % 10u128.pow(place + 1) - n % 10u128.pow(place)) /
-// 10u128.pow(place);
-
-//     // assert!(m <= u32::MAX as u64);
-//     // #[expect(
-//     //     clippy::cast_possible_truncation,
-//     //     reason = "can't use try_from in const fns; false positive"
-//     // )]
-
-//     assert!(digit <= 9);
-//     digit as u8
-// }
 
 pub const fn utf8(bz: &[u8]) -> &str {
     match core::str::from_utf8(bz) {
