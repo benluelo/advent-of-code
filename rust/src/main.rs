@@ -100,7 +100,8 @@ pub extern "Rust" fn _start(_argc: i32, _argv: *const *const u8) {
     target_env = "gnu",
     not(test),
     not(feature = "alloc"),
-    not(feature = "libc")
+    not(feature = "libc"),
+    feature = "const"
 ))]
 pub extern "C" fn _start(_argc: i32, _argv: *const *const u8) -> ! {
     use crate::const_helpers::{arr, concat_array_const, itoa};

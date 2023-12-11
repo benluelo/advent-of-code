@@ -27,8 +27,8 @@ pub const fn count_segments<const PAT: u8, const TRAILING: bool>(bz: &'static [u
 }
 
 pub const fn split_with_len<const LEN: usize, const PAT: u8, const TRAILING: bool>(
-    bytes: &'static [u8],
-) -> [&'static [u8]; LEN] {
+    bytes: &[u8],
+) -> [&[u8]; LEN] {
     let mut res: [&[u8]; LEN] = [b""; LEN];
 
     let mut idx_start = 0;
@@ -173,7 +173,15 @@ pub const fn max(a: u32, b: u32) -> u32 {
     }
 }
 
-pub const fn min(a: usize, b: usize) -> usize {
+pub const fn min_usize(a: usize, b: usize) -> usize {
+    if a <= b {
+        a
+    } else {
+        b
+    }
+}
+
+pub const fn min_u64(a: u64, b: u64) -> u64 {
     if a <= b {
         a
     } else {
@@ -294,11 +302,11 @@ macro_rules! iter {
     (for $item:pat in $slice:ident
         $body:block
     ) => {
-        let mut i = 0;
-        while i < $slice.len() {
-            let $item = $slice[i];
+        let mut __i = 0;
+        while __i < $slice.len() {
+            let $item = $slice[__i];
+            __i += 1;
             $body
-            i += 1;
         }
     };
 
@@ -306,32 +314,44 @@ macro_rules! iter {
         $body:block
     ) => {
         let mut $i = 0;
-        while $i < $slice.len() {
-            let $item = $slice[$i];
+        let mut __i = 0;
+        while __i < $slice.len() {
+            let $item = $slice[__i];
+            __i += 1;
+            $i = __i - 1;
             $body
-            $i += 1;
         }
     };
 
     (for $i:ident in range($start:expr, $end:expr)
         $body:block
     ) => {
+        let mut __i = $start;
         let mut $i = $start;
-        while $i < $end {
+        while __i < $end {
+            __i += 1;
+            $i = __i - 1;
             $body
-            $i += 1;
         }
     };
 
     (for $line:ident in lines($slice:ident)
         $body:block
     ) => {
-        let mut i = 0;
-        while i < $slice.len() {
-            let $line = $crate::const_helpers::read_until($slice, i, b"\n");
-            $body
+        iter! {
+            for $line in split($slice, b"\n") $body
+        }
+    };
 
-            i += $line.len() + 1;
+    (for $segment:ident in split($slice:ident, $delimiter:expr)
+        $body:block
+    ) => {
+        let mut i = 0;
+        let __delimiter = $delimiter;
+        while i < $slice.len() {
+            let $segment = $crate::const_helpers::read_until($slice, i, __delimiter);
+            i += $segment.len() + __delimiter.len();
+            $body
         }
     };
 }
@@ -370,4 +390,38 @@ fn concat() {
     }
 
     assert_eq!(CONST, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
+}
+
+pub const fn strip_prefix<'a>(input: &'a [u8], prefix: &[u8]) -> &'a [u8] {
+    assert!(
+        input.len() >= prefix.len(),
+        "prefix cannot be longer than input"
+    );
+
+    iter! {
+        for (i, c) in enumerate(prefix) {
+            assert!(input[i] == c, "input not prefixed by prefix");
+        }
+    }
+
+    slice(input, prefix.len(), input.len())
+}
+
+#[test]
+fn strip_prefix_works() {
+    assert_eq!(strip_prefix(b"abcde", b"abc"), b"de");
+    assert_eq!(strip_prefix(b"abcde", b"abcde"), b"");
+    assert_eq!(strip_prefix(b"abcde", b""), b"abcde");
+}
+
+#[test]
+#[should_panic = "prefix cannot be longer than input"]
+fn strip_prefix_prefix_too_long() {
+    strip_prefix(b"abc", b"abcde");
+}
+
+#[test]
+#[should_panic = "input not prefixed by prefix"]
+fn strip_prefix_not_prefixed() {
+    strip_prefix(b"abcde", b"edcba");
 }

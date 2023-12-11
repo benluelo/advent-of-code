@@ -1,5 +1,5 @@
 use crate::{
-    const_helpers::{iter, itoa, min, parse_int, read_until, slice, utf8},
+    const_helpers::{iter, itoa, min_usize, parse_int, read_until, slice, utf8},
     ConstDaySolution, Day, Input,
 };
 
@@ -213,14 +213,14 @@ const fn parse2(input: &[u8]) -> u32 {
 #[rustfmt::skip]
 const fn any_neighbour_is_symbol(is_part_number: bool, input: &[u8], num_x: usize, y: usize, line_len: usize) -> bool {
     is_part_number
-        || is_symbol(input[min(input.len() - 1, num_x + 1               + ((y + 1) * line_len))             ])
-        || is_symbol(input[min(input.len() - 1, num_x + 1               +  (y.saturating_sub(1) * line_len))])
-        || is_symbol(input[min(input.len() - 1, num_x.saturating_sub(1) +  (y.saturating_sub(1) * line_len))])
-        || is_symbol(input[min(input.len() - 1, num_x.saturating_sub(1) + ((y + 1) * line_len))             ])
-        || is_symbol(input[min(input.len() - 1, num_x + 1               +  (y * line_len))                  ])
-        || is_symbol(input[min(input.len() - 1, num_x.saturating_sub(1) +  (y * line_len))                  ])
-        || is_symbol(input[min(input.len() - 1, num_x                   + ((y + 1) * line_len))             ])
-        || is_symbol(input[min(input.len() - 1, num_x                   +  (y.saturating_sub(1) * line_len))])
+        || is_symbol(input[min_usize(input.len() - 1, num_x + 1               + ((y + 1) * line_len))             ])
+        || is_symbol(input[min_usize(input.len() - 1, num_x + 1               +  (y.saturating_sub(1) * line_len))])
+        || is_symbol(input[min_usize(input.len() - 1, num_x.saturating_sub(1) +  (y.saturating_sub(1) * line_len))])
+        || is_symbol(input[min_usize(input.len() - 1, num_x.saturating_sub(1) + ((y + 1) * line_len))             ])
+        || is_symbol(input[min_usize(input.len() - 1, num_x + 1               +  (y * line_len))                  ])
+        || is_symbol(input[min_usize(input.len() - 1, num_x.saturating_sub(1) +  (y * line_len))                  ])
+        || is_symbol(input[min_usize(input.len() - 1, num_x                   + ((y + 1) * line_len))             ])
+        || is_symbol(input[min_usize(input.len() - 1, num_x                   +  (y.saturating_sub(1) * line_len))])
 }
 
 const fn is_symbol(b: u8) -> bool {
