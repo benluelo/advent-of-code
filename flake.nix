@@ -48,17 +48,30 @@
             ];
           };
 
+          CARGO_BUILD_TARGET =
+            if system == "aarch64-linux" then "aarch64-unknown-gnu"
+            else if system == "x86_64-linux" then "x86_64-unknown-gnu"
+            else if system == "aarch64-darwin" then "aarch64-apple-darwin"
+            else if system == "x86_64-darwin" then "x86_64-apple-darwin"
+            else throw "unsupported system `${system}`";
+
           years = [ 2022 2023 ];
           days = [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ];
 
+          link-args = ["-v" "-e" "__start" "-Z" "-pie" "-no_eh_labels" "-dead_strip" "-allow_stack_execute" "-S" "-no_uuid"] ++ (pkgs.lib.optionals pkgs.stdenv.isLinux ["--no-eh-frame-hdr" "-z" "norelro" "-nostdlib" "--disable-new-dtags" "--no-dynamic-linker" "-z" "nodefaultlib" "--hash-style=sysv" "--no-rosegment" "-z" "nognustack" "-N" "--icf=all" "--ignore-data-address-equality" "--ignore-data-address-equality" "--noinhibit-exec" "--print-gc-sections" "--print-icf-sections"]);
+
           mkAocDay = year: day: pkgs.stdenv.mkDerivation {
             name = "advent-of-code-${toString year}-${toString day}";
-            buildInputs = [ pkgs.elfkickers ];
+            buildInputs = if pkgs.stdenv.isLinux then [ pkgs.elfkickers ] else [ ];
             src = pkgs.stdenv.mkDerivation {
               name = "${toString year}-${toString day}";
               src = crane.lib.cleanCargoSource ./.;
-              buildInputs = [ rust-nightly ];
+              buildInputs = [ rust-nightly ] ++ (
+                pkgs.lib.optionals pkgs.stdenv.isDarwin [ pkgs.darwin.apple_sdk.MacOSX-SDK ]
+              );
+              nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.isDarwin [ ];
               buildPhase = ''
+                echo $PATH
                 cp -r --no-preserve=mode . $out
 
                 cp ${crane.lib.configureCargoVendoredDepsHook}/nix-support/setup-hook $out/setup-hook
@@ -78,22 +91,25 @@
                 # cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=core -Z build-std-features=panic_immediate_abort --target="x86_64-unknown-linux-musl" -j1
                 # cargo rustc --release --no-default-features -F ${toString year}-${toString day} --target x86_64-unknown-linux-musl -j1 -Z build-std=std,core -Z build-std-features=panic_immediate_abort,core/panic_immediate_abort -- -C link-arg=-nostartfiles -C link-arg=-znoseparate-code
                 # cargo rustc --release --no-default-features -F 2023-1 --target x86_64-unknown-linux-gnu -j1 -Z build-std=std,core -Z build-std-features=panic_immediate_abort,core/panic_immediate_abort -- -C link-arg=-nostartfiles -C link-arg="-Wl,-znoseparate-code" -C link-arg=-Wl,--no-eh-frame-hdr -C link-arg=-Wl,-znorelro -C link-arg=-flinker-output=exec -C link-args='-nodefaultlibs -nostdlib -nolibc -s'
-                RUSTC_LOG=rustc_codegen_ssa::back::link=info cargo rustc -vvv --release --no-default-features -F const,${toString year}-${toString day} --target x86_64-unknown-linux-gnu -j1 -Z build-std=alloc,core -Z build-std-features=core/panic_immediate_abort -- -C linker=rust-lld -C link-args='-v --no-eh-frame-hdr -z norelro -nostdlib --disable-new-dtags --no-dynamic-linker -z nodefaultlib --hash-style=sysv --no-rosegment -z nognustack -N --icf=all --ignore-data-address-equality --ignore-data-address-equality --noinhibit-exec --print-gc-sections --print-icf-sections'
+                SDKROOT="${pkgs.darwin.apple_sdk.MacOSX-SDK}" RUSTC_LOG=rustc_codegen_ssa::back::link=info cargo rustc -vvv --release --no-default-features -F const,${toString year}-${toString day} --target ${CARGO_BUILD_TARGET} -j1 -Z build-std=alloc,core -Z build-std-features=core/panic_immediate_abort -- -C linker=rust-lld -C link-args='${pkgs.lib.concatStringsSep "\n" link-args}'
               '';
             };
-            installPhase = ''
+            installPhase = pkgs.lib.concatStringsSep "\n" [''
               mkdir -p $out/bin
 
-              cp --no-preserve=mode $src/rust/target/x86_64-unknown-linux-gnu/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
-
+              cp --no-preserve=mode $src/rust/target/${CARGO_BUILD_TARGET}/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
+            ''
+            (pkgs.lib.optionalString pkgs.stdenv.isLinux ''
               ls -l $out/bin
 
-              sstrip -z "$out/bin/advent-of-code-${toString year}-${toString day}"
+              strip -z "$out/bin/advent-of-code-${toString year}-${toString day}"
+            '')
+            ''
 
               ls -l $out/bin
 
               chmod +x "$out/bin/advent-of-code-${toString year}-${toString day}"
-            '';
+            ''];
 
             meta.mainProgram = "advent-of-code-${toString year}-${toString day}";
           };
