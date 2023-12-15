@@ -1,4 +1,6 @@
-#![cfg_attr(not(test), no_main)]
+// #![cfg_attr(not(any(test, target_arch = "aarch64")), no_main)]
+#![cfg_attr(not(any(test)), no_main)]
+// #![cfg_attr(target_arch = "aarch64", feature(start))]
 #![cfg_attr(not(any(test, debug_assertions)), no_std)]
 #![feature(
     // iterator hackery
@@ -52,57 +54,59 @@ mod allocator;
 #[cfg(feature = "libc")]
 mod libc_write;
 
+// #[no_mangle]
+// // #[cfg(all(not(test), feature = "alloc"))]
+// // #[start]
+// // #[cfg(target_arch = "aarch64")]
+// pub extern "C" fn _start(_argc: i32, _argv: *const *const u8) {
+//     use core::fmt::Write;
+
+//     use crate::libc_write::Stdout;
+
+//     #[inline]
+//     fn solve<const YEAR: u16, const DAY: u8>()
+//     where
+//         Day<YEAR, DAY>: DaySolution,
+//     {
+//         writeln!(
+//             &mut Stdout,
+//             "{}/{}-1: {}",
+//             YEAR,
+//             DAY,
+//             Day::<YEAR, DAY>::part_1()
+//         )
+//         .unwrap();
+//         writeln!(
+//             &mut Stdout,
+//             "{}/{}-2: {}",
+//             YEAR,
+//             DAY,
+//             Day::<YEAR, DAY>::part_2()
+//         )
+//         .unwrap();
+//     }
+
+//     macro_rules! run_solution {
+//         ($YEAR:literal, $DAY:literal) => {
+//             solve::<$YEAR, $DAY>();
+//         };
+//     }
+
+//     for_each_day! {
+//         run_solution
+//     };
+// }
+
 #[no_mangle]
-#[cfg(all(not(test), feature = "alloc"))]
-pub extern "Rust" fn _start(_argc: i32, _argv: *const *const u8) {
-    use core::fmt::Write;
-
-    use crate::libc_write::Stdout;
-
-    #[inline]
-    fn solve<const YEAR: u16, const DAY: u8>()
-    where
-        Day<YEAR, DAY>: DaySolution,
-    {
-        writeln!(
-            &mut Stdout,
-            "{}/{}-1: {}",
-            YEAR,
-            DAY,
-            Day::<YEAR, DAY>::part_1()
-        )
-        .unwrap();
-        writeln!(
-            &mut Stdout,
-            "{}/{}-2: {}",
-            YEAR,
-            DAY,
-            Day::<YEAR, DAY>::part_2()
-        )
-        .unwrap();
-    }
-
-    macro_rules! run_solution {
-        ($YEAR:literal, $DAY:literal) => {
-            solve::<$YEAR, $DAY>();
-        };
-    }
-
-    for_each_day! {
-        run_solution
-    };
-}
-
-#[no_mangle]
-#[cfg(all(
-    target_os = "linux",
-    target_arch = "x86_64",
-    target_env = "gnu",
-    not(test),
-    not(feature = "alloc"),
-    not(feature = "libc"),
-    feature = "const"
-))]
+// #[cfg(all(
+//     target_os = "linux",
+//     target_arch = "x86_64",
+//     target_env = "gnu",
+//     not(test),
+//     not(feature = "alloc"),
+//     not(feature = "libc"),
+//     feature = "const"
+// ))]
 pub extern "C" fn _start(_argc: i32, _argv: *const *const u8) -> ! {
     use crate::const_helpers::{arr, concat_array_const, itoa};
 
@@ -230,17 +234,24 @@ macro_rules! for_each_day {
     };
 }
 
-#[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 pub(crate) mod sys {
     use core::{arch::asm, hint::unreachable_unchecked};
 
+    #[cfg(target_os = "linux")]
     const WRITE: u64 = 1;
+    #[cfg(target_os = "linux")]
     const EXIT: u64 = 60;
+
+    #[cfg(target_os = "macos")]
+    const WRITE: u64 = 4;
+    #[cfg(target_os = "macos")]
+    const EXIT: u64 = 1;
 
     /// Wrapper around a Linux syscall with three arguments. It returns
     /// the syscall result (or error code) that gets stored in rax.
     unsafe fn syscall_3(num: u64, arg1: u64, arg2: u64, arg3: u64) -> i64 {
         let res;
+        #[cfg(target_os = "linux")]
         asm!(
             // there is no need to write "mov"-instructions, see below
             "syscall",
@@ -252,6 +263,15 @@ pub(crate) mod sys {
             in("rdx") arg3,
             lateout("rax") res,
         );
+        #[cfg(target_os = "macos")]
+        asm!(
+            "svc 0",
+            in("x16") num,
+            inout("x0") arg1 => res,
+            in("x1") arg2,
+            in("x2") arg3,
+            options(nostack),
+        );
         res
     }
 
@@ -259,6 +279,7 @@ pub(crate) mod sys {
     /// the syscall result (or error code) that gets stored in rax.
     unsafe fn syscall_1(num: u64, arg1: u64) -> i64 {
         let res;
+        #[cfg(target_os = "linux")]
         asm!(
             // there is no need to write "mov"-instructions, see below
             "syscall",
@@ -268,16 +289,19 @@ pub(crate) mod sys {
             in("rdi") arg1,
             lateout("rax") res,
         );
+        #[cfg(target_os = "macos")]
+        asm!(
+            "svc 0",
+            in("x16") num,
+            inout("x0") arg1 => res,
+            options(nostack),
+        );
         res
     }
 
     #[inline(always)]
     pub(crate) fn write(data: &[u8]) {
         let written = unsafe { syscall_3(WRITE, 1, data.as_ptr() as u64, data.len() as u64) };
-
-        // without this, the output is missing the year in the second line. no
-        // clue why
-        // assert!(written == data.len() as i64);
     }
 
     pub(crate) fn exit() -> ! {
