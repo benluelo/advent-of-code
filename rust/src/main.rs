@@ -13,8 +13,11 @@
     array_windows,
     as_array_of_cells,
 
-    // misc
+    // numbers
     int_roundings,
+    isqrt,
+
+    // misc
     control_flow_enum,
     byte_slice_trim_ascii,
 
