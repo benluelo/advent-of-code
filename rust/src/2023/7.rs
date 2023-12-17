@@ -28,25 +28,8 @@ KTJJT 220
 QQQJA 483
 ";
 
-    for line in Day::<2023, 7>::INPUT.lines() {
-        let hand_bytes = line.as_bytes();
-        // dbg!(utf8(hand_bytes));
-        let hand = parse_hand_from_line::<true>(hand_bytes);
-        eprintln!("{hand}");
-        if hand_bytes.contains(&b'J') {
-            let hand_no_jokers = parse_hand_from_line::<false>(hand_bytes);
-            eprintln!("  {hand_no_jokers}");
-        }
-        assert_eq!(hand.as_bytes(), hand_bytes[0..5]);
-    }
-
-    dbg!(cmp_cards::<true>(
-        [Label::A, Label::J, Label::A, Label::J, Label::A],
-        [Label::A, Label::_2, Label::A, Label::J, Label::K],
-    ));
-
-    dbg!(parse_generic::<true>(Day::<2023, 7>::INPUT.as_bytes()));
-    dbg!(parse_generic::<true>(input));
+    dbg!(parse(input));
+    dbg!(parse2(input));
 }
 
 const fn parse(input: &[u8]) -> u128 {
