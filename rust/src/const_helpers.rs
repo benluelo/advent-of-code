@@ -10,7 +10,7 @@ pub const fn slice_mut<T>(bytes: &mut [T], idx_start: usize, idx_curr: usize) ->
     line
 }
 
-pub const fn count_segments<const PAT: u8, const TRAILING: bool>(bz: &'static [u8]) -> usize {
+pub const fn count_segments<const PAT: u8, const TRAILING: bool>(bz: &[u8]) -> usize {
     let len = bz.len();
 
     let mut segments = 0;
@@ -425,3 +425,33 @@ fn strip_prefix_prefix_too_long() {
 fn strip_prefix_not_prefixed() {
     strip_prefix(b"abcde", b"edcba");
 }
+
+const fn nth_line(bz: &[u8], mut n: usize) -> &[u8] {
+    iter! {
+        for (i, b) in enumerate(bz) {
+            if n == 0 {
+                return read_until(bz, i, b"\n");
+            }
+            if b == b'\n' {
+                n -= 1;
+            }
+        }
+    }
+
+    panic!();
+}
+
+macro_rules! cmp {
+    ($l:expr, $r:expr) => {{
+        let l = $l;
+        let r = $r;
+        if l < r {
+            ::core::cmp::Ordering::Less
+        } else if l > r {
+            ::core::cmp::Ordering::Greater
+        } else {
+            ::core::cmp::Ordering::Equal
+        }
+    }};
+}
+pub(crate) use cmp;

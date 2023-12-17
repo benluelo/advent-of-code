@@ -3,11 +3,11 @@
     "aoc-inputs": {
       "flake": false,
       "locked": {
-        "lastModified": 1702678426,
-        "narHash": "sha256-SDMAC5g+pkPIeDmiEybZIKbNnNU7IBe8K4VW5OyZnQs=",
+        "lastModified": 1702795476,
+        "narHash": "sha256-+BsCdle0qlEhZ/oL/RF7ldriMjB90eiDj2atAw2WEaE=",
         "ref": "refs/heads/main",
-        "rev": "f071aa121d47fb520a1813d73d69b1e8f2e7f2df",
-        "revCount": 13,
+        "rev": "2d3fa535c78843e211ff113be1b6eed77026f650",
+        "revCount": 14,
         "type": "git",
         "url": "ssh://git@github.com/benluelo/advent-of-code-inputs.git"
       },

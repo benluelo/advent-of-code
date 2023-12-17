@@ -29,6 +29,7 @@
     const_mut_refs,
     const_slice_split_at_mut
 )]
+#![allow(clippy::many_single_char_names)]
 
 #[cfg(windows)]
 compile_error!("windows is not supported");

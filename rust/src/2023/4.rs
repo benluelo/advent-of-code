@@ -52,7 +52,6 @@ const fn parse(input: &[u8]) -> u32 {
     res
 }
 
-#[allow(clippy::many_single_char_names)]
 const fn parse2(input: &mut [u8]) -> u64 {
     let mut res: u64 = 0;
 
@@ -150,7 +149,6 @@ const fn count_matches(winning_numbers: &[u8], numbers: &[u8]) -> u32 {
     matches
 }
 
-#[allow(clippy::many_single_char_names)]
 const fn read_repetitions(line: &[u8], colon_space_idx: usize, pipe_space_idx: usize) -> u64 {
     let [a, b, c, d] = slice(line, 0, 4) else {
         panic!()
@@ -165,7 +163,6 @@ const fn read_repetitions(line: &[u8], colon_space_idx: usize, pipe_space_idx: u
     u64::from_be_bytes([*a, *b, *c, *d, *e, *f, *g, *h])
 }
 
-#[allow(clippy::many_single_char_names)]
 const fn write_repetitions(
     line: &mut [u8],
     colon_space_idx: usize,
