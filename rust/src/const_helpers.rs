@@ -455,3 +455,19 @@ macro_rules! cmp {
     }};
 }
 pub(crate) use cmp;
+
+pub const fn slice_eq(a: &[u8], b: &[u8]) -> bool {
+    if a.len() == b.len() {
+        iter! {
+            for i in range(0, a.len()) {
+                if a[i] != b[i] {
+                    return false;
+                }
+            }
+        }
+
+        true
+    } else {
+        false
+    }
+}

@@ -123,11 +123,6 @@ pub extern "C" fn _start(_argc: i32, _argv: *const *const u8) -> ! {
                 const OUTPUT: [u8; _] = PREFIX, PART_1, PREFIX, PART_2;
             }
 
-            // sys::write(PREFIX.as_slice());
-            // sys::write(PART_1.as_slice());
-
-            // sys::write(PREFIX.as_slice());
-            // sys::write(PART_2.as_slice());
             sys::write(OUTPUT.as_slice());
         }};
     }
