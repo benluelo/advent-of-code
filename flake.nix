@@ -58,7 +58,7 @@
           years = [ 2022 2023 ];
           days = [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ];
 
-          link-args = ["-v" "-e" "__start" "-Z" "-pie" "-no_eh_labels" "-dead_strip" "-allow_stack_execute" "-S" "-no_uuid"] ++ (pkgs.lib.optionals pkgs.stdenv.isLinux ["--no-eh-frame-hdr" "-z" "norelro" "-nostdlib" "--disable-new-dtags" "--no-dynamic-linker" "-z" "nodefaultlib" "--hash-style=sysv" "--no-rosegment" "-z" "nognustack" "-N" "--icf=all" "--ignore-data-address-equality" "--ignore-data-address-equality" "--noinhibit-exec" "--print-gc-sections" "--print-icf-sections"]);
+          link-args = ["-v"] ++ (pkgs.lib.optionals pkgs.stdenv.isDarwin ["-e" "__start" "-Z" "-pie" "-no_eh_labels" "-dead_strip" "-allow_stack_execute" "-S" "-no_uuid"]) ++ (pkgs.lib.optionals pkgs.stdenv.isLinux ["--no-eh-frame-hdr" "-z" "norelro" "-nostdlib" "--disable-new-dtags" "--no-dynamic-linker" "-z" "nodefaultlib" "--hash-style=sysv" "--no-rosegment" "-z" "nognustack" "-N" "--icf=all" "--ignore-data-address-equality" "--ignore-data-address-equality" "--noinhibit-exec" "--print-gc-sections" "--print-icf-sections"]);
 
           mkAocDay = year: day: pkgs.stdenv.mkDerivation {
             name = "advent-of-code-${toString year}-${toString day}";
