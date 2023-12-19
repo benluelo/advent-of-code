@@ -165,6 +165,34 @@ pub const fn parse_int(bz: &[u8]) -> u32 {
     res as u32
 }
 
+#[allow(clippy::cast_possible_truncation)]
+pub const fn parse_sint(bz: &[u8]) -> i32 {
+    let mut res = 0;
+
+    let is_negative = bz[0] == b'-';
+    let bz = if is_negative { bz.split_at(1).1 } else { bz };
+
+    iter! {
+        for (i, digit) in enumerate(bz) {
+            assert!(digit.is_ascii_digit());
+            res += (digit - 48) as i32 * (if is_negative { -1 } else { 1 }) * 10_i32.pow((bz.len() - i - 1) as u32);
+        }
+    }
+
+    res
+}
+
+#[test]
+fn parse_sint_works() {
+    assert_eq!(parse_sint(b"0"), 0);
+    assert_eq!(parse_sint(b"1"), 1);
+    assert_eq!(parse_sint(b"12345"), 12345);
+    assert_eq!(parse_sint(b"-1"), -1);
+    assert_eq!(parse_sint(b"-1234"), -1234);
+    assert_eq!(parse_sint(i32::MAX.to_string().as_bytes()), i32::MAX);
+    assert_eq!(parse_sint(i32::MIN.to_string().as_bytes()), i32::MIN);
+}
+
 pub const fn max(a: u32, b: u32) -> u32 {
     if a >= b {
         a
@@ -313,12 +341,11 @@ macro_rules! iter {
     (for ($i:ident, $item:pat) in enumerate($slice:ident)
         $body:block
     ) => {
-        let mut $i = 0;
         let mut __i = 0;
         while __i < $slice.len() {
             let $item = $slice[__i];
             __i += 1;
-            $i = __i - 1;
+            let $i = __i - 1;
             $body
         }
     };
@@ -327,10 +354,9 @@ macro_rules! iter {
         $body:block
     ) => {
         let mut __i = $start;
-        let mut $i = $start;
         while __i < $end {
             __i += 1;
-            $i = __i - 1;
+            let $i = __i - 1;
             $body
         }
     };
