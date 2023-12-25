@@ -20,6 +20,7 @@
     // misc
     control_flow_enum,
     byte_slice_trim_ascii,
+    let_chains,
 
     // cool and handy
     lint_reasons,

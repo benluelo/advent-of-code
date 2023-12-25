@@ -497,3 +497,13 @@ pub const fn slice_eq(a: &[u8], b: &[u8]) -> bool {
         false
     }
 }
+
+macro_rules! opt_unwrap {
+    ($opt:expr) => {
+        match $opt {
+            Some(t) => t,
+            None => panic!(),
+        }
+    };
+}
+pub(crate) use opt_unwrap;

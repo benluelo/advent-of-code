@@ -6,16 +6,16 @@ use crate::{
 };
 
 impl ConstDaySolution for Day<2023, 9> {
-    // const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    // const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    const PART_1: &'static str = "";
-    const PART_2: &'static str = "";
+    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
+    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
+    // const PART_1: &'static str = "";
+    // const PART_2: &'static str = "";
 }
 
-// #[allow(long_running_const_eval)]
-// const SOLUTION_PART_1: i32 = parse(Day::<2023, 9>::INPUT.as_bytes());
-// #[allow(long_running_const_eval)]
-// const SOLUTION_PART_2: u128 = parse2(Day::<2023, 8>::INPUT.as_bytes());
+#[allow(long_running_const_eval)]
+const SOLUTION_PART_1: i32 = parse(Day::<2023, 9>::INPUT.as_bytes());
+#[allow(long_running_const_eval)]
+const SOLUTION_PART_2: u128 = parse2(Day::<2023, 8>::INPUT.as_bytes());
 
 #[test]
 fn parse_test() {
