@@ -353,10 +353,21 @@ macro_rules! iter {
     (for $i:ident in range($start:expr, $end:expr)
         $body:block
     ) => {
+        iter! {
+            for $i in range($start, $end, 1) {
+                $body
+            }
+        }
+    };
+
+    (for $i:ident in range($start:expr, $end:expr, $step:expr)
+        $body:block
+    ) => {
+        let __step = $step;
         let mut __i = $start;
         while __i < $end {
-            __i += 1;
-            let $i = __i - 1;
+            __i += __step;
+            let $i = __i - __step;
             $body
         }
     };
