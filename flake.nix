@@ -26,7 +26,7 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems =
         [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" "x86_64-darwin" ];
-        
+
       imports = [
         treefmt-nix.flakeModule
       ];
@@ -58,7 +58,7 @@
           years = [ 2022 2023 ];
           days = [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ];
 
-          link-args = ["-v"] ++ (pkgs.lib.optionals pkgs.stdenv.isDarwin ["-e" "__start" "-Z" "-pie" "-no_eh_labels" "-dead_strip" "-allow_stack_execute" "-S" "-no_uuid"]) ++ (pkgs.lib.optionals pkgs.stdenv.isLinux ["--no-eh-frame-hdr" "-z" "norelro" "-nostdlib" "--disable-new-dtags" "--no-dynamic-linker" "-z" "nodefaultlib" "--hash-style=sysv" "--no-rosegment" "-z" "nognustack" "-N" "--icf=all" "--ignore-data-address-equality" "--ignore-data-address-equality" "--noinhibit-exec" "--print-gc-sections" "--print-icf-sections"]);
+          link-args = [ "-v" ] ++ (pkgs.lib.optionals pkgs.stdenv.isDarwin [ "-e" "__start" "-Z" "-pie" "-no_eh_labels" "-dead_strip" "-allow_stack_execute" "-S" "-no_uuid" ]) ++ (pkgs.lib.optionals pkgs.stdenv.isLinux [ "--no-eh-frame-hdr" "-z" "norelro" "-nostdlib" "--disable-new-dtags" "--no-dynamic-linker" "-z" "nodefaultlib" "--hash-style=sysv" "--no-rosegment" "-z" "nognustack" "-N" "--icf=all" "--ignore-data-address-equality" "--ignore-data-address-equality" "--noinhibit-exec" "--print-gc-sections" "--print-icf-sections" ]);
 
           mkAocDay = year: day: pkgs.stdenv.mkDerivation {
             name = "advent-of-code-${toString year}-${toString day}";
@@ -94,33 +94,36 @@
                 SDKROOT="${pkgs.darwin.apple_sdk.MacOSX-SDK}" RUSTC_LOG=rustc_codegen_ssa::back::link=info cargo rustc -vvv --release --no-default-features -F const,${toString year}-${toString day} --target ${CARGO_BUILD_TARGET} -j1 -Z build-std=alloc,core -Z build-std-features=core/panic_immediate_abort -- -C linker=rust-lld -C link-args='${pkgs.lib.concatStringsSep "\n" link-args}'
               '';
             };
-            installPhase = pkgs.lib.concatStringsSep "\n" [''
-              mkdir -p $out/bin
+            installPhase = pkgs.lib.concatStringsSep "\n" [
+              ''
+                mkdir -p $out/bin
 
-              cp --no-preserve=mode $src/rust/target/${CARGO_BUILD_TARGET}/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
-            ''
-            (pkgs.lib.optionalString pkgs.stdenv.isLinux ''
-              ls -l $out/bin
+                cp --no-preserve=mode $src/rust/target/${CARGO_BUILD_TARGET}/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
+              ''
+              (pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+                ls -l $out/bin
 
-              strip -z "$out/bin/advent-of-code-${toString year}-${toString day}"
-            '')
-            ''
+                strip -z "$out/bin/advent-of-code-${toString year}-${toString day}"
+              '')
+              ''
 
               ls -l $out/bin
 
               chmod +x "$out/bin/advent-of-code-${toString year}-${toString day}"
-            ''];
+            ''
+            ];
 
             meta.mainProgram = "advent-of-code-${toString year}-${toString day}";
           };
-        in {
+        in
+        {
           _module.args.pkgs = import nixpkgs {
             inherit system;
             overlays = with inputs; [
               rust-overlay.overlays.default
             ];
           };
-        
+
           packages = builtins.listToAttrs (
             map
               ({ year, day }: {
@@ -131,17 +134,17 @@
                 year = years;
                 day = days;
               })
-            );
+          );
 
           devShells = {
             default = pkgs.mkShell {
               buildInputs = [ rust-nightly ]
                 ++ (with pkgs; [
-                  rnix-lsp
-                  cargo-flamegraph
-                ]);
-            nativeBuildInputs = [ config.treefmt.build.wrapper ]
-              ++ pkgs.lib.attrsets.attrValues config.treefmt.build.programs;
+                rnix-lsp
+                cargo-flamegraph
+              ]);
+              nativeBuildInputs = [ config.treefmt.build.wrapper ]
+                ++ pkgs.lib.attrsets.attrValues config.treefmt.build.programs;
             };
           };
 

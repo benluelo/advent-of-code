@@ -365,7 +365,8 @@ macro_rules! iter {
     ) => {
         let __step = $step;
         let mut __i = $start;
-        while __i < $end {
+        let __end = $end;
+        while __i < __end {
             __i += __step;
             let $i = __i - __step;
             $body
@@ -518,3 +519,39 @@ macro_rules! opt_unwrap {
     };
 }
 pub(crate) use opt_unwrap;
+
+macro_rules! set_bit {
+    ($number:expr, $n:expr) => {
+        $number | (1 << $n)
+    };
+}
+pub(crate) use set_bit;
+
+macro_rules! set_bit_to {
+    ($number:expr, $n:expr, ($ty:ty)$x:expr) => {{
+        let _: bool = $x;
+        $number & !(1 << $n) | ($x as $ty << $n)
+    }};
+}
+pub(crate) use set_bit_to;
+
+macro_rules! clear_bit {
+    ($number:expr, $n:expr) => {
+        $number & !(1 << $n)
+    };
+}
+pub(crate) use clear_bit;
+
+macro_rules! toggle_bit {
+    ($number:expr, $n:expr) => {
+        $number ^ (1 << $n)
+    };
+}
+pub(crate) use toggle_bit;
+
+macro_rules! check_bit {
+    ($number:expr, $n:expr) => {
+        (($number >> $n) & 1) == 1
+    };
+}
+pub(crate) use check_bit;

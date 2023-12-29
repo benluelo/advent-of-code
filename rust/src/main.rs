@@ -25,6 +25,7 @@
     // cool and handy
     lint_reasons,
     trace_macros,
+    slice_flatten,
 
     // const stuff
     const_mut_refs,
