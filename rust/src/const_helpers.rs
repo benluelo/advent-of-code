@@ -327,22 +327,22 @@ macro_rules! arr {
 pub(crate) use arr;
 
 macro_rules! iter {
-    (for $item:pat in $slice:ident
+    ($($label:lifetime:)? for $item:pat in $slice:ident
         $body:block
     ) => {
         let mut __i = 0;
-        while __i < $slice.len() {
+        $($label:)? while __i < $slice.len() {
             let $item = $slice[__i];
             __i += 1;
             $body
         }
     };
 
-    (for ($i:ident, $item:pat) in enumerate($slice:ident)
+    ($($label:lifetime:)? for ($i:ident, $item:pat) in enumerate($slice:ident)
         $body:block
     ) => {
         let mut __i = 0;
-        while __i < $slice.len() {
+        $($label:)? while __i < $slice.len() {
             let $item = $slice[__i];
             __i += 1;
             let $i = __i - 1;
@@ -350,30 +350,30 @@ macro_rules! iter {
         }
     };
 
-    (for $i:ident in range($start:expr, $end:expr)
+    ($($label:lifetime:)? for $i:ident in range($start:expr, $end:expr)
         $body:block
     ) => {
         iter! {
-            for $i in range($start, $end, 1) {
+            $($label:)? for $i in range($start, $end, 1) {
                 $body
             }
         }
     };
 
-    (for $i:ident in range($start:expr, $end:expr, $step:expr)
+    ($($label:lifetime:)? for $i:ident in range($start:expr, $end:expr, $step:expr)
         $body:block
     ) => {
         let __step = $step;
         let mut __i = $start;
         let __end = $end;
-        while __i < __end {
+        $($label:)? while __i < __end {
             __i += __step;
             let $i = __i - __step;
             $body
         }
     };
 
-    (for $line:ident in lines($slice:ident)
+    ($($label:lifetime:)? for $line:ident in lines($slice:ident)
         $body:block
     ) => {
         iter! {
@@ -381,12 +381,12 @@ macro_rules! iter {
         }
     };
 
-    (for $segment:ident in split($slice:ident, $delimiter:expr)
+    ($($label:lifetime:)? for $segment:ident in split($slice:ident, $delimiter:expr)
         $body:block
     ) => {
         let mut i = 0;
         let __delimiter = $delimiter;
-        while i < $slice.len() {
+        $($label:)? while i < $slice.len() {
             let $segment = $crate::const_helpers::read_until($slice, i, __delimiter);
             i += $segment.len() + __delimiter.len();
             $body
@@ -555,3 +555,7 @@ macro_rules! check_bit {
     };
 }
 pub(crate) use check_bit;
+
+pub const fn line_len(line: &[u8]) -> usize {
+    read_until(line, 0, b"\n").len() + 1
+}

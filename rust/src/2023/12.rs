@@ -8,16 +8,17 @@ use crate::{
 };
 
 impl ConstDaySolution for Day<2023, 12> {
-    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    // const PART_1: &'static str = "";
-    // const PART_2: &'static str = "";
+    // const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
+    // const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
+    const PART_1: &'static str = "";
+    const PART_2: &'static str = "";
 }
 
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_1: u128 = parse(&mut arr!(Day::<2023, 12>::INPUT.as_bytes()));
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_2: u128 = parse2(&mut arr!(Day::<2023, 12>::INPUT.as_bytes()));
+// #[allow(long_running_const_eval)]
+// const SOLUTION_PART_1: u128 = parse(&mut arr!(Day::<2023,
+// 12>::INPUT.as_bytes())); #[allow(long_running_const_eval)]
+// const SOLUTION_PART_2: u128 = parse2(&mut arr!(Day::<2023,
+// 12>::INPUT.as_bytes()));
 
 // who needs a heap
 const MEMOIZATION_LEN: usize = 15000;
