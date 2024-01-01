@@ -98,33 +98,31 @@ const fn parse2(input: &[u8]) -> u32 {
 }
 
 const fn parse_map_horizontal(map: Map) -> Option<u32> {
-    let line_len = map.line_len;
-
     let mut a = 0;
-    let mut b = line_len;
+    let mut b = map.line_len;
 
-    while (b + line_len) - 1 <= map.map.len() {
+    while (b + map.line_len) - 1 <= map.map.len() {
         'outer: {
             if matches!(row_cmp(map, a, b), LineDiff::Equal) {
                 // compare until either a or b hits the limit
                 let mut a2 = a;
-                let mut b2 = b + line_len;
+                let mut b2 = b + map.line_len;
 
-                while (b2 + line_len) - 1 <= map.map.len() && a2 > 0 {
-                    if !matches!(row_cmp(map, a2 - line_len, b2), LineDiff::Equal) {
+                while (b2 + map.line_len) - 1 <= map.map.len() && a2 > 0 {
+                    if !matches!(row_cmp(map, a2 - map.line_len, b2), LineDiff::Equal) {
                         break 'outer;
                     }
 
-                    a2 -= line_len;
-                    b2 += line_len;
+                    a2 -= map.line_len;
+                    b2 += map.line_len;
                 }
 
-                return Some((a / line_len) as u32 + 1);
+                return Some((a / map.line_len) as u32 + 1);
             }
         }
 
-        a += line_len;
-        b += line_len;
+        a += map.line_len;
+        b += map.line_len;
     }
 
     None
@@ -133,17 +131,15 @@ const fn parse_map_horizontal(map: Map) -> Option<u32> {
 const fn parse_map_horizontal_fix_smudge(map: Map) -> Option<u32> {
     let unfixed_result = parse_map_horizontal(map);
 
-    let line_len = map.line_len;
-
     let mut a = 0;
-    let mut b = line_len;
+    let mut b = map.line_len;
 
     let mut smudge_fixed = false;
 
-    while (b + line_len) - 1 <= map.map.len() {
+    while (b + map.line_len) - 1 <= map.map.len() {
         'outer: {
             let matches_unfixed = if let Some(u) = unfixed_result
-                && u == (a / line_len) as u32 + 1
+                && u == (a / map.line_len) as u32 + 1
             {
                 true
             } else {
@@ -162,10 +158,10 @@ const fn parse_map_horizontal_fix_smudge(map: Map) -> Option<u32> {
             if lines_match {
                 // compare until either a or b hits the limit
                 let mut a2 = a;
-                let mut b2 = b + line_len;
+                let mut b2 = b + map.line_len;
 
-                while (b2 + line_len) - 1 <= map.map.len() && a2 > 0 {
-                    let lines_match = match row_cmp(map, a2 - line_len, b2) {
+                while (b2 + map.line_len) - 1 <= map.map.len() && a2 > 0 {
+                    let lines_match = match row_cmp(map, a2 - map.line_len, b2) {
                         LineDiff::Equal => true,
                         LineDiff::OneDifference if !smudge_fixed => {
                             smudge_fixed = true;
@@ -179,24 +175,22 @@ const fn parse_map_horizontal_fix_smudge(map: Map) -> Option<u32> {
                         break 'outer;
                     }
 
-                    a2 -= line_len;
-                    b2 += line_len;
+                    a2 -= map.line_len;
+                    b2 += map.line_len;
                 }
 
-                return Some((a / line_len) as u32 + 1);
+                return Some((a / map.line_len) as u32 + 1);
             }
         }
 
-        a += line_len;
-        b += line_len;
+        a += map.line_len;
+        b += map.line_len;
     }
 
     None
 }
 
 const fn row_cmp(map: Map, a: usize, b: usize) -> LineDiff {
-    let line_len = map.line_len;
-
     let mut one_difference_found = false;
 
     // newlines --+
@@ -210,17 +204,17 @@ const fn row_cmp(map: Map, a: usize, b: usize) -> LineDiff {
     //     .#.#.#. <-+
 
     assert!(a < b);
-    assert!(a % line_len == 0);
-    assert!(b % line_len == 0);
+    assert!(a % map.line_len == 0);
+    assert!(b % map.line_len == 0);
     // not sure how to get this assertion to work but i got the right answer so
     // ¯\_(ツ)_/¯
     // assert!(a < map.map.len() - (line_len * 2) - 1);
     // NOTE: -2 to ignore newlines
-    assert!(b < (map.map.len() - (line_len - 2)));
-    assert!(b >= line_len);
+    assert!(b < (map.map.len() - (map.line_len - 2)));
+    assert!(b >= map.line_len);
 
     iter! {
-        for i in range(0, line_len - 1) {
+        for i in range(0, map.line_len - 1) {
             if map.map[a + i] != map.map[b + i] {
                 if one_difference_found {
                     return LineDiff::Different;
@@ -239,10 +233,8 @@ const fn row_cmp(map: Map, a: usize, b: usize) -> LineDiff {
 }
 
 const fn parse_map_vertical(map: Map) -> Option<u32> {
-    let line_len = map.line_len;
-
     iter! {
-        'outer: for x in range(0, line_len - 2) {
+        'outer: for x in range(0, map.line_len - 2) {
             let left_col = x;
             let right_col = x + 1;
 
@@ -254,7 +246,7 @@ const fn parse_map_vertical(map: Map) -> Option<u32> {
             let mut right_col2 = right_col + 1;
 
             // skip the newline
-            while right_col2 < line_len - 1 && left_col2 > 0 {
+            while right_col2 < map.line_len - 1 && left_col2 > 0 {
                 if !matches!(col_cmp(map, left_col2 - 1, right_col2), LineDiff::Equal) {
                     continue 'outer;
                 }
@@ -273,12 +265,10 @@ const fn parse_map_vertical(map: Map) -> Option<u32> {
 const fn parse_map_vertical_fix_smudge(map: Map) -> Option<u32> {
     let unfixed_result = parse_map_vertical(map);
 
-    let line_len = map.line_len;
-
     let mut smudge_fixed = false;
 
     iter! {
-        'outer: for x in range(0, line_len - 2) {
+        'outer: for x in range(0, map.line_len - 2) {
             let left_col = x;
             let right_col = x + 1;
 
@@ -308,7 +298,7 @@ const fn parse_map_vertical_fix_smudge(map: Map) -> Option<u32> {
             let mut right_col2 = right_col + 1;
 
             // skip the newline
-            while right_col2 < line_len - 1 && left_col2 > 0 {
+            while right_col2 < map.line_len - 1 && left_col2 > 0 {
                 let lines_match = match col_cmp(map, left_col2 - 1, right_col2) {
                     LineDiff::Equal => true,
                     LineDiff::OneDifference if !smudge_fixed => {
@@ -335,13 +325,11 @@ const fn parse_map_vertical_fix_smudge(map: Map) -> Option<u32> {
 }
 
 const fn col_cmp(map: Map, mut left_col: usize, mut right_col: usize) -> LineDiff {
-    let line_len = map.line_len;
-
     let mut one_difference_found = false;
 
     assert!(left_col < right_col);
-    assert!(left_col < line_len - 1);
-    assert!(right_col < line_len);
+    assert!(left_col < map.line_len - 1);
+    assert!(right_col < map.line_len);
     assert!(right_col > 0);
 
     while right_col < map.map.len() {
@@ -356,8 +344,8 @@ const fn col_cmp(map: Map, mut left_col: usize, mut right_col: usize) -> LineDif
             one_difference_found = true;
         }
 
-        left_col += line_len;
-        right_col += line_len;
+        left_col += map.line_len;
+        right_col += map.line_len;
     }
 
     if one_difference_found {
