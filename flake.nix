@@ -82,6 +82,8 @@
 
                 configureCargoVendoredDepsHook ${vendored} "$out/.cargo/config.toml"
 
+                ls -al ${aoc-inputs}/*
+
                 cp -r ${aoc-inputs} $out/inputs
                 # schrodinger's directory: this only exists if i print it's contents
                 ls $out/inputs/*
