@@ -338,12 +338,13 @@ macro_rules! iter {
         }
     };
 
-    ($($label:lifetime:)? for ($i:ident, $item:pat) in enumerate($slice:ident)
+    ($($label:lifetime:)? for ($i:ident, $item:pat) in enumerate($slice:expr)
         $body:block
     ) => {
+        let __slice = $slice;
         let mut __i = 0;
-        $($label:)? while __i < $slice.len() {
-            let $item = $slice[__i];
+        $($label:)? while __i < __slice.len() {
+            let $item = __slice[__i];
             __i += 1;
             let $i = __i - 1;
             $body

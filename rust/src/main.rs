@@ -12,6 +12,11 @@
     // arrays
     array_windows,
     as_array_of_cells,
+    const_maybe_uninit_write,
+    maybe_uninit_slice,
+    maybe_uninit_uninit_array,
+    const_maybe_uninit_uninit_array,
+    const_maybe_uninit_assume_init,
 
     // numbers
     int_roundings,
@@ -29,7 +34,11 @@
 
     // const stuff
     const_mut_refs,
-    const_slice_split_at_mut
+    const_slice_split_at_mut,
+    const_option,
+    const_swap,
+    const_replace,
+    inline_const
 )]
 #![allow(clippy::many_single_char_names)]
 
