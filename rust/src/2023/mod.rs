@@ -58,6 +58,10 @@ mod day_14;
 #[path = "15.rs"]
 mod day_15;
 
+#[cfg(feature = "2023-16")]
+#[path = "16.rs"]
+mod day_16;
+
 #[cfg(feature = "2023-17")]
 #[path = "17.rs"]
 mod day_17;
