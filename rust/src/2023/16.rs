@@ -1,25 +1,25 @@
 use core::fmt::{Display, Write};
 
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{arr, count_segments, iter, itoa, max, read_until, utf8},
-    ConstDaySolution, Day, Input,
+    const_helpers::{count_segments, iter, max, read_until},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 16> {
-    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    // const PART_1: &'static str = "";
-    // const PART_2: &'static str = "";
+#[apply(day)]
+impl Day<2023, 16> {
+    pub const fn parse(input: &mut [u8]) -> u32 {
+        parse(input)
+    }
+    pub const fn parse2(input: &mut [u8]) -> u32 {
+        parse2(input)
+    }
 }
-
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_1: u32 = parse(&mut arr!(Day::<2023, 16>::INPUT.as_bytes()));
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_2: u32 = parse2(&mut arr!(Day::<2023, 16>::INPUT.as_bytes()));
 
 #[test]
 fn parse_test() {
-    let mut input = br".|...\....
+    let _input = br".|...\....
 |.-.\.....
 .....|-...
 ........|.
@@ -56,39 +56,38 @@ const fn parse2(input: &mut [u8]) -> u32 {
 
     let mut res = 0;
 
-    iter! {
-        for i in range(0, map.map.len()) {
-            if map.map[i] == b'\n' {
-                continue;
-            }
+    #[apply(iter)]
+    for i in range(0, map.map.len()) {
+        if map.map[i] == b'\n' {
+            continue;
+        }
 
-            if map.col(i) == 0 {
-                traverse(&mut map, i, Direction::East);
+        if map.col(i) == 0 {
+            traverse(&mut map, i, Direction::East);
 
-                res = max(res, map.count_energized());
-                map.reset();
-            }
+            res = max(res, map.count_energized());
+            map.reset();
+        }
 
-            if map.col(i) == map.cols - 1 {
-                traverse(&mut map, i, Direction::West);
+        if map.col(i) == map.cols - 1 {
+            traverse(&mut map, i, Direction::West);
 
-                res = max(res, map.count_energized());
-                map.reset();
-            }
+            res = max(res, map.count_energized());
+            map.reset();
+        }
 
-            if map.row(i) == 0 {
-                traverse(&mut map, i, Direction::South);
+        if map.row(i) == 0 {
+            traverse(&mut map, i, Direction::South);
 
-                res = max(res, map.count_energized());
-                map.reset();
-            }
+            res = max(res, map.count_energized());
+            map.reset();
+        }
 
-            if map.row(i) == map.rows - 1 {
-                traverse(&mut map, i, Direction::North);
+        if map.row(i) == map.rows - 1 {
+            traverse(&mut map, i, Direction::North);
 
-                res = max(res, map.count_energized());
-                map.reset();
-            }
+            res = max(res, map.count_energized());
+            map.reset();
         }
     }
 
@@ -113,11 +112,10 @@ enum Direction {
 
 impl<'a> Map<'a> {
     const fn new(map: &'a mut [u8]) -> Self {
-        iter! {
-            for i in range(0, map.len()) {
-                if map[i] != b'\n' {
-                    map[i] &= MASK;
-                }
+        #[apply(iter)]
+        for i in range(0, map.len()) {
+            if map[i] != b'\n' {
+                map[i] &= MASK;
             }
         }
 
@@ -128,17 +126,16 @@ impl<'a> Map<'a> {
     }
 
     const fn reset(&mut self) {
-        iter! {
-            for i in range(0, self.map.len()) {
-                if self.map[i] != b'\n' {
-                    self.map[i] &= MASK;
-                }
+        #[apply(iter)]
+        for i in range(0, self.map.len()) {
+            if self.map[i] != b'\n' {
+                self.map[i] &= MASK;
             }
         }
     }
 
     const fn read(&self, cursor: usize) -> Option<Tile> {
-        if cursor >= 0 && cursor < self.map.len() {
+        if cursor < self.map.len() {
             let b = self.map[cursor];
             Tile::from_byte(b)
         } else {
@@ -164,9 +161,7 @@ impl<'a> Map<'a> {
 
     #[cfg(test)]
     fn dbg_input(&self) {
-        let row_empty_color = "\u{001b}[46;1m";
         let col_empty_color = "\u{001b}[30;47m";
-        let both_empty_color = "\u{001b}[42;1m";
         let reset = "\u{001b}[0m";
 
         let formatted = &self
@@ -191,6 +186,7 @@ impl<'a> Map<'a> {
     }
 
     const fn cursor_delta(&self, direction: Direction) -> isize {
+        #[allow(clippy::cast_possible_wrap)]
         match direction {
             Direction::North => -((self.cols + 1) as isize),
             Direction::East => 1,
@@ -204,10 +200,9 @@ impl<'a> Map<'a> {
 
         let map = &self.map;
 
-        iter! {
-            for char in map {
-                res += (Tile::from_byte(char).is_some() && char & !MASK > 0) as u32;
-            }
+        #[apply(iter)]
+        for char in map {
+            res += (Tile::from_byte(char).is_some() && char & !MASK > 0) as u32;
         }
 
         res
@@ -215,8 +210,13 @@ impl<'a> Map<'a> {
 }
 
 const fn traverse(map: &mut Map, mut cursor: usize, mut direction: Direction) {
-    use Direction::*;
-    use Tile::*;
+    #[allow(clippy::enum_glob_use)]
+    use {Direction::*, Tile::*};
+
+    enum NextDirection {
+        Next(Direction),
+        Split(Direction, Direction),
+    }
 
     loop {
         if cursor >= map.map.len() {
@@ -229,27 +229,27 @@ const fn traverse(map: &mut Map, mut cursor: usize, mut direction: Direction) {
 
         map.energize(cursor, direction);
 
-        enum NextDirection {
-            Next(Direction),
-            Split(Direction, Direction),
-        }
-
         if let Some(tile) = map.read(cursor) {
             let next_directions = match (direction, tile) {
-                (prev @ (North | South), EMPTY | VSPLIT) => NextDirection::Next(prev),
-                (prev @ (East | West), EMPTY | HSPLIT) => NextDirection::Next(prev),
+                (prev @ (East | West), Empty | HSplit)
+                | (prev @ (North | South), Empty | VSplit) => NextDirection::Next(prev),
 
-                (North | South, HSPLIT) => NextDirection::Split(East, West),
-                (East | West, VSPLIT) => NextDirection::Split(North, South),
+                (North | South, HSplit) => NextDirection::Split(East, West),
+                (East | West, VSplit) => NextDirection::Split(North, South),
 
-                (North, FMIRROR) => NextDirection::Next(East),
-                (North, BMIRROR) => NextDirection::Next(West),
-                (East, FMIRROR) => NextDirection::Next(North),
-                (East, BMIRROR) => NextDirection::Next(South),
-                (South, FMIRROR) => NextDirection::Next(West),
-                (South, BMIRROR) => NextDirection::Next(East),
-                (West, FMIRROR) => NextDirection::Next(South),
-                (West, BMIRROR) => NextDirection::Next(North),
+                //        v
+                //   / or \
+                //   ^
+                (North, FMirror) | (South, BMirror) => NextDirection::Next(East),
+                //        v
+                //   \ or /
+                //   ^
+                (North, BMirror) | (South, FMirror) => NextDirection::Next(West),
+
+                // ->/ or \<-
+                (East, FMirror) | (West, BMirror) => NextDirection::Next(North),
+                // ->\ or /<-
+                (East, BMirror) | (West, FMirror) => NextDirection::Next(South),
             };
 
             match next_directions {
@@ -276,21 +276,21 @@ const MASK: u8 = 0b0011_0011;
 #[repr(u8)]
 #[rustfmt::skip]
 pub enum Tile {
-    EMPTY   = b'.' & MASK,
-    VSPLIT  = b'|' & MASK,
-    HSPLIT  = b'-' & MASK,
-    FMIRROR = b'/' & MASK,
-    BMIRROR = b'\\' & MASK,
+    Empty   = b'.' & MASK,
+    VSplit  = b'|' & MASK,
+    HSplit  = b'-' & MASK,
+    FMirror = b'/' & MASK,
+    BMirror = b'\\' & MASK,
 }
 
 impl Display for Tile {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         f.write_char(match self {
-            Tile::EMPTY => '.',
-            Tile::VSPLIT => '|',
-            Tile::HSPLIT => '-',
-            Tile::FMIRROR => '/',
-            Tile::BMIRROR => '\\',
+            Tile::Empty => '.',
+            Tile::VSplit => '|',
+            Tile::HSplit => '-',
+            Tile::FMirror => '/',
+            Tile::BMirror => '\\',
         })
     }
 }
@@ -304,11 +304,11 @@ impl Tile {
         const BMIRROR: u8 = b'\\' & MASK;
 
         match b & MASK {
-            EMPTY => Some(Self::EMPTY),
-            VSPLIT => Some(Self::VSPLIT),
-            HSPLIT => Some(Self::HSPLIT),
-            FMIRROR => Some(Self::FMIRROR),
-            BMIRROR => Some(Self::BMIRROR),
+            EMPTY => Some(Self::Empty),
+            VSPLIT => Some(Self::VSplit),
+            HSPLIT => Some(Self::HSplit),
+            FMIRROR => Some(Self::FMirror),
+            BMIRROR => Some(Self::BMirror),
             _ => None,
         }
     }

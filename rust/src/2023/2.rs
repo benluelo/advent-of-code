@@ -1,17 +1,19 @@
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{iter, itoa, max, parse_int, read_until, slice, utf8},
-    ConstDaySolution, Day, Input,
+    const_helpers::{iter, max, parse_int, read_until, slice},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 2> {
-    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    // const PART_1: &'static str = "";
-    // const PART_2: &'static str = "";
+#[apply(day)]
+impl Day<2023, 2> {
+    pub const fn parse(input: &[u8]) -> u32 {
+        parse(input)
+    }
+    pub const fn parse2(input: &[u8]) -> u32 {
+        parse2(input)
+    }
 }
-
-const SOLUTION_PART_1: u32 = parse(Day::<2023, 2>::INPUT.as_bytes());
-const SOLUTION_PART_2: u32 = parse2(Day::<2023, 2>::INPUT.as_bytes());
 
 struct Game {
     red: u32,
@@ -22,13 +24,12 @@ struct Game {
 const fn parse(bytes: &[u8]) -> u32 {
     let mut res = 0;
 
-    iter! {
-        for line in lines(bytes) {
-            let (game_number, Game { red, green, blue }) = parse_line(line);
+    #[apply(iter)]
+    for line in lines(bytes) {
+        let (game_number, Game { red, green, blue }) = parse_line(line);
 
-            if red <= 12 && green <= 13 && blue <= 14 {
-                res += game_number;
-            }
+        if red <= 12 && green <= 13 && blue <= 14 {
+            res += game_number;
         }
     }
 
@@ -38,12 +39,11 @@ const fn parse(bytes: &[u8]) -> u32 {
 const fn parse2(bytes: &[u8]) -> u32 {
     let mut res = 0;
 
-    iter! {
-        for line in lines(bytes) {
-            let (_, Game { red, green, blue }) = parse_line(line);
+    #[apply(iter)]
+    for line in lines(bytes) {
+        let (_, Game { red, green, blue }) = parse_line(line);
 
-            res += red * green * blue;
-        }
+        res += red * green * blue;
     }
 
     res

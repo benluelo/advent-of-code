@@ -1,17 +1,18 @@
-use core::fmt::Display;
+use cfg_proc::apply;
 
-use crate::{Day, DaySolution, Input};
+use crate::{const_helpers::utf8, day, Day};
 
 const START_OF_PACKET_MARKER_LENGTH: usize = 4;
 const START_OF_MESSAGE_MARKER_LENGTH: usize = 14;
 
-impl DaySolution for Day<2022, 6> {
-    fn part_1() -> impl Display {
-        parse::<START_OF_PACKET_MARKER_LENGTH>(Self::INPUT)
+#[apply(day)]
+impl Day<2022, 6> {
+    pub fn parse(input: &[u8]) -> usize {
+        parse::<START_OF_PACKET_MARKER_LENGTH>(utf8(input))
     }
 
-    fn part_2() -> impl Display {
-        parse::<START_OF_MESSAGE_MARKER_LENGTH>(Self::INPUT)
+    pub fn parse2(input: &[u8]) -> usize {
+        parse::<START_OF_MESSAGE_MARKER_LENGTH>(utf8(input))
     }
 }
 

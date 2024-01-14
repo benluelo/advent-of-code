@@ -1,44 +1,45 @@
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{arr, iter, itoa, opt_unwrap, read_until, utf8},
-    ConstDaySolution, Day, Input,
+    const_helpers::{iter, opt_unwrap, read_until},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 10> {
-    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    // const PART_1: &'static str = "";
-    // const PART_2: &'static str = "";
+#[apply(day)]
+impl Day<2023, 10> {
+    pub const fn parse(input: &mut [u8]) -> u32 {
+        parse(input)
+    }
+    pub const fn parse2(input: &mut [u8]) -> u32 {
+        parse2(input)
+    }
 }
 
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_1: u32 = parse(&mut arr!(Day::<2023, 10>::INPUT.as_bytes()));
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_2: u32 = parse2(&mut arr!(Day::<2023, 10>::INPUT.as_bytes()));
-
-const GROUND: u8 = b'.';
-
 #[test]
+#[cfg(test)]
 fn parse_test() {
-    let mut input = *b"\
-..F7.
-.FJ|.
-SJ.L7
-|F--J
-LJ...
-";
+    use crate::const_helpers::utf8;
 
-    let mut input = *b"\
-.F----7F7F7F7F-7....
-.|F--7||||||||FJ....
-.||.FJ||||||||L7....
-FJL7L7LJLJ||LJ.L-7..
-L--J.L7...LJS7F-7L7.
-....F-J..F7FJ|L7L7L7
-....L7.F7||L7|.L7L7|
-.....|FJLJ|FJ|F7|.LJ
-....FJL-7.||.||||...
-....L---J.LJ.LJLJ...
-";
+    //     let input = *b"\
+    // ..F7.
+    // .FJ|.
+    // SJ.L7
+    // |F--J
+    // LJ...
+    // ";
+
+    //     let input = *b"\
+    // .F----7F7F7F7F-7....
+    // .|F--7||||||||FJ....
+    // .||.FJ||||||||L7....
+    // FJL7L7LJLJ||LJ.L-7..
+    // L--J.L7...LJS7F-7L7.
+    // ....F-J..F7FJ|L7L7L7
+    // ....L7.F7||L7|.L7L7|
+    // .....|FJLJ|FJ|F7|.LJ
+    // ....FJL-7.||.||||...
+    // ....L---J.LJ.LJLJ...
+    // ";
 
     let mut input = *b"\
 FF7FSF7F7F7F7F7F---7
@@ -62,8 +63,6 @@ L7JLJL-JLJLJL--JLJ.L
     dbg!(parse2(&mut input));
 
     dbg_input(&input);
-    // dbg!(parse(input2));
-    // dbg!(parse2(input));
 
     for char in [b'F', b'7', b'-', b'|', b'J', b'L', b'.'] {
         println!("{} = {char:08b} ({:08b})", utf8(&[char]), char | PATH_MASK);
@@ -123,7 +122,8 @@ const fn parse(input: &mut [u8]) -> u32 {
         }
     }
 
-    input[start_pos] = match (next.0, (init.1 as isize) - (start_pos as isize)) {
+    input[start_pos] = #[allow(clippy::match_same_arms, clippy::cast_possible_wrap)]
+    match (next.0, (init.1 as isize) - (start_pos as isize)) {
         //  i
         // iSi
         //  ^
@@ -164,55 +164,53 @@ const fn parse2(input: &mut [u8]) -> u32 {
     let _ = parse(input);
 
     // + 1 to include newline
-    let line_len = read_until(input, 0, b"\n").len() + 1;
+    let _line_len = read_until(input, 0, b"\n").len() + 1;
 
     let mut count = 0;
 
-    iter! {
-        for line in lines(input) {
-            let mut north = false;
-            let mut south = false;
+    #[apply(iter)]
+    for line in lines(input) {
+        let mut north = false;
+        let mut south = false;
 
-            let mut in_shape = false;
+        let mut in_shape = false;
 
-            iter! {
-                for char in line {
-                    if (char & PATH_MASK) == PATH_MASK {
-                        match char & !PATH_MASK {
-                            b'7' => {
-                                // either an F or L has been hit
-                                assert!(north || south);
+        #[apply(iter)]
+        for char in line {
+            if (char & PATH_MASK) == PATH_MASK {
+                match char & !PATH_MASK {
+                    b'7' => {
+                        // either an F or L has been hit
+                        assert!(north || south);
 
-                                in_shape = !(in_shape ^ south);
-                                north = false;
-                                south = false;
-                            }
-                            b'J' => {
-                                // either an F or L has been hit
-                                assert!(north || south);
-
-                                in_shape = !(in_shape ^ north);
-                                north = false;
-                                south = false;
-                            }
-                            b'F' => {
-                                assert!(!north && !south);
-                                south = true;
-                            }
-                            b'L' => {
-                                assert!(!north && !south);
-                                north = true;
-                            }
-                            b'|' => {
-                                assert!(!north && !south);
-                                in_shape = !in_shape;
-                            }
-                            _ => {}
-                        };
-                    } else {
-                        count += in_shape as u32;
+                        in_shape = !(in_shape ^ south);
+                        north = false;
+                        south = false;
                     }
-                }
+                    b'J' => {
+                        // either an F or L has been hit
+                        assert!(north || south);
+
+                        in_shape = !(in_shape ^ north);
+                        north = false;
+                        south = false;
+                    }
+                    b'F' => {
+                        assert!(!north && !south);
+                        south = true;
+                    }
+                    b'L' => {
+                        assert!(!north && !south);
+                        north = true;
+                    }
+                    b'|' => {
+                        assert!(!north && !south);
+                        in_shape = !in_shape;
+                    }
+                    _ => {}
+                };
+            } else {
+                count += in_shape as u32;
             }
         }
     }
@@ -227,9 +225,7 @@ const fn start(line_len: usize, input: &[u8], pos: usize) -> (Direction, usize) 
         return (dir, pos + 1);
     }
 
-    if pos < 0
-        && let Some(dir) = west(input[pos - 1])
-    {
+    if let Some(dir) = west(input[pos - 1]) {
         return (dir, pos - 1);
     }
 

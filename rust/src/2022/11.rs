@@ -1,15 +1,18 @@
 use alloc::{collections::BTreeMap, vec::Vec};
-use core::{cmp::Ordering, fmt::Display, ops::Rem};
+use core::{cmp::Ordering, ops::Rem};
 
-use crate::{Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 11> {
-    fn part_1() -> impl Display {
-        parse_and_solve(Self::INPUT, 20, Some(3))
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 11> {
+    pub fn parse(input: &[u8]) -> u64 {
+        parse_and_solve(utf8(input), 20, Some(3))
     }
 
-    fn part_2() -> impl Display {
-        parse_and_solve(Self::INPUT, 10_000, None)
+    pub fn parse2(input: &[u8]) -> u64 {
+        parse_and_solve(utf8(input), 10_000, None)
     }
 }
 

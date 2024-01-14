@@ -1,24 +1,25 @@
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{arr, iter, itoa, opt_unwrap, read_until, utf8},
-    ConstDaySolution, Day, Input,
+    const_helpers::{iter, read_until},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 11> {
-    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    // const PART_1: &'static str = "";
-    // const PART_2: &'static str = "";
+#[apply(day)]
+impl Day<2023, 11> {
+    pub const fn parse(input: &mut [u8]) -> u64 {
+        parse(input)
+    }
+    pub const fn parse2(input: &mut [u8]) -> u64 {
+        parse2(input)
+    }
 }
-
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_1: u64 = parse(&mut arr!(Day::<2023, 11>::INPUT.as_bytes()));
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_2: u64 = parse2(&mut arr!(Day::<2023, 11>::INPUT.as_bytes()));
 
 const OCCUPIED_ROW_MASK: u8 = 0b1000_0000;
 const OCCUPIED_COL_MASK: u8 = 0b0100_0000;
 
 #[test]
+#[cfg(test)]
 fn parse_test() {
     let mut input = *b"\
 ...#......
@@ -33,19 +34,7 @@ fn parse_test() {
 #...#.....
 ";
 
-    // dbg!(parse(&mut input));
-
-    // dbg_input(&input);
-
-    let mut input = Day::<2023, 11>::INPUT.as_bytes().to_vec();
-
-    // dbg!(parse2(&mut input));
-
-    // dbg_input(&input);
-    // dbg!(parse(input2));
-    // dbg!(parse2(input));
-
-    let mut input = &mut input;
+    let input = &mut input;
 
     let res = parse(input);
 
@@ -56,29 +45,29 @@ const fn parse_generic<const EXPANSION_FACTOR: u64>(input: &mut [u8]) -> u64 {
     let line_len = read_until(input, 0, b"\n").len() + 1;
 
     // first pass to mark the rows and cols
-    iter! {
-        for (i, c) in enumerate(input) {
-            if is_galaxy(c) {
-                input[row_of(i, line_len)] |= OCCUPIED_ROW_MASK;
-                input[col_of(i, line_len)] |= OCCUPIED_COL_MASK;
-            }
+
+    #[apply(iter)]
+    for i in range(0, input.len()) {
+        if is_galaxy(input[i]) {
+            input[row_of(i, line_len)] |= OCCUPIED_ROW_MASK;
+            input[col_of(i, line_len)] |= OCCUPIED_COL_MASK;
         }
     }
 
     let mut res = 0;
 
-    iter! {
-        for (i, c) in enumerate(input) {
-            if is_galaxy(c) {
-                let remaining_input = input.split_at(i).1;
+    let input = &input;
 
-                iter! {
-                    for (j, c2) in enumerate(remaining_input) {
-                        if is_galaxy(c2) {
-                            let distance = traverse::<EXPANSION_FACTOR>(input, line_len, i, i + j);
-                            res += distance;
-                        }
-                    }
+    #[apply(iter)]
+    for (i, c) in enumerate(input) {
+        if is_galaxy(c) {
+            let remaining_input = input.split_at(i).1;
+
+            #[apply(iter)]
+            for (j, c2) in enumerate(remaining_input) {
+                if is_galaxy(c2) {
+                    let distance = traverse::<EXPANSION_FACTOR>(input, line_len, i, i + j);
+                    res += distance;
                 }
             }
         }
@@ -124,20 +113,18 @@ const fn traverse<const EXPANSION_FACTOR: u64>(
     };
 
     let mut count = 0;
-    iter! {
-        for row in range(north_row + line_len, south_row, line_len) {
-            let row = input[row_of(row, line_len)];
-            count += 1;
-            count += (EXPANSION_FACTOR - 1) * ((row & OCCUPIED_ROW_MASK == 0) as u64);
-        }
+    #[apply(iter)]
+    for row in range(north_row + line_len, south_row, line_len) {
+        let row = input[row_of(row, line_len)];
+        count += 1;
+        count += (EXPANSION_FACTOR - 1) * ((row & OCCUPIED_ROW_MASK == 0) as u64);
     }
 
-    iter! {
-        for col in range(west_col + 1, east_col) {
-            let col = input[col];
-            count += 1;
-            count += (EXPANSION_FACTOR - 1) * ((col & OCCUPIED_COL_MASK == 0) as u64);
-        }
+    #[apply(iter)]
+    for col in range(west_col + 1, east_col) {
+        let col = input[col];
+        count += 1;
+        count += (EXPANSION_FACTOR - 1) * ((col & OCCUPIED_COL_MASK == 0) as u64);
     }
 
     count + (east_col != west_col) as u64 + (north_row != south_row) as u64
@@ -177,8 +164,7 @@ fn dbg_input(input: &[u8]) {
                 (false, false) => format!("\u{001b}[30m{both_empty_color}{c}{reset}"),
             }
         })
-        .collect::<Vec<String>>()
-        .join("");
+        .collect::<String>();
 
     println!("{out}");
 }

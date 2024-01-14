@@ -60,63 +60,67 @@
 
           link-args = [ "-v" ] ++ (pkgs.lib.optionals pkgs.stdenv.isDarwin [ "-e" "__start" "-Z" "-pie" "-no_eh_labels" "-dead_strip" "-allow_stack_execute" "-S" "-no_uuid" ]) ++ (pkgs.lib.optionals pkgs.stdenv.isLinux [ "--no-eh-frame-hdr" "-z" "norelro" "-nostdlib" "--disable-new-dtags" "--no-dynamic-linker" "-z" "nodefaultlib" "--hash-style=sysv" "--no-rosegment" "-z" "nognustack" "-N" "--icf=all" "--ignore-data-address-equality" "--ignore-data-address-equality" "--noinhibit-exec" "--print-gc-sections" "--print-icf-sections" ]);
 
-          mkAocDay = year: day: pkgs.stdenv.mkDerivation {
-            name = "advent-of-code-${toString year}-${toString day}";
-            buildInputs = if pkgs.stdenv.isLinux then [ pkgs.elfkickers ] else [ ];
-            src = pkgs.stdenv.mkDerivation {
-              name = "${toString year}-${toString day}";
-              src = crane.lib.cleanCargoSource ./.;
-              buildInputs = [ rust-nightly ] ++ (
-                pkgs.lib.optionals pkgs.stdenv.isDarwin [ pkgs.darwin.apple_sdk.MacOSX-SDK ]
-              );
-              nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.isDarwin [ ];
-              buildPhase = ''
-                echo $PATH
-                cp -r --no-preserve=mode . $out
+          mkAocDay = year: day: const:
+            let
+              dayYear = "${toString year}-${toString day}";
+              suffix = "${if const then "-const" else ""}";
+              pname = "advent-of-code-${dayYear}${suffix}";
+            in
+            pkgs.stdenv.mkDerivation {
+              name = "${pname}";
+              buildInputs = if pkgs.stdenv.isLinux then [ pkgs.elfkickers ] else [ ];
+              src = pkgs.stdenv.mkDerivation {
+                name = "${dayYear}-const";
+                src = crane.lib.cleanCargoSource ./.;
+                buildInputs = [ rust-nightly ] ++ (
+                  pkgs.lib.optionals pkgs.stdenv.isDarwin [ pkgs.darwin.apple_sdk.MacOSX-SDK ]
+                );
+                nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.isDarwin [ ];
+                buildPhase = ''
+                  echo $PATH
+                  cp -r --no-preserve=mode . $out
 
-                cp ${crane.lib.configureCargoVendoredDepsHook}/nix-support/setup-hook $out/setup-hook
-                source $out/setup-hook
+                  cp ${crane.lib.configureCargoVendoredDepsHook}/nix-support/setup-hook $out/setup-hook
+                  source $out/setup-hook
 
-                mkdir $out/.cargo
-                touch "$out/.cargo/config.toml"
+                  mkdir $out/.cargo
+                  touch "$out/.cargo/config.toml"
 
-                configureCargoVendoredDepsHook ${vendored} "$out/.cargo/config.toml"
+                  configureCargoVendoredDepsHook ${vendored} "$out/.cargo/config.toml"
 
-                ls -al ${aoc-inputs}/*
+                  ls -al ${aoc-inputs}/*
 
-                cp -r ${aoc-inputs} $out/inputs
-                # schrodinger's directory: this only exists if i print it's contents
-                ls $out/inputs/*
-                cd $out/rust
+                  cp -r ${aoc-inputs} $out/inputs
+                  # schrodinger's directory: this only exists if i print it's contents
+                  ls $out/inputs/*
+                  cd $out/rust
 
-                # RUSTFLAGS="-C link-args=-lc -C target-feature=+crt-static -Z location-detail=none -C relocation-model=static"
-                # cargo build --release --no-default-features -F ${toString year}-${toString day} -Z build-std=core -Z build-std-features=panic_immediate_abort --target="x86_64-unknown-linux-musl" -j1
-                # cargo rustc --release --no-default-features -F ${toString year}-${toString day} --target x86_64-unknown-linux-musl -j1 -Z build-std=std,core -Z build-std-features=panic_immediate_abort,core/panic_immediate_abort -- -C link-arg=-nostartfiles -C link-arg=-znoseparate-code
-                # cargo rustc --release --no-default-features -F 2023-1 --target x86_64-unknown-linux-gnu -j1 -Z build-std=std,core -Z build-std-features=panic_immediate_abort,core/panic_immediate_abort -- -C link-arg=-nostartfiles -C link-arg="-Wl,-znoseparate-code" -C link-arg=-Wl,--no-eh-frame-hdr -C link-arg=-Wl,-znorelro -C link-arg=-flinker-output=exec -C link-args='-nodefaultlibs -nostdlib -nolibc -s'
-                SDKROOT="${pkgs.darwin.apple_sdk.MacOSX-SDK}" RUSTC_LOG=rustc_codegen_ssa::back::link=info cargo rustc -vvv --release --no-default-features -F const,${toString year}-${toString day} --target ${CARGO_BUILD_TARGET} -j1 -Z build-std=alloc,core -Z build-std-features=core/panic_immediate_abort -- -C linker=rust-lld -C link-args='${pkgs.lib.concatStringsSep "\n" link-args}'
-              '';
-            };
-            installPhase = pkgs.lib.concatStringsSep "\n" [
-              ''
-                mkdir -p $out/bin
+                  echo ${pkgs.darwin.apple_sdk.MacOSX-SDK}
 
-                cp --no-preserve=mode $src/rust/target/${CARGO_BUILD_TARGET}/release/advent-of-code "$out/bin/advent-of-code-${toString year}-${toString day}"
-              ''
-              (pkgs.lib.optionalString pkgs.stdenv.isLinux ''
-                ls -l $out/bin
+                  SDKROOT="${pkgs.darwin.apple_sdk.MacOSX-SDK}" RUSTC_LOG=rustc_codegen_ssa::back::link=info cargo rustc -vvv --release --no-default-features -F ${if const then "const" else "alloc"},${dayYear} --target ${CARGO_BUILD_TARGET} -j1 -Z build-std=alloc,core -Z build-std-features=core/panic_immediate_abort,compiler-builtins-mem -- -C linker=rust-lld -C link-args='${pkgs.lib.concatStringsSep "\n" link-args}'
+                '';
+              };
+              installPhase = pkgs.lib.concatStringsSep "\n" [
+                ''
+                  mkdir -p $out/bin
 
-                strip -z "$out/bin/advent-of-code-${toString year}-${toString day}"
-              '')
-              ''
+                  cp --no-preserve=mode $src/rust/target/${CARGO_BUILD_TARGET}/release/advent-of-code "$out/bin/${pname}"
+                ''
+                (pkgs.lib.optionalString pkgs.stdenv.isLinux ''
+                  ls -l $out/bin
+
+                  strip -z "$out/bin/${pname}"
+                '')
+                ''
 
               ls -l $out/bin
 
-              chmod +x "$out/bin/advent-of-code-${toString year}-${toString day}"
+              chmod +x "$out/bin/${pname}"
             ''
-            ];
+              ];
 
-            meta.mainProgram = "advent-of-code-${toString year}-${toString day}";
-          };
+              meta.mainProgram = pname;
+            };
         in
         {
           _module.args.pkgs = import nixpkgs {
@@ -128,13 +132,14 @@
 
           packages = builtins.listToAttrs (
             map
-              ({ year, day }: {
-                name = "rust-${toString year}-${toString day}";
-                value = mkAocDay year day;
+              ({ year, day, const }: {
+                name = "rust-${toString year}-${toString day}${if const then "-const" else ""}";
+                value = mkAocDay year day const;
               })
               (pkgs.lib.cartesianProductOfSets {
                 year = years;
                 day = days;
+                const = [ true false ];
               })
           );
 

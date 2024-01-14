@@ -1,11 +1,13 @@
 use alloc::{vec, vec::Vec};
-use core::fmt::Display;
 
-use crate::{Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 7> {
-    fn part_1() -> impl Display {
-        let ft = FileTree::parse(Self::INPUT);
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 7> {
+    pub fn parse(input: &[u8]) -> u32 {
+        let ft = FileTree::parse(utf8(input));
 
         let mut total = 0_u32;
 
@@ -19,11 +21,11 @@ impl DaySolution for Day<2022, 7> {
         total
     }
 
-    fn part_2() -> impl Display {
+    pub fn parse2(input: &[u8]) -> u32 {
         const DISK_SIZE: u32 = 70_000_000;
         const REQUIRED_SPACE_FOR_UPDATE: u32 = 30_000_000;
 
-        let root = FileTree::parse(Self::INPUT);
+        let root = FileTree::parse(utf8(input));
 
         let space_necessary = REQUIRED_SPACE_FOR_UPDATE - (DISK_SIZE - root.size());
 

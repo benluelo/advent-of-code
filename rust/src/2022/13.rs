@@ -2,24 +2,27 @@ use alloc::{vec, vec::Vec};
 use core::{
     cmp::Ordering,
     convert::Infallible,
-    fmt::{Debug, Display},
+    fmt::Debug,
     iter::{self, Peekable},
     ops::ControlFlow,
     str::FromStr,
 };
 
-use crate::{Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 13> {
-    fn part_1() -> impl Display {
-        part_1(Self::INPUT)
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 13> {
+    pub fn parse(input: &[u8]) -> u32 {
+        part_1(utf8(input))
     }
 
-    fn part_2() -> impl Display {
+    pub fn parse2(input: &[u8]) -> u64 {
         let packet_data_2 = "[[2]]".parse::<PacketData>().unwrap();
         let packet_data_6 = "[[6]]".parse::<PacketData>().unwrap();
 
-        let mut vec = Self::INPUT
+        let mut vec = utf8(input)
             .split("\n\n")
             .flat_map(|packets| {
                 packets

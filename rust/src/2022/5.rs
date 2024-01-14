@@ -1,16 +1,18 @@
 use alloc::{collections::BTreeMap, string::String, vec::Vec};
 use core::{
     convert::Infallible,
-    fmt::Display,
     iter::Peekable,
     str::{Chars, FromStr},
 };
 
-use crate::{Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 5> {
-    fn part_1() -> impl Display {
-        parse(Self::INPUT, |mut crates, Action { mov, from, to }| {
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 5> {
+    pub fn parse(input: &[u8]) -> String {
+        parse(utf8(input), |mut crates, Action { mov, from, to }| {
             for _ in 0..mov {
                 let moved = crates.get_mut(&from).unwrap().pop().unwrap();
                 crates.get_mut(&to).unwrap().push(moved);
@@ -19,8 +21,8 @@ impl DaySolution for Day<2022, 5> {
         })
     }
 
-    fn part_2() -> impl Display {
-        parse(Self::INPUT, |mut crates, Action { mov, from, to }| {
+    pub fn parse2(input: &[u8]) -> String {
+        parse(utf8(input), |mut crates, Action { mov, from, to }| {
             let from_stack = crates.get_mut(&from).unwrap();
 
             let moved = from_stack.split_off(from_stack.len() - mov as usize);

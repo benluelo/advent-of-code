@@ -1,22 +1,27 @@
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{iter, itoa, parse_int, read_until, slice, utf8},
-    ConstDaySolution, Day, Input,
+    const_helpers::{iter, parse_int, read_until, slice},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 6> {
-    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
+#[apply(day)]
+impl Day<2023, 6> {
+    pub const fn parse(input: &[u8]) -> u128 {
+        parse(input)
+    }
+    pub const fn parse2(input: &[u8]) -> u128 {
+        parse2(input)
+    }
 }
 
-const SOLUTION_PART_1: u128 = parse(Day::<2023, 6>::INPUT.as_bytes());
-const SOLUTION_PART_2: u128 = parse2(Day::<2023, 6>::INPUT.as_bytes());
-
 #[test]
+#[cfg(test)]
 fn parse_test() {
-    let input = "\
-Time:      7  15   30
-Distance:  9  40  200
-";
+    //     let input = "\
+    // Time:      7  15   30
+    // Distance:  9  40  200
+    // ";
 
     dbg!(parse2(Day::<2023, 6>::INPUT.as_bytes()));
 }
@@ -40,7 +45,7 @@ const fn parse(input: &[u8]) -> u128 {
         let time = parse_int(raw_time);
         let distance = parse_int(distance);
 
-        let (min, max) = roots(time as u128, distance as u128);
+        let (min, max) = roots(time as u64, distance as u64);
 
         res *= (max - min) + 1;
     }
@@ -53,26 +58,28 @@ const fn parse2(input: &[u8]) -> u128 {
 
     let time = parse_int_with_spaces(times);
     let distance = parse_int_with_spaces(distances);
-    let (min, max) = roots(time as u128, distance as u128);
+    let (min, max) = roots(time as u64, distance as u64);
 
     (max - min) + 1
 }
 
-const fn roots(t: u128, d: u128) -> (u128, u128) {
+#[allow(clippy::items_after_statements)] // looks better
+const fn roots(t: u64, d: u64) -> (u128, u128) {
     let t = t as i128;
     let d = d as i128;
 
     let root = ((t * t) - (4 * d)).isqrt();
-    let lower = (root - t).div_ceil(-2) as u128;
-    let upper = (-root - t).div_floor(-2) as u128;
+    let lower = (root - t).div_ceil(-2);
+    let upper = (-root - t).div_floor(-2);
 
-    const fn y(t: u128, x: u128) -> u128 {
+    const fn y(t: i128, x: i128) -> i128 {
         (t * x) - (x * x)
     }
 
+    #[allow(clippy::cast_sign_loss)]
     (
-        lower + (y(t as u128, lower) == d as u128) as u128,
-        upper - (y(t as u128, upper) == d as u128) as u128,
+        (lower + (y(t, lower) == d) as i128) as u128,
+        (upper - (y(t, upper) == d) as i128) as u128,
     )
 }
 
@@ -82,17 +89,16 @@ fn roots_works() {
     assert_eq!(roots(30, 200), (11, 19));
 }
 
-pub const fn parse_int_with_spaces(bz: &[u8]) -> u128 {
+pub const fn parse_int_with_spaces(bz: &[u8]) -> u64 {
     let mut res = 0;
 
-    iter! {
-        for digit in bz {
-            if digit != b' ' {
-                assert!(digit.is_ascii_digit());
+    #[apply(iter)]
+    for digit in bz {
+        if digit != b' ' {
+            assert!(digit.is_ascii_digit());
 
-                res *= 10;
-                res += (digit - 48) as u128;
-            }
+            res *= 10;
+            res += (digit - 48) as u64;
         }
     }
 

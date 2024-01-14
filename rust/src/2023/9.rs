@@ -1,23 +1,22 @@
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{
-        count_segments, iter, itoa, max, parse_sint, read_until, slice, slice_eq, utf8,
-    },
-    ConstDaySolution, Day, Input,
+    const_helpers::{count_segments, iter, parse_sint},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 9> {
-    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    // const PART_1: &'static str = "";
-    // const PART_2: &'static str = "";
+#[apply(day)]
+impl Day<2023, 9> {
+    pub const fn parse(input: &[u8]) -> i32 {
+        parse(input)
+    }
+    pub const fn parse2(input: &[u8]) -> i32 {
+        parse2(input)
+    }
 }
 
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_1: i32 = parse(Day::<2023, 9>::INPUT.as_bytes());
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_2: u128 = parse2(Day::<2023, 8>::INPUT.as_bytes());
-
 #[test]
+#[cfg(test)]
 fn parse_test() {
     let input = b"\
 0 3 6 9 12 15
@@ -42,23 +41,18 @@ const fn parse2(input: &[u8]) -> i32 {
 const fn parse_generic<const READ_LEFT: bool>(bytes: &[u8]) -> i32 {
     let mut res = 0;
 
-    iter! {
-        for line in lines(bytes) {
-            // dbg!(utf8(line));
-            let len = count_segments::<b' ', false>(line);
+    #[apply(iter)]
+    for line in lines(bytes) {
+        let len = count_segments::<b' ', false>(line);
 
-            // dbg!(len);
+        let mut line_res = 0;
 
-            let mut line_res = 0;
-
-            iter! {
-                for n in range(0, len) {
-                    line_res += calculate_edge::<READ_LEFT>(n, (len - 1) - n, Line { bz: line, len });
-                }
-            }
-
-            res += line_res;
+        #[apply(iter)]
+        for n in range(0, len) {
+            line_res += calculate_edge::<READ_LEFT>(n, (len - 1) - n, Line { bz: line, len });
         }
+
+        res += line_res;
     }
 
     res
@@ -86,13 +80,12 @@ const fn read_n<const READ_LEFT: bool>(mut i: usize, line: Line) -> i32 {
     }
 
     let bz = line.bz;
-    iter! {
-        for segment in split(bz, b" ") {
-            if i == 0 {
-                return parse_sint(segment);
-            }
-            i -= 1;
+    #[apply(iter)]
+    for segment in split(bz, b" ") {
+        if i == 0 {
+            return parse_sint(segment);
         }
+        i -= 1;
     }
 
     panic!()

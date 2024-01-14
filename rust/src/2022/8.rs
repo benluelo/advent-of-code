@@ -1,17 +1,20 @@
-use alloc::{borrow::ToOwned, string::String, vec::Vec};
+use alloc::vec::Vec;
 use core::{
     borrow::Borrow,
-    fmt::{Debug, Display, Write},
+    fmt::Debug,
     iter::{self, Enumerate, Map, Repeat, RepeatN, Rev, Zip},
     marker::PhantomData,
     slice,
 };
 
-use crate::{libc_write::Stdout, Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 8> {
-    fn part_1() -> impl Display {
-        let forest = Forest::parse(Self::INPUT);
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 8> {
+    pub fn parse(input: &[u8]) -> usize {
+        let forest = Forest::parse(utf8(input));
 
         let mut visible_trees = forest
             .trees
@@ -37,8 +40,8 @@ impl DaySolution for Day<2022, 8> {
         visible_trees.iter().flatten().filter(|b| **b).count()
     }
 
-    fn part_2() -> impl Display {
-        let forest = Forest::parse(Self::INPUT);
+    pub fn parse2(input: &[u8]) -> u32 {
+        let forest = Forest::parse(utf8(input));
 
         let column_scores = forest
             .iter::<Column>()
@@ -236,7 +239,7 @@ where
     }
 }
 
-#[allow(dead_code)]
+#[cfg(test)]
 fn print_bool_matrix(matrix: &[Vec<bool>]) {
     let output = matrix
         .iter()
@@ -248,7 +251,7 @@ fn print_bool_matrix(matrix: &[Vec<bool>]) {
         .intersperse("\n".to_owned())
         .collect::<String>();
 
-    writeln!(&mut Stdout, "{output}\n").unwrap();
+    println!("{output}\n");
 }
 
 /// Represents a forest in this form:

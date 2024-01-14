@@ -1,19 +1,22 @@
 use alloc::{borrow::ToOwned, string::String};
-use core::{fmt::Display, str::FromStr};
+use core::str::FromStr;
 
-use crate::{Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 2> {
-    fn part_1() -> impl Display {
-        Self::INPUT
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 2> {
+    pub fn parse(input: &[u8]) -> u32 {
+        utf8(input)
             .trim()
             .lines()
             .map(|s| s.parse::<Round>().unwrap())
             .fold(0, |acc, curr| acc + curr.score())
     }
 
-    fn part_2() -> impl Display {
-        Self::INPUT
+    pub fn parse2(input: &[u8]) -> u32 {
+        utf8(input)
             .trim()
             .lines()
             .map::<Round, _>(|s| s.parse::<IncompleteRound>().unwrap().into())

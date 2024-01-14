@@ -1,24 +1,24 @@
 use core::cmp::Ordering;
 
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{cmp, count_segments, iter, itoa, parse_int, utf8},
-    ConstDaySolution, Day, Input,
+    const_helpers::{cmp, count_segments, iter, parse_int, utf8},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 7> {
-    // careful, takes ~9 minutes to build on my m3 max
-    // const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    // const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    const PART_1: &'static str = "";
-    const PART_2: &'static str = "";
+#[apply(day)]
+impl Day<2023, 7> {
+    pub const fn parse(input: &[u8]) -> u128 {
+        parse(input)
+    }
+    pub const fn parse2(input: &[u8]) -> u128 {
+        parse2(input)
+    }
 }
 
-// #[allow(long_running_const_eval)]
-// const SOLUTION_PART_1: u128 = parse(Day::<2023, 7>::INPUT.as_bytes());
-// #[allow(long_running_const_eval)]
-// const SOLUTION_PART_2: u128 = parse2(Day::<2023, 7>::INPUT.as_bytes());
-
 #[test]
+#[cfg(test)]
 fn parse_test() {
     let input = b"\
 32T3K 765
@@ -48,61 +48,56 @@ const fn parse_generic<const WITH_JOKERS: bool>(input: &[u8]) -> u128 {
     let len = count_segments::<b'\n', true>(input);
 
     let mut max = None::<Hand<WITH_JOKERS>>;
-    let mut res = 0;
+    let mut res: u128 = 0;
 
-    iter! {
-        for line in lines(input) {
-            let bet = parse_int(line.split_at(5).1.trim_ascii_start());
-            let hand = parse_hand_from_line(line);
+    #[apply(iter)]
+    for line in lines(input) {
+        let bet = parse_int(line.split_at(5).1.trim_ascii_start()) as u128;
+        let hand = parse_hand_from_line(line);
 
-            if let Some(m) = &max {
-                match hand.cmp(m) {
-                    Ordering::Equal => {}
-                    Ordering::Less => {},
-                    Ordering::Greater => {
-                        res = bet * len as u32;
-                        max = Some(hand);
-                    },
+        if let Some(m) = &max {
+            match hand.cmp(*m) {
+                Ordering::Less | Ordering::Equal => {}
+                Ordering::Greater => {
+                    res = bet * len as u128;
+                    max = Some(hand);
                 }
-            } else {
-                res = bet * len as u32;
-                max = Some(hand);
             }
+        } else {
+            res = bet * len as u128;
+            max = Some(hand);
         }
     }
 
     let Some(mut max) = max else { panic!() };
 
-    let mut rank = len as u32 - 1; // already found max
+    let mut rank = len as u128 - 1; // already found max
     while rank != 0 {
         let mut curr_max = None::<Hand<WITH_JOKERS>>;
-        let mut curr_res = 0;
+        let mut curr_res: u128 = 0;
 
-        iter! {
-            for line in lines(input) {
-                let bet = parse_int(line.split_at(5).1.trim_ascii_start());
-                let hand = parse_hand_from_line(line);
+        #[apply(iter)]
+        for line in lines(input) {
+            let bet = parse_int(line.split_at(5).1.trim_ascii_start()) as u128;
+            let hand = parse_hand_from_line(line);
 
-                match hand.cmp(&max) {
-                    Ordering::Less => {},
-                    Ordering::Equal => continue,
-                    Ordering::Greater => continue,
-                }
+            match hand.cmp(max) {
+                Ordering::Less => {}
+                Ordering::Equal | Ordering::Greater => continue,
+            }
 
-                // hand is < the previous max here
-                if let Some(m) = &curr_max {
-                    match hand.cmp(m) {
-                        Ordering::Equal => {}
-                        Ordering::Less => {},
-                        Ordering::Greater => {
-                            curr_res = bet;
-                            curr_max = Some(hand);
-                        },
+            // hand is < the previous max here
+            if let Some(m) = &curr_max {
+                match hand.cmp(*m) {
+                    Ordering::Less | Ordering::Equal => {}
+                    Ordering::Greater => {
+                        curr_res = bet;
+                        curr_max = Some(hand);
                     }
-                } else {
-                    curr_res = bet;
-                    curr_max = Some(hand);
                 }
+            } else {
+                curr_res = bet;
+                curr_max = Some(hand);
             }
         }
 
@@ -113,7 +108,7 @@ const fn parse_generic<const WITH_JOKERS: bool>(input: &[u8]) -> u128 {
         rank -= 1;
     }
 
-    res as u128
+    res
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -162,22 +157,22 @@ enum Label {
 }
 
 impl Label {
-    const fn cmp<const WITH_JOKERS: bool>(&self, other: &Self) -> Ordering {
+    const fn cmp<const WITH_JOKERS: bool>(self, other: Self) -> Ordering {
         let l = if WITH_JOKERS && matches!(self, Self::J) {
             1
         } else {
-            *self as u8
+            self as u8
         };
         let r = if WITH_JOKERS && matches!(other, Self::J) {
             1
         } else {
-            *other as u8
+            other as u8
         };
 
         cmp!(l, r)
     }
 
-    const fn as_byte(&self) -> u8 {
+    const fn as_byte(self) -> u8 {
         match self {
             Label::A => b'A',
             Label::K => b'K',
@@ -217,6 +212,7 @@ const fn label_rank(label: u8) -> Label {
 
 #[rustfmt::skip]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(clippy::upper_case_acronyms)]
 enum Hand<const WITH_JOKERS: bool> {
     XXXXX { x: Label },
     XXXXY { x: Label, y: Label },
@@ -273,7 +269,7 @@ enum Hand<const WITH_JOKERS: bool> {
 }
 
 impl<const WITH_JOKERS: bool> Hand<WITH_JOKERS> {
-    const fn cmp(&self, other: &Self) -> Ordering {
+    const fn cmp(self, other: Self) -> Ordering {
         let ordering = cmp!(self.hand_kind() as u8, other.hand_kind() as u8);
 
         match ordering {
@@ -282,9 +278,9 @@ impl<const WITH_JOKERS: bool> Hand<WITH_JOKERS> {
         }
     }
 
-    const fn hand_kind(&self) -> HandKind {
-        use Hand::*;
-        use Label::J;
+    const fn hand_kind(self) -> HandKind {
+        #[allow(clippy::enum_glob_use)]
+        use {Hand::*, Label::J};
 
         match self {
             // always five of a kind, even if all jokers
@@ -384,12 +380,11 @@ impl<const WITH_JOKERS: bool> Hand<WITH_JOKERS> {
 }
 
 const fn cmp_cards<const WITH_JOKERS: bool>(l: [Label; 5], r: [Label; 5]) -> Ordering {
-    iter! {
-        for i in range(0, 5) {
-            match l[i].cmp::<WITH_JOKERS>(&r[i]) {
-                Ordering::Equal => continue,
-                cmp => return cmp,
-            }
+    #[apply(iter)]
+    for i in range(0, 5) {
+        match l[i].cmp::<WITH_JOKERS>(r[i]) {
+            Ordering::Equal => continue,
+            cmp => return cmp,
         }
     }
 
@@ -397,8 +392,8 @@ const fn cmp_cards<const WITH_JOKERS: bool>(l: [Label; 5], r: [Label; 5]) -> Ord
 }
 
 impl<const WITH_JOKERS: bool> Hand<WITH_JOKERS> {
-    const fn as_labels(&self) -> [Label; 5] {
-        match *self {
+    const fn as_labels(self) -> [Label; 5] {
+        match self {
             Hand::XXXXX { x } => [x, x, x, x, x],
             Hand::XXXXY { x, y } => [x, x, x, x, y],
             Hand::XXXYY { x, y } => [x, x, x, y, y],
@@ -454,7 +449,7 @@ impl<const WITH_JOKERS: bool> Hand<WITH_JOKERS> {
         }
     }
 
-    const fn as_bytes(&self) -> [u8; 5] {
+    const fn as_bytes(self) -> [u8; 5] {
         let [a, b, c, d, e] = self.as_labels();
         [
             a.as_byte(),
@@ -467,7 +462,11 @@ impl<const WITH_JOKERS: bool> Hand<WITH_JOKERS> {
 }
 
 #[deny(unreachable_patterns)]
+#[allow(clippy::too_many_lines)]
 const fn parse_hand_from_line<const WITH_JOKERS: bool>(hand_bytes: &[u8]) -> Hand<WITH_JOKERS> {
+    const EQ: bool = true;
+    const NE: bool = false;
+
     let [a, b, c, d, e, ..] = hand_bytes else {
         panic!()
     };
@@ -477,9 +476,6 @@ const fn parse_hand_from_line<const WITH_JOKERS: bool>(hand_bytes: &[u8]) -> Han
     let c = label_rank(*c);
     let d = label_rank(*d);
     let e = label_rank(*e);
-
-    const EQ: bool = true;
-    const NE: bool = false;
 
     match (
         a.as_byte() == b.as_byte(),

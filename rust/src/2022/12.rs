@@ -2,23 +2,26 @@ use alloc::{
     collections::{BTreeMap, BinaryHeap},
     vec::Vec,
 };
-use core::{borrow::Borrow, cmp::Reverse, fmt::Display};
+use core::{borrow::Borrow, cmp::Reverse};
 
-use crate::{Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 12> {
-    fn part_1() -> impl Display {
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 12> {
+    pub fn parse(input: &[u8]) -> u32 {
         let ParsedMap {
             start, end, edges, ..
-        } = parse(Self::INPUT);
+        } = parse(utf8(input));
 
         dijkstra(start, |pos| pos == end, |pos| edges[&pos].iter()).unwrap()
     }
 
-    fn part_2() -> impl Display {
+    pub fn parse2(input: &[u8]) -> u32 {
         let ParsedMap {
             grid, end, edges, ..
-        } = parse(Self::INPUT);
+        } = parse(utf8(input));
 
         dijkstra(
             end,

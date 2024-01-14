@@ -1,17 +1,20 @@
-use core::{fmt::Display, ops::RangeInclusive};
+use core::ops::RangeInclusive;
 
-use crate::{Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 4> {
-    fn part_1() -> impl Display {
-        parse(Self::INPUT, |[range_a, range_b]| {
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 4> {
+    pub fn parse(input: &[u8]) -> usize {
+        parse(utf8(input), |[range_a, range_b]| {
             (range_a.contains(range_b.start()) && range_a.contains(range_b.end()))
                 || (range_b.contains(range_a.start()) && range_b.contains(range_a.end()))
         })
     }
 
-    fn part_2() -> impl Display {
-        parse(Self::INPUT, |[range_a, range_b]| {
+    pub fn parse2(input: &[u8]) -> usize {
+        parse(utf8(input), |[range_a, range_b]| {
             range_a.contains(range_b.start())
                 || range_a.contains(range_b.end())
                 || range_b.contains(range_a.start())

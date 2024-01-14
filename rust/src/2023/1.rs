@@ -1,15 +1,19 @@
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{iter, itoa, slice, utf8},
-    ConstDaySolution, Day, Input,
+    const_helpers::{iter, slice},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 1> {
-    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
+#[apply(day)]
+impl Day<2023, 1> {
+    pub const fn parse(input: &[u8]) -> u32 {
+        parse(input)
+    }
+    pub const fn parse2(input: &[u8]) -> u32 {
+        parse2(input)
+    }
 }
-
-const SOLUTION_PART_1: u32 = parse(Day::<2023, 1>::INPUT.as_bytes());
-const SOLUTION_PART_2: u32 = parse2(Day::<2023, 1>::INPUT.as_bytes());
 
 const fn parse(bytes: &[u8]) -> u32 {
     const fn parse_line<const REVERSE: bool>(bz: &[u8]) -> u32 {
@@ -35,13 +39,12 @@ const fn parse(bytes: &[u8]) -> u32 {
 
     let mut res = 0;
 
-    iter! {
-        for line in lines(bytes) {
-            let left_digit = parse_line::<false>(line);
-            let right_digit = parse_line::<true>(line);
+    #[apply(iter)]
+    for line in lines(bytes) {
+        let left_digit = parse_line::<false>(line);
+        let right_digit = parse_line::<true>(line);
 
-            res += (left_digit * 10) + right_digit;
-        }
+        res += (left_digit * 10) + right_digit;
     }
 
     res
@@ -111,13 +114,12 @@ const fn parse2(bytes: &[u8]) -> u32 {
 
     let mut res = 0;
 
-    iter! {
-        for line in lines(bytes) {
-            let left_digit = parse_line::<false>(line);
-            let right_digit = parse_line::<true>(line);
+    #[apply(iter)]
+    for line in lines(bytes) {
+        let left_digit = parse_line::<false>(line);
+        let right_digit = parse_line::<true>(line);
 
-            res += (left_digit * 10) + right_digit;
-        }
+        res += (left_digit * 10) + right_digit;
     }
 
     res

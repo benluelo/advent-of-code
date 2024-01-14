@@ -1,41 +1,42 @@
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{iter, itoa, max, read_until, slice, slice_eq, utf8},
-    ConstDaySolution, Day, Input,
+    const_helpers::{iter, read_until, slice, slice_eq, utf8},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 8> {
-    // const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    // const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    const PART_1: &'static str = "";
-    const PART_2: &'static str = "";
+#[apply(day)]
+impl Day<2023, 8> {
+    pub const fn parse(input: &[u8]) -> usize {
+        parse(input)
+    }
+    pub const fn parse2(input: &[u8]) -> u128 {
+        parse2(input)
+    }
 }
 
-// #[allow(long_running_const_eval)]
-// const SOLUTION_PART_1: usize = parse(Day::<2023, 8>::INPUT.as_bytes());
-// #[allow(long_running_const_eval)]
-// const SOLUTION_PART_2: u128 = parse2(Day::<2023, 8>::INPUT.as_bytes());
-
 #[test]
+#[cfg(test)]
 fn parse_test() {
-    let input = b"\
-RL
+    //     let input = b"\
+    // RL
 
-AAA = (BBB, CCC)
-BBB = (DDD, EEE)
-CCC = (ZZZ, GGG)
-DDD = (DDD, DDD)
-EEE = (EEE, EEE)
-GGG = (GGG, GGG)
-ZZZ = (ZZZ, ZZZ)
-";
+    // AAA = (BBB, CCC)
+    // BBB = (DDD, EEE)
+    // CCC = (ZZZ, GGG)
+    // DDD = (DDD, DDD)
+    // EEE = (EEE, EEE)
+    // GGG = (GGG, GGG)
+    // ZZZ = (ZZZ, ZZZ)
+    // ";
 
-    let input2 = b"\
-LLR
+    //     let input2 = b"\
+    // LLR
 
-AAA = (BBB, BBB)
-BBB = (AAA, ZZZ)
-ZZZ = (ZZZ, ZZZ)
-";
+    // AAA = (BBB, BBB)
+    // BBB = (AAA, ZZZ)
+    // ZZZ = (ZZZ, ZZZ)
+    // ";
 
     dbg!(parse2(Day::<2023, 8>::INPUT.as_bytes()));
     // dbg!(parse(input2));
@@ -106,37 +107,36 @@ const fn parse2(bytes: &[u8]) -> u128 {
 
     let mut res = 0;
 
-    iter! {
-        for line in lines(mappings) {
-            if matches!(&line, [_, _, b'A', ..]) {
-                let start = find_node(mappings, [line[0], line[1], line[2]]);
-                let mut curr = start;
+    #[apply(iter)]
+    for line in lines(mappings) {
+        if matches!(&line, [_, _, b'A', ..]) {
+            let start = find_node(mappings, [line[0], line[1], line[2]]);
+            let mut curr = start;
 
-                let mut direction_counter = 0;
-                let steps = loop {
-                    let dir = directions[direction_counter % directions.len()];
-                    let next_instr = match dir {
-                        b'L' => curr.left,
-                        b'R' => curr.right,
-                        _ => panic!(),
-                    };
-
-                    if matches!(&next_instr, [_, _, b'Z']) {
-                        // count the first step as well
-                        break direction_counter + 1;
-                    }
-
-                    curr = find_node(mappings, next_instr);
-
-                    direction_counter += 1;
+            let mut direction_counter = 0;
+            let steps = loop {
+                let dir = directions[direction_counter % directions.len()];
+                let next_instr = match dir {
+                    b'L' => curr.left,
+                    b'R' => curr.right,
+                    _ => panic!(),
                 };
 
-                res = if res == 0 {
-                    steps as u128
-                } else {
-                    lcm(steps as u128, res as u128)
-                };
-            }
+                if matches!(&next_instr, [_, _, b'Z']) {
+                    // count the first step as well
+                    break direction_counter + 1;
+                }
+
+                curr = find_node(mappings, next_instr);
+
+                direction_counter += 1;
+            };
+
+            res = if res == 0 {
+                steps as u128
+            } else {
+                lcm(steps as u128, res)
+            };
         }
     }
 
@@ -174,11 +174,10 @@ const fn gcd(mut a: u128, mut b: u128) -> u128 {
 }
 
 const fn find_node(mappings: &[u8], key: [u8; 3]) -> MapInstruction {
-    iter! {
-        for line in lines(mappings) {
-            if slice_eq(slice(line, 0, 3), &key) {
-                return parse_line(line);
-            }
+    #[apply(iter)]
+    for line in lines(mappings) {
+        if slice_eq(slice(line, 0, 3), &key) {
+            return parse_line(line);
         }
     }
 

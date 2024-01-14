@@ -1,15 +1,18 @@
 use alloc::collections::BTreeSet;
-use core::{cell::Cell, convert::Infallible, fmt::Display, str::FromStr};
+use core::{cell::Cell, convert::Infallible, str::FromStr};
 
-use crate::{Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 9> {
-    fn part_1() -> impl Display {
-        get_tail_movements::<2>(Self::INPUT)
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 9> {
+    pub fn parse(input: &[u8]) -> usize {
+        get_tail_movements::<2>(utf8(input))
     }
 
-    fn part_2() -> impl Display {
-        get_tail_movements::<10>(Self::INPUT)
+    pub fn parse2(input: &[u8]) -> usize {
+        get_tail_movements::<10>(utf8(input))
     }
 }
 

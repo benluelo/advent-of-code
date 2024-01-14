@@ -1,24 +1,21 @@
 use core::fmt::Write;
 
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{
-        arr, check_bit, iter, itoa, max, opt_unwrap, parse_int, read_until, set_bit, slice, utf8,
-    },
-    ConstDaySolution, Day, Input,
+    const_helpers::{iter, read_until, slice},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 12> {
-    // const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    // const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    const PART_1: &'static str = "";
-    const PART_2: &'static str = "";
+#[apply(day)]
+impl Day<2023, 12> {
+    pub const fn parse(input: &[u8]) -> u128 {
+        parse(input)
+    }
+    pub const fn parse2(input: &[u8]) -> u128 {
+        parse2(input)
+    }
 }
-
-// #[allow(long_running_const_eval)]
-// const SOLUTION_PART_1: u128 = parse(&mut arr!(Day::<2023,
-// 12>::INPUT.as_bytes())); #[allow(long_running_const_eval)]
-// const SOLUTION_PART_2: u128 = parse2(&mut arr!(Day::<2023,
-// 12>::INPUT.as_bytes()));
 
 // who needs a heap
 const MEMOIZATION_LEN: usize = 15000;
@@ -26,15 +23,16 @@ const MEMOIZATION_LEN: usize = 15000;
 type Memoization = [Option<u128>; MEMOIZATION_LEN];
 
 #[test]
+#[cfg(test)]
 fn parse_test() {
-    let input = b"\
-???.### 1,1,3
-.??..??...?##. 1,1,3
-?#?#?#?#?#?#?#? 1,3,1,6
-????.#...#... 4,1,1
-????.######..#####. 1,6,5
-?###???????? 3,2,1
-";
+    //     let input = b"\
+    // ???.### 1,1,3
+    // .??..??...?##. 1,1,3
+    // ?#?#?#?#?#?#?#? 1,3,1,6
+    // ????.#...#... 4,1,1
+    // ????.######..#####. 1,6,5
+    // ?###???????? 3,2,1
+    // ";
 
     let mut nums = std::collections::HashSet::new();
     for i in 0..=55 {
@@ -61,10 +59,9 @@ const fn parse2(input: &[u8]) -> u128 {
 const fn parse_generic<const UNFOLDING_FACTOR: usize>(input: &[u8]) -> u128 {
     let mut res = 0;
 
-    iter! {
-        for line in lines(input) {
-            res += parse_line::<UNFOLDING_FACTOR>(line);
-        }
+    #[apply(iter)]
+    for line in lines(input) {
+        res += parse_line::<UNFOLDING_FACTOR>(line);
     }
 
     res
@@ -80,16 +77,13 @@ const fn parse_line<const UNFOLDING_FACTOR: usize>(line: &[u8]) -> u128 {
     let mut springs_inner = [[b"?".as_slice(); UNFOLDING_FACTOR]; 2];
     let mut groups_inner = [[b",".as_slice(); UNFOLDING_FACTOR]; 2];
 
-    iter! {
-        for i in range(0, UNFOLDING_FACTOR) {
-            let bytes_idx = i * 2;
-            let sep_idx = (i * 2) + 1;
+    #[apply(iter)]
+    for i in range(0, UNFOLDING_FACTOR) {
+        let bytes_idx = i * 2;
 
-            springs_inner[bytes_idx.div_floor(UNFOLDING_FACTOR)][bytes_idx % UNFOLDING_FACTOR] =
-                springs;
-            groups_inner[bytes_idx.div_floor(UNFOLDING_FACTOR)][bytes_idx % UNFOLDING_FACTOR] =
-                groups;
-        }
+        springs_inner[bytes_idx.div_floor(UNFOLDING_FACTOR)][bytes_idx % UNFOLDING_FACTOR] =
+            springs;
+        groups_inner[bytes_idx.div_floor(UNFOLDING_FACTOR)][bytes_idx % UNFOLDING_FACTOR] = groups;
     }
 
     let springs_: &[&[u8]] = springs_inner.flatten();
@@ -98,9 +92,7 @@ const fn parse_line<const UNFOLDING_FACTOR: usize>(line: &[u8]) -> u128 {
     let groups_: &[&[u8]] = groups_inner.flatten();
     let groups = MultiSlice::new(slice(groups_, 0, groups_.len() - 1));
 
-    let solutions = calculate_solutions(springs, groups, &mut memoization);
-
-    solutions
+    calculate_solutions(springs, groups, &mut memoization)
 }
 
 const fn calculate_solutions(
@@ -176,11 +168,10 @@ const fn calculate_hash_solutions(
     }
 
     // if any of the next `x` characters are a `.`, group is broken; not a match
-    iter! {
-        for i in range(0, x) {
-            if strings.get(i) == b'.' {
-                return 0;
-            }
+    #[apply(iter)]
+    for i in range(0, x) {
+        if strings.get(i) == b'.' {
+            return 0;
         }
     }
 
@@ -224,11 +215,11 @@ impl<'a> core::fmt::Debug for MultiSlice<'a> {
 impl<'a> MultiSlice<'a> {
     const fn new(slice: &'a [&'a [u8]]) -> Self {
         let mut len = 0;
-        iter! {
-            for s in slice {
-                len += s.len();
-            }
+        #[apply(iter)]
+        for s in slice {
+            len += s.len();
         }
+
         Self {
             slice,
             len,
@@ -252,13 +243,12 @@ impl<'a> MultiSlice<'a> {
 
             let slice = self.slice;
 
-            iter! {
-                for s in slice {
-                    if i >= s.len() {
-                        i -= s.len();
-                    } else {
-                        return Some(s[i]);
-                    }
+            #[apply(iter)]
+            for s in slice {
+                if i >= s.len() {
+                    i -= s.len();
+                } else {
+                    return Some(s[i]);
                 }
             }
 

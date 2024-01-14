@@ -1,21 +1,22 @@
+use cfg_proc::apply;
+
 use crate::{
-    const_helpers::{arr, iter, itoa, max, read_until, slice, slice_mut, utf8},
-    ConstDaySolution, Day, Input,
+    const_helpers::{iter, max, read_until, slice, slice_mut},
+    day, Day,
 };
 
-impl ConstDaySolution for Day<2023, 4> {
-    const PART_1: &'static str = utf8(&itoa!(SOLUTION_PART_1));
-    const PART_2: &'static str = utf8(&itoa!(SOLUTION_PART_2));
-    // const PART_1: &'static str = "";
-    // const PART_2: &'static str = "";
+#[apply(day)]
+impl Day<2023, 4> {
+    pub const fn parse(input: &mut [u8]) -> u32 {
+        parse(input)
+    }
+    pub const fn parse2(input: &mut [u8]) -> u64 {
+        parse2(input)
+    }
 }
 
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_1: u32 = parse(Day::<2023, 4>::INPUT.as_bytes());
-#[allow(long_running_const_eval)]
-const SOLUTION_PART_2: u64 = parse2(&mut arr!(Day::<2023, 4>::INPUT.as_bytes()));
-
 #[test]
+#[cfg(test)]
 fn parse_test() {
     let input = b"Card 1: 41 48 83 86 17 | 83 86  6 31 17  9 48 53
 Card 2: 13 32 20 16 61 | 61 30 68 82 17 32 24 19
@@ -38,15 +39,22 @@ const fn parse(input: &[u8]) -> u32 {
     let index_of_colon_space = read_until(first_line, 0, COLON_SPACE).len();
     let index_of_pipe_space = read_until(first_line, 0, PIPE_SPACE).len();
 
-    iter! {
-        for line in lines(input) {
-            let winning_numbers = slice(line, index_of_colon_space + COLON_SPACE.len(), index_of_pipe_space);
-            let numbers = slice(line, index_of_pipe_space + PIPE_SPACE.len(), line.len());
+    #[apply(iter)]
+    for line in lines(input) {
+        let winning_numbers = slice(
+            line,
+            index_of_colon_space + COLON_SPACE.len(),
+            index_of_pipe_space,
+        );
+        let numbers = slice(line, index_of_pipe_space + PIPE_SPACE.len(), line.len());
 
-            let matches = count_matches(winning_numbers, numbers);
+        let matches = count_matches(winning_numbers, numbers);
 
-            res += if matches == 0 { 0 } else { 2_u32.pow(matches - 1) };
-        }
+        res += if matches == 0 {
+            0
+        } else {
+            2_u32.pow(matches - 1)
+        };
     }
 
     res
@@ -89,22 +97,21 @@ const fn parse2(input: &mut [u8]) -> u64 {
 
         res += copies;
 
-        iter! {
-            for n in range(0, matches) {
-                let card = i + n as usize + 1;
+        #[apply(iter)]
+        for n in range(0, matches) {
+            let card = i + n as usize + 1;
 
-                let line = slice_mut(input, card * line_len, (card * line_len) + line_len);
+            let line = slice_mut(input, card * line_len, (card * line_len) + line_len);
 
-                let mut line_copies = if highest_line_reached <= card {
-                    1
-                } else {
-                    read_repetitions(line, index_of_colon_space, index_of_pipe_space)
-                };
+            let mut line_copies = if highest_line_reached <= card {
+                1
+            } else {
+                read_repetitions(line, index_of_colon_space, index_of_pipe_space)
+            };
 
-                line_copies += copies;
+            line_copies += copies;
 
-                write_repetitions(line, index_of_colon_space, index_of_pipe_space, line_copies);
-            }
+            write_repetitions(line, index_of_colon_space, index_of_pipe_space, line_copies);
         }
 
         #[expect(clippy::cast_possible_truncation, reason = "false positive")]
@@ -117,11 +124,6 @@ const fn parse2(input: &mut [u8]) -> u64 {
     }
 
     res
-}
-
-#[cfg(test)]
-fn mk_str(bz: &[u8]) -> String {
-    String::from_utf8_lossy(bz).to_string()
 }
 
 #[allow(long_running_const_eval)]

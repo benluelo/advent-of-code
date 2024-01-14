@@ -6,6 +6,23 @@ use proc_macro::{
 };
 
 #[proc_macro_attribute]
+pub fn apply(meta: TokenStream, ts: TokenStream) -> TokenStream {
+    let [ident @ TokenTree::Ident(_)]: [TokenTree; 1] =
+        meta.into_iter().collect::<Vec<_>>().try_into().unwrap()
+    else {
+        panic!()
+    };
+
+    [
+        ident,
+        Punct::new('!', Spacing::Alone).into(),
+        TokenTree::Group(Group::new(Delimiter::Brace, ts)),
+    ]
+    .into_iter()
+    .collect()
+}
+
+#[proc_macro_attribute]
 pub fn concat_cfg(meta: TokenStream, ts: TokenStream) -> TokenStream {
     let predicates = match separated(meta, ',', CfgPredicate::try_from_token_stream, true) {
         Ok(predicates) => predicates,

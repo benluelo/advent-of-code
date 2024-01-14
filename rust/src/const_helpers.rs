@@ -1,3 +1,7 @@
+use cfg_proc::apply;
+
+pub mod array;
+
 pub const fn slice<T>(bytes: &[T], idx_start: usize, idx_curr: usize) -> &[T] {
     let first_split = &bytes.split_at(idx_start).1;
     let line = first_split.split_at(idx_curr - idx_start).0;
@@ -10,6 +14,7 @@ pub const fn slice_mut<T>(bytes: &mut [T], idx_start: usize, idx_curr: usize) ->
     line
 }
 
+#[must_use]
 pub const fn count_segments<const PAT: u8, const TRAILING: bool>(bz: &[u8]) -> usize {
     let len = bz.len();
 
@@ -26,6 +31,7 @@ pub const fn count_segments<const PAT: u8, const TRAILING: bool>(bz: &[u8]) -> u
     segments + (!TRAILING as usize)
 }
 
+#[must_use]
 pub const fn split_with_len<const LEN: usize, const PAT: u8, const TRAILING: bool>(
     bytes: &[u8],
 ) -> [&[u8]; LEN] {
@@ -51,6 +57,7 @@ pub const fn split_with_len<const LEN: usize, const PAT: u8, const TRAILING: boo
     res
 }
 
+#[must_use]
 pub const fn read_until<'bz>(bytes: &'bz [u8], start: usize, separator: &[u8]) -> &'bz [u8] {
     let sep_len = separator.len();
     let bytes_len = bytes.len();
@@ -83,38 +90,6 @@ pub const fn read_until<'bz>(bytes: &'bz [u8], start: usize, separator: &[u8]) -
     slice(bytes, start, i)
 }
 
-// pub const fn eat<'bz>(bytes: &'bz [u8], start: usize, separator:
-// &[u8]) -> &'bz [u8] {     let sep_len = separator.len();
-//     let bytes_len = bytes.len();
-
-//     assert!(sep_len <= bytes_len, "separator is longer than input");
-//     assert!(sep_len > 0, "separator must be > 0");
-
-//     let mut i = start;
-
-//     while i < bytes_len {
-//         if sep_len - 1 <= i - start {
-//             let mut j = sep_len;
-//             while j != 0 {
-//                 if bytes[i - (sep_len - j)] != separator[j - 1] {
-//                     break;
-//                 }
-//                 j -= 1;
-//             }
-
-//             if j == 0 {
-//                 // `i` can be 1 less than sep_len here, so add to it before
-// subtracting                 return slice(bytes, start, i + 1 - sep_len);
-//             }
-//         }
-
-//         i += 1;
-//     }
-
-//     // separator not found, read until end
-//     slice(bytes, start, i)
-// }
-
 #[test]
 fn test_read_until() {
     let bz = b"hello,ABworldAB";
@@ -137,34 +112,35 @@ fn test_read_until() {
     assert_eq!(b"", read_until(bz, 0, b"FOO"));
 }
 
-pub const fn bytes_to_array<const LEN: usize>(bz: &'static [u8]) -> [u8; LEN] {
+#[must_use]
+pub const fn bytes_to_array<const LEN: usize>(bz: &[u8]) -> [u8; LEN] {
     assert!(LEN == bz.len());
 
     let mut out = [0; LEN];
 
-    iter! {
-        for (i, item) in enumerate(bz) {
-            out[i] = item;
-        }
+    #[apply(iter)]
+    for (i, item) in enumerate(bz) {
+        out[i] = item;
     }
 
     out
 }
 
 #[allow(clippy::cast_possible_truncation)]
+#[must_use]
 pub const fn parse_int(bz: &[u8]) -> u32 {
     let mut res = 0;
 
-    iter! {
-        for (i, digit) in enumerate(bz) {
-            assert!(digit.is_ascii_digit());
-            res += (digit - 48) as usize * 10_usize.pow((bz.len() - i - 1) as u32);
-        }
+    #[apply(iter)]
+    for (i, digit) in enumerate(bz) {
+        assert!(digit.is_ascii_digit());
+        res += (digit - 48) as usize * 10_usize.pow((bz.len() - i - 1) as u32);
     }
 
     res as u32
 }
 
+#[must_use]
 #[allow(clippy::cast_possible_truncation)]
 pub const fn parse_sint(bz: &[u8]) -> i32 {
     let mut res = 0;
@@ -172,11 +148,12 @@ pub const fn parse_sint(bz: &[u8]) -> i32 {
     let is_negative = bz[0] == b'-';
     let bz = if is_negative { bz.split_at(1).1 } else { bz };
 
-    iter! {
-        for (i, digit) in enumerate(bz) {
-            assert!(digit.is_ascii_digit());
-            res += (digit - 48) as i32 * (if is_negative { -1 } else { 1 }) * 10_i32.pow((bz.len() - i - 1) as u32);
-        }
+    #[apply(iter)]
+    for (i, digit) in enumerate(bz) {
+        assert!(digit.is_ascii_digit());
+        res += (digit - 48) as i32
+            * (if is_negative { -1 } else { 1 })
+            * 10_i32.pow((bz.len() - i - 1) as u32);
     }
 
     res
@@ -193,6 +170,7 @@ fn parse_sint_works() {
     assert_eq!(parse_sint(i32::MIN.to_string().as_bytes()), i32::MIN);
 }
 
+#[must_use]
 pub const fn max(a: u32, b: u32) -> u32 {
     if a >= b {
         a
@@ -201,6 +179,7 @@ pub const fn max(a: u32, b: u32) -> u32 {
     }
 }
 
+#[must_use]
 pub const fn min_usize(a: usize, b: usize) -> usize {
     if a <= b {
         a
@@ -209,6 +188,7 @@ pub const fn min_usize(a: usize, b: usize) -> usize {
     }
 }
 
+#[must_use]
 pub const fn min_u64(a: u64, b: u64) -> u64 {
     if a <= b {
         a
@@ -217,46 +197,15 @@ pub const fn min_u64(a: u64, b: u64) -> u64 {
     }
 }
 
-#[allow(clippy::cast_possible_truncation)]
-pub const fn int_to_str<const LEN: usize>(n: u128) -> [u8; LEN] {
-    // would be nice, but generic_const_exprs is still incomplete
-    // let bz = [0; N.ilog10()];
-
-    let mut bz = [0; LEN];
-
-    if n == 0 {
-        assert!(LEN as u32 == 1);
-        bz[0] = b'0';
-        return bz;
-    }
-
-    assert!(LEN as u32 == n.ilog10() + 1);
-
-    let mut n = n;
-
-    iter! {
-        for i in range(0, LEN) {
-            let digit = n % 10;
-
-            assert!(digit <= 9);
-
-            bz[LEN - i - 1] = digit as u8 + 48;
-
-            n /= 10;
-        }
-    }
-
-    bz
-}
-
 #[test]
-fn test_int_to_str() {
-    assert_eq!(utf8(&itoa!(0)), "0");
-    assert_eq!(utf8(&itoa!(1)), "1");
-    assert_eq!(utf8(&itoa!(12345)), "12345");
-    assert_eq!(utf8(&itoa!(u128::MAX)), u128::MAX.to_string());
+fn test_itoa() {
+    assert_eq!(itoa!(0).as_str(), "0");
+    assert_eq!(itoa!(1).as_str(), "1");
+    assert_eq!(itoa!(12345).as_str(), "12345");
+    assert_eq!(itoa!(u128::MAX).as_str(), u128::MAX.to_string());
 }
 
+#[must_use]
 pub const fn utf8(bz: &[u8]) -> &str {
     match core::str::from_utf8(bz) {
         Ok(ok) => ok,
@@ -266,6 +215,7 @@ pub const fn utf8(bz: &[u8]) -> &str {
     }
 }
 
+#[must_use]
 pub const fn array_concat<const LEN_1: usize, const LEN_2: usize, const OUT: usize>(
     bz1: [u8; LEN_1],
     bz2: [u8; LEN_2],
@@ -274,48 +224,68 @@ pub const fn array_concat<const LEN_1: usize, const LEN_2: usize, const OUT: usi
 
     let mut res = [0; OUT];
 
-    iter! {
-        for (i, item) in enumerate(bz1) {
-            res[i] = item;
-        }
+    #[apply(iter)]
+    for (i, item) in enumerate(bz1) {
+        res[i] = item;
     }
 
-    iter! {
-        for (i, item) in enumerate(bz2) {
-            res[i + LEN_1] = item;
-        }
+    #[apply(iter)]
+    for (i, item) in enumerate(bz2) {
+        res[i + LEN_1] = item;
     }
 
     res
 }
 
-macro_rules! itoa {
-    ($i:expr) => {{
-        const I: u128 = $i as u128;
-        const LEN: usize = if I == 0 { 1 } else { (I.ilog10() + 1) as usize };
-        const A: [u8; LEN] = $crate::const_helpers::int_to_str::<LEN>(I);
-        A
-    }};
-}
-pub(crate) use itoa;
+pub struct Num<T>(pub T);
 
-macro_rules! split {
-    ($input:expr, $pat:expr, $trailing:expr) => {
-        $crate::const_helpers::split_with_len::<
-            { $crate::const_helpers::count_segments::<$pat, $trailing>($input) },
-            $pat,
-            $trailing,
-        >($input)
+macro_rules! impl_num {
+    ($($T:ty)+) => {
+        $(
+            impl Num<$T> {
+                #[allow(unused_comparisons)]
+                pub const STR_LEN: usize = (<$T>::MAX.ilog10() + 1 + ((<$T>::MIN < 0) as u32)) as usize;
+
+                // pub const fn max_value(&self) -> $T {
+                //     <$T>::MAX
+                // }
+
+                #[must_use]
+                #[allow(clippy::cast_possible_truncation)]
+                pub const fn to_str(&self) -> ArrayVec<u8, { Self::STR_LEN }>
+                {
+                    let mut n = self.0;
+
+                    let mut arr = ArrayVec::new();
+
+                    if n == 0 {
+                        arr.append(b'0');
+                    } else {
+                        while n != 0 {
+                            let digit = n % 10;
+
+                            assert!(digit <= 9);
+
+                            arr.push(digit as u8 + 48);
+
+                            n /= 10;
+                        }
+                    }
+
+                    arr
+                }
+            }
+        )+
     };
 }
-pub(crate) use split;
+impl_num!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
 
-#[test]
-fn split_works() {
-    const INPUT: &[u8] = b"hello\nworld";
-
-    assert_eq!(split!(INPUT, b'\n', false), [b"hello", b"world"]);
+macro_rules! itoa {
+    ($i:expr) => {
+        $crate::const_helpers::Num($i as u128).to_str()
+    };
 }
+pub(crate) use itoa;
 
 macro_rules! arr {
     ($i:expr) => {{
@@ -330,49 +300,52 @@ macro_rules! iter {
     ($($label:lifetime:)? for $item:pat in $slice:ident
         $body:block
     ) => {
+    #[allow(clippy::semicolon_if_nothing_returned)]
+    {
         let mut __i = 0;
         $($label:)? while __i < $slice.len() {
             let $item = $slice[__i];
             __i += 1;
-            $body
+            $body;
         }
-    };
+    }};
 
     ($($label:lifetime:)? for ($i:ident, $item:pat) in enumerate($slice:expr)
         $body:block
-    ) => {
+    ) => {{
         let __slice = $slice;
         let mut __i = 0;
         $($label:)? while __i < __slice.len() {
+            #[allow(clippy::toplevel_ref_arg)]
             let $item = __slice[__i];
             __i += 1;
             let $i = __i - 1;
-            $body
+            $body;
         }
-    };
+    }};
 
-    ($($label:lifetime:)? for $i:ident in range($start:expr, $end:expr)
+    ($($label:lifetime:)? for $i:pat in range($start:expr, $end:expr)
         $body:block
-    ) => {
+    ) => {{
         iter! {
-            $($label:)? for $i in range($start, $end, 1) {
+            $($label:)? for $i in range($start, $end, 1)
                 $body
-            }
-        }
-    };
 
-    ($($label:lifetime:)? for $i:ident in range($start:expr, $end:expr, $step:expr)
+        }
+    }};
+
+    ($($label:lifetime:)? for $i:pat in range($start:expr, $end:expr, $step:expr)
         $body:block
-    ) => {
+    ) => {{
         let __step = $step;
         let mut __i = $start;
         let __end = $end;
         $($label:)? while __i < __end {
             __i += __step;
             let $i = __i - __step;
-            $body
+            $body;
         }
-    };
+    }};
 
     ($($label:lifetime:)? for $line:ident in lines($slice:ident)
         $body:block
@@ -384,15 +357,15 @@ macro_rules! iter {
 
     ($($label:lifetime:)? for $segment:ident in split($slice:ident, $delimiter:expr)
         $body:block
-    ) => {
+    ) => {{
         let mut i = 0;
         let __delimiter = $delimiter;
         $($label:)? while i < $slice.len() {
             let $segment = $crate::const_helpers::read_until($slice, i, __delimiter);
             i += $segment.len() + __delimiter.len();
-            $body
+            $body;
         }
-    };
+    }};
 }
 pub(crate) use iter;
 
@@ -431,16 +404,16 @@ fn concat() {
     assert_eq!(CONST, [1, 2, 3, 4, 5, 6, 7, 8, 9]);
 }
 
+#[must_use]
 pub const fn strip_prefix<'a>(input: &'a [u8], prefix: &[u8]) -> &'a [u8] {
     assert!(
         input.len() >= prefix.len(),
         "prefix cannot be longer than input"
     );
 
-    iter! {
-        for (i, c) in enumerate(prefix) {
-            assert!(input[i] == c, "input not prefixed by prefix");
-        }
+    #[apply(iter)]
+    for (i, c) in enumerate(prefix) {
+        assert!(input[i] == c, "input not prefixed by prefix");
     }
 
     slice(input, prefix.len(), input.len())
@@ -456,28 +429,13 @@ fn strip_prefix_works() {
 #[test]
 #[should_panic = "prefix cannot be longer than input"]
 fn strip_prefix_prefix_too_long() {
-    strip_prefix(b"abc", b"abcde");
+    let _ = strip_prefix(b"abc", b"abcde");
 }
 
 #[test]
 #[should_panic = "input not prefixed by prefix"]
 fn strip_prefix_not_prefixed() {
-    strip_prefix(b"abcde", b"edcba");
-}
-
-const fn nth_line(bz: &[u8], mut n: usize) -> &[u8] {
-    iter! {
-        for (i, b) in enumerate(bz) {
-            if n == 0 {
-                return read_until(bz, i, b"\n");
-            }
-            if b == b'\n' {
-                n -= 1;
-            }
-        }
-    }
-
-    panic!();
+    let _ = strip_prefix(b"abcde", b"edcba");
 }
 
 macro_rules! cmp {
@@ -495,13 +453,13 @@ macro_rules! cmp {
 }
 pub(crate) use cmp;
 
+#[must_use]
 pub const fn slice_eq(a: &[u8], b: &[u8]) -> bool {
     if a.len() == b.len() {
-        iter! {
-            for i in range(0, a.len()) {
-                if a[i] != b[i] {
-                    return false;
-                }
+        #[apply(iter)]
+        for i in range(0, a.len()) {
+            if a[i] != b[i] {
+                return false;
             }
         }
 
@@ -526,7 +484,6 @@ macro_rules! set_bit {
         $number | (1 << $n)
     };
 }
-pub(crate) use set_bit;
 
 macro_rules! set_bit_to {
     ($number:expr, $n:expr, ($ty:ty)$x:expr) => {{
@@ -534,29 +491,28 @@ macro_rules! set_bit_to {
         $number & !(1 << $n) | ($x as $ty << $n)
     }};
 }
-pub(crate) use set_bit_to;
 
 macro_rules! clear_bit {
     ($number:expr, $n:expr) => {
         $number & !(1 << $n)
     };
 }
-pub(crate) use clear_bit;
 
 macro_rules! toggle_bit {
     ($number:expr, $n:expr) => {
         $number ^ (1 << $n)
     };
 }
-pub(crate) use toggle_bit;
 
 macro_rules! check_bit {
     ($number:expr, $n:expr) => {
         (($number >> $n) & 1) == 1
     };
 }
-pub(crate) use check_bit;
 
+use crate::const_helpers::array::ArrayVec;
+
+#[must_use]
 pub const fn line_len(line: &[u8]) -> usize {
     read_until(line, 0, b"\n").len() + 1
 }

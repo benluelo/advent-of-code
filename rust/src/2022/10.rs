@@ -1,14 +1,17 @@
 use alloc::string::String;
-use core::{convert::Infallible, fmt::Display, iter, str::FromStr};
+use core::{convert::Infallible, iter, str::FromStr};
 
-use crate::{Day, DaySolution, Input};
+use cfg_proc::apply;
 
-impl DaySolution for Day<2022, 10> {
-    fn part_1() -> impl Display {
+use crate::{const_helpers::utf8, day, Day};
+
+#[apply(day)]
+impl Day<2022, 10> {
+    pub fn parse(input: &[u8]) -> i32 {
         let checkpoint_intervals = [20_usize, 40, 40, 40, 40, 40];
 
         let mut cpu = Cpu::new(
-            Self::INPUT
+            utf8(input)
                 .trim()
                 .lines()
                 .map(|line| line.parse::<Instruction>().unwrap()),
@@ -32,9 +35,9 @@ impl DaySolution for Day<2022, 10> {
             .1
     }
 
-    fn part_2() -> impl Display {
+    pub fn parse2(input: &[u8]) -> String {
         Cpu::new(
-            Self::INPUT
+            utf8(input)
                 .trim()
                 .lines()
                 .map(|line| line.parse::<Instruction>().unwrap()),
