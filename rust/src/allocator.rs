@@ -11,7 +11,7 @@ use core::{
 
 use crate::{
     const_helpers::{arr, concat_array_const, itoa, parse_int},
-    sys, NEWLINE,
+    print, sys, NEWLINE,
 };
 
 pub const ARENA_SIZE: usize = match option_env!("ARENA_SIZE") {
@@ -83,7 +83,7 @@ unsafe impl GlobalAlloc for StackArenaAllocator {
                 });
 
         if update_res.is_err() {
-            sys::write({
+            print({
                 concat_array_const! {
                     const MSG: [u8; _] = *b"out of memory, try compiling with ARENA_SIZE > ", arr!(itoa!(ARENA_SIZE).as_slice()), NEWLINE;
                 };

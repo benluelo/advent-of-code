@@ -97,7 +97,7 @@
 
                   echo ${pkgs.darwin.apple_sdk.MacOSX-SDK}
 
-                  SDKROOT="${pkgs.darwin.apple_sdk.MacOSX-SDK}" RUSTC_LOG=rustc_codegen_ssa::back::link=info cargo rustc -vvv --release --no-default-features -F ${if const then "const" else "alloc"},${dayYear} --target ${CARGO_BUILD_TARGET} -j1 -Z build-std=alloc,core -Z build-std-features=core/panic_immediate_abort,compiler-builtins-mem -- -C linker=rust-lld -C link-args='${pkgs.lib.concatStringsSep "\n" link-args}'
+                  SDKROOT="${pkgs.darwin.apple_sdk.MacOSX-SDK}" RUSTC_LOG=rustc_codegen_ssa::back::link=info cargo rustc -vvv --release --no-default-features -F ${if const then "const" else ""},${dayYear} --target ${CARGO_BUILD_TARGET} -j1 -Z build-std=alloc,core -Z build-std-features=core/panic_immediate_abort,compiler-builtins-mem -- -C linker=rust-lld -C link-args='${pkgs.lib.concatStringsSep "\n" link-args}'
                 '';
               };
               installPhase = pkgs.lib.concatStringsSep "\n" [

@@ -42,6 +42,7 @@
 
     stmt_expr_attributes,
     proc_macro_hygiene,
+    cfg_match,
 )]
 
 #[cfg(windows)]
@@ -60,49 +61,11 @@ extern crate alloc;
 
 #[cfg(not(feature = "const"))]
 use alloc::{vec, vec::Vec};
-use core::{
-    self,
-    ffi::{c_void, CStr},
-};
+use core::{self, ffi::CStr};
 
 use crate::const_helpers::{arr, bytes_to_array, slice};
 
-/// # Safety
-///
-/// The caller must ensure that `s` is at least `n` bytes long, `n`
-/// bytes of `s` are valid to be set to zero.
-#[no_mangle]
-// llvm is emitting this symbol for some reason
-pub unsafe extern "C" fn bzero(s: *mut c_void, n: usize) {
-    extern "C" {
-        fn memset(dest: *mut c_void, c: i32, n: usize);
-    }
-    memset(s, 0, n);
-}
-
-#[test]
-fn bzero_test() {
-    let mut bz = vec![1_u8; 20];
-
-    unsafe { bzero(bz.as_mut_ptr().cast(), 10) }
-
-    assert_eq!(
-        bz,
-        vec![0; 10]
-            .into_iter()
-            .chain(vec![1; 10])
-            .collect::<Vec<_>>()
-    );
-
-    let mut bz = vec![u32::MAX; 4];
-
-    unsafe { bzero(bz.as_mut_ptr().cast(), 6) }
-
-    assert_eq!(
-        bz,
-        [0, u32::from_ne_bytes([0, 0, 255, 255]), u32::MAX, u32::MAX]
-    );
-}
+struct Day<const YEAR: u16, const DAY: u8>;
 
 #[cfg(not(any(test, debug_assertions)))]
 #[panic_handler]
@@ -112,18 +75,31 @@ fn panic_handler<'a, 'b>(_: &'a core::panic::PanicInfo<'b>) -> ! {
 
 const NEWLINE: [u8; 1] = *b"\n";
 
+fn print(data: &[u8]) {
+    let len = data.len();
+    let mut total_written = 0;
+
+    while total_written < len {
+        let written = sys::write(1, &data[total_written..]).unwrap();
+        total_written += written;
+    }
+}
+
+/// # Safety
+///
+/// This is the entry point, I don't recommend calling this
 #[no_mangle]
-pub extern "C" fn _start(argc: i32, argv: *const *const u8) -> ! {
+pub unsafe extern "C" fn _start(argc: usize, argv: *const *const u8) -> ! {
     use core::slice;
 
     use crate::const_helpers::{concat_array_const, itoa};
 
-    let argv = unsafe { slice::from_raw_parts(argv, argc as usize) };
+    let argv = unsafe { slice::from_raw_parts(argv, argc) };
 
     let 3 = argc else {
-        sys::write(b"usage: ");
-        sys::write(unsafe { CStr::from_ptr(argv[0].cast()) }.to_bytes());
-        sys::write(b" <day> <path-to-input>\navailable days:\n");
+        print(b"usage: ");
+        print(unsafe { CStr::from_ptr(argv[0].cast()) }.to_bytes());
+        print(b" <day> <path-to-input>\navailable days:\n");
 
         let mut output = vec![];
 
@@ -139,7 +115,7 @@ pub extern "C" fn _start(argc: i32, argv: *const *const u8) -> ! {
 
         for_each_day! { solution_name };
 
-        sys::write(&output);
+        print(&output);
 
         sys::exit();
     };
@@ -172,7 +148,7 @@ pub extern "C" fn _start(argc: i32, argv: *const *const u8) -> ! {
                 const OUTPUT: [u8; _] = PREFIX, PART_1, PREFIX, PART_2;
             }
 
-            sys::write(OUTPUT.as_slice());
+            print(OUTPUT.as_slice());
         }};
     }
 
@@ -189,17 +165,17 @@ pub extern "C" fn _start(argc: i32, argv: *const *const u8) -> ! {
 
                 let part_1 = Day::<$YEAR, $DAY>::parse(&mut input.clone());
 
-                sys::write(PREFIX.as_slice());
-                sys::write(b"1: ");
-                sys::write(crate::const_displayable::Displayable::<<Day<$YEAR, $DAY> as SolutionTypes>::Part1>::new(part_1).as_str().as_bytes());
-                sys::write(NEWLINE.as_slice());
+                print(PREFIX.as_slice());
+                print(b"1: ");
+                print(crate::const_displayable::Displayable::<<Day<$YEAR, $DAY> as SolutionTypes>::Part1>::new(part_1).as_str().as_bytes());
+                print(NEWLINE.as_slice());
 
                 let part_2 = Day::<$YEAR, $DAY>::parse2(&mut input);
 
-                sys::write(PREFIX.as_slice());
-                sys::write(b"2: ");
-                sys::write(crate::const_displayable::Displayable::<<Day<$YEAR, $DAY> as SolutionTypes>::Part2>::new(part_2).as_str().as_bytes());
-                sys::write(NEWLINE.as_slice());
+                print(PREFIX.as_slice());
+                print(b"2: ");
+                print(crate::const_displayable::Displayable::<<Day<$YEAR, $DAY> as SolutionTypes>::Part2>::new(part_2).as_str().as_bytes());
+                print(NEWLINE.as_slice());
 
                 sys::exit();
             }
@@ -212,38 +188,31 @@ pub extern "C" fn _start(argc: i32, argv: *const *const u8) -> ! {
 
     #[cfg(not(feature = "const"))]
     {
-        sys::write(b"day `");
-        sys::write(day.to_bytes());
-        sys::write(b"` not found\n");
+        print(b"day `");
+        print(day.to_bytes());
+        print(b"` not found\n");
     }
 
     sys::exit();
 }
 
 fn read_all(path: &CStr) -> Vec<u8> {
-    let Some(stat) = sys::stat(path) else {
-        sys::write(b"file not found: ");
-        sys::write(path.to_bytes());
-        sys::write(&NEWLINE);
+    let Ok(stat) = sys::stat(path) else {
+        print(b"file not found: ");
+        print(path.to_bytes());
+        print(&NEWLINE);
         sys::exit();
     };
 
-    let fd = sys::open(path, 0);
+    let fd = sys::open(path, 0).unwrap();
 
     let mut buf = vec![0; stat.size()];
 
-    let read = sys::read(fd, &mut buf, stat.size());
-    assert_eq!(read, stat.size() as i64);
+    let read = sys::read(fd, &mut buf, stat.size()).unwrap();
+    assert_eq!(read, stat.size());
 
     buf
 }
-
-// // #[cfg(feature = "libc")]
-// #[no_mangle]
-// pub extern "C" fn start(_argc: i32, _argv: *const *const u8) -> ! {
-
-//     sys::exit();
-// }
 
 #[derive(Debug)]
 #[repr(C)]
@@ -258,8 +227,6 @@ impl Stat {
             .unwrap()
     }
 }
-
-struct Day<const YEAR: u16, const DAY: u8>;
 
 #[cfg(any(feature = "const", test))]
 const _: () = {
@@ -334,33 +301,31 @@ macro_rules! for_each_day {
 }
 
 pub(crate) mod sys {
-    use core::{arch::asm, ffi::CStr, hint::unreachable_unchecked, ptr::addr_of_mut};
+    use core::{
+        arch::asm,
+        ffi::{c_void, CStr},
+        hint::unreachable_unchecked,
+        ptr::addr_of_mut,
+    };
 
-    #[cfg(target_os = "linux")]
-    const WRITE: u64 = 1;
-    #[cfg(target_os = "linux")]
-    const EXIT: u64 = 60;
-
-    #[cfg(target_os = "macos")]
-    const WRITE: u64 = 4;
-    #[cfg(target_os = "macos")]
-    const EXIT: u64 = 1;
-
-    #[cfg(target_os = "macos")]
-    const READ: u64 = 3;
-
-    #[cfg(target_os = "macos")]
-    const STAT: u64 = 188;
-
-    #[cfg(target_os = "macos")]
-    const OPEN: u64 = 5;
-
-    #[cfg(target_os = "macos")]
-    const CLOSE: u64 = 6;
+    cfg_match! {
+        cfg(all(target_os = "linux", target_arch = "aarch64")) => {
+            const WRITE: usize = 1;
+            const EXIT: usize = 60;
+        }
+        cfg(all(target_os = "macos", target_arch = "aarch64")) => {
+            const WRITE: usize = 4;
+            const EXIT: usize = 1;
+            const READ: usize = 3;
+            const STAT: usize = 188;
+            const OPEN: usize = 5;
+            const CLOSE: usize = 6;
+        }
+    }
 
     /// Wrapper around a Linux syscall with three arguments. It returns
     /// the syscall result (or error code) that gets stored in rax.
-    unsafe fn syscall_1(num: u64, arg1: u64) -> i64 {
+    unsafe fn syscall_1(num: usize, arg1: usize) -> isize {
         let res;
         #[cfg(target_os = "linux")]
         asm!(
@@ -384,7 +349,7 @@ pub(crate) mod sys {
 
     /// Wrapper around a Linux syscall with three arguments. It returns
     /// the syscall result (or error code) that gets stored in rax.
-    unsafe fn syscall_2(num: u64, arg1: u64, arg2: u64) -> i64 {
+    unsafe fn syscall_2(num: usize, arg1: usize, arg2: usize) -> isize {
         let res;
         #[cfg(target_os = "linux")]
         asm!(
@@ -409,7 +374,7 @@ pub(crate) mod sys {
 
     /// Wrapper around a Linux syscall with three arguments. It returns
     /// the syscall result (or error code) that gets stored in rax.
-    unsafe fn syscall_3(num: u64, arg1: u64, arg2: u64, arg3: u64) -> i64 {
+    unsafe fn syscall_3(num: usize, arg1: usize, arg2: usize, arg3: usize) -> isize {
         let res;
         #[cfg(target_os = "linux")]
         asm!(
@@ -435,12 +400,16 @@ pub(crate) mod sys {
         res
     }
 
-    pub fn write(data: &[u8]) {
-        let _written = unsafe { syscall_3(WRITE, 1, data.as_ptr() as u64, data.len() as u64) };
+    pub fn write(fd: usize, data: &[u8]) -> Result<usize, isize> {
+        let written = unsafe { syscall_3(WRITE, fd, data.as_ptr() as usize, data.len()) };
+
+        written.try_into().map_err(|_| written)
     }
 
-    pub fn read(fd: i64, buf: &mut [u8], count: usize) -> i64 {
-        unsafe { syscall_3(READ, fd as u64, buf.as_mut_ptr() as u64, count as u64) }
+    pub fn read(fd: usize, buf: &mut [u8], count: usize) -> Result<usize, isize> {
+        let ret = unsafe { syscall_3(READ, fd, buf.as_mut_ptr() as usize, count) };
+
+        ret.try_into().map_err(|_| ret)
     }
 
     pub fn exit() -> ! {
@@ -450,20 +419,59 @@ pub(crate) mod sys {
         };
     }
 
-    pub fn stat(path: &CStr) -> Option<crate::Stat> {
+    pub fn stat(path: &CStr) -> Result<crate::Stat, isize> {
         let mut stat: crate::Stat = unsafe { core::mem::zeroed() };
 
-        let ret = unsafe { syscall_2(STAT, path.as_ptr() as u64, addr_of_mut!(stat) as u64) };
+        let ret = unsafe { syscall_2(STAT, path.as_ptr() as usize, addr_of_mut!(stat) as usize) };
 
-        (ret == 0).then_some(stat)
+        (ret == 0).then_some(stat).ok_or(ret)
     }
 
-    pub fn open(path: &CStr, flags: u64) -> i64 {
-        unsafe { syscall_2(OPEN, path.as_ptr() as u64, flags) }
+    pub fn open(path: &CStr, flags: usize) -> Result<usize, isize> {
+        let ret = unsafe { syscall_2(OPEN, path.as_ptr() as usize, flags) };
+
+        ret.try_into().map_err(|_| ret)
     }
 
-    pub fn close(fd: i64) {
-        unsafe { syscall_1(CLOSE, fd as u64) };
+    pub fn close(fd: usize) {
+        unsafe { syscall_1(CLOSE, fd) };
+    }
+
+    /// # Safety
+    ///
+    /// The caller must ensure that `s` is at least `n` bytes long, `n`
+    /// bytes of `s` are valid to be set to zero.
+    #[no_mangle]
+    // llvm is emitting this symbol for some reason
+    unsafe extern "C" fn bzero(s: *mut c_void, n: usize) {
+        extern "C" {
+            fn memset(dest: *mut c_void, c: i32, n: usize);
+        }
+        memset(s, 0, n);
+    }
+
+    #[test]
+    fn bzero_test() {
+        let mut bz = vec![1_u8; 20];
+
+        unsafe { bzero(bz.as_mut_ptr().cast(), 10) }
+
+        assert_eq!(
+            bz,
+            vec![0; 10]
+                .into_iter()
+                .chain(vec![1; 10])
+                .collect::<Vec<_>>()
+        );
+
+        let mut bz = vec![u32::MAX; 4];
+
+        unsafe { bzero(bz.as_mut_ptr().cast(), 6) }
+
+        assert_eq!(
+            bz,
+            [0, u32::from_ne_bytes([0, 0, 255, 255]), u32::MAX, u32::MAX]
+        );
     }
 }
 
@@ -547,6 +555,7 @@ pub trait SolutionTypes {
 
 #[macro_export]
 macro_rules! day {
+    // const impls
     (
         $(#[cfg($meta:meta)])*
         impl $Ty:ty {
@@ -567,6 +576,7 @@ macro_rules! day {
         }
     };
 
+    // non-const impls
     (
         $(#[cfg($meta:meta)])*
         impl $Ty:ty {
