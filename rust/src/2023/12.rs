@@ -86,10 +86,10 @@ const fn parse_line<const UNFOLDING_FACTOR: usize>(line: &[u8]) -> u128 {
         groups_inner[bytes_idx.div_floor(UNFOLDING_FACTOR)][bytes_idx % UNFOLDING_FACTOR] = groups;
     }
 
-    let springs_: &[&[u8]] = springs_inner.flatten();
+    let springs_: &[&[u8]] = springs_inner.as_flattened();
     let springs = MultiSlice::new(slice(springs_, 0, springs_.len() - 1));
 
-    let groups_: &[&[u8]] = groups_inner.flatten();
+    let groups_: &[&[u8]] = groups_inner.as_flattened();
     let groups = MultiSlice::new(slice(groups_, 0, groups_.len() - 1));
 
     calculate_solutions(springs, groups, &mut memoization)
@@ -202,7 +202,7 @@ struct MultiSlice<'a> {
     cursor: usize,
 }
 
-impl<'a> core::fmt::Debug for MultiSlice<'a> {
+impl core::fmt::Debug for MultiSlice<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         for i in 0..self.len() {
             f.write_char(self.get(i) as char)?;

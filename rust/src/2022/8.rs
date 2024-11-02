@@ -240,6 +240,7 @@ where
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 fn print_bool_matrix(matrix: &[Vec<bool>]) {
     let output = matrix
         .iter()

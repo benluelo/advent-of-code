@@ -11,7 +11,7 @@ use core::{
 
 use crate::{
     const_helpers::{arr, concat_array_const, itoa, parse_int},
-    print, sys, NEWLINE,
+    exit, print, NEWLINE,
 };
 
 pub const ARENA_SIZE: usize = match option_env!("ARENA_SIZE") {
@@ -90,7 +90,7 @@ unsafe impl GlobalAlloc for StackArenaAllocator {
                 &MSG
             });
 
-            sys::exit();
+            exit();
         };
         self.arena.get().cast::<u8>().add(allocated)
     }

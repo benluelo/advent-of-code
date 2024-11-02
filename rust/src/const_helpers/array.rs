@@ -17,6 +17,7 @@ impl<T: core::fmt::Debug, const N: usize> core::fmt::Debug for ArrayVec<T, N> {
 
 impl<T, const N: usize> ArrayVec<T, N> {
     #[must_use]
+    #[allow(clippy::new_without_default)]
     pub const fn new() -> Self {
         Self {
             len: 0,
@@ -185,7 +186,7 @@ mod tests {
     }
 
     #[test]
-    #[should_panic = "overflow"]
+    #[should_panic = "index out of bounds: the len is 1 but the index is 1"]
     fn append_overflow_panics() {
         let mut av = ArrayVec::<u8, 1>::new();
 

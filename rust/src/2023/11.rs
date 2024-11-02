@@ -139,6 +139,7 @@ const fn col_of(b: usize, line_len: usize) -> usize {
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 fn dbg_input(input: &[u8]) {
     let line_len = read_until(input, 0, b"\n").len() + 1;
 

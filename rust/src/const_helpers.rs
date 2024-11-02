@@ -1,5 +1,7 @@
 use cfg_proc::apply;
 
+use crate::const_helpers::array::ArrayVec;
+
 pub mod array;
 
 pub const fn slice<T>(bytes: &[T], idx_start: usize, idx_curr: usize) -> &[T] {
@@ -277,6 +279,7 @@ macro_rules! impl_num {
 
                             assert!(digit <= 9);
 
+                            #[allow(clippy::cast_sign_loss)]
                             arr.push(digit as u8 + 48);
 
                             n /= 10;
@@ -490,38 +493,36 @@ macro_rules! opt_unwrap {
 }
 pub(crate) use opt_unwrap;
 
-macro_rules! set_bit {
-    ($number:expr, $n:expr) => {
-        $number | (1 << $n)
-    };
-}
+// macro_rules! set_bit {
+//     ($number:expr, $n:expr) => {
+//         $number | (1 << $n)
+//     };
+// }
 
-macro_rules! set_bit_to {
-    ($number:expr, $n:expr, ($ty:ty)$x:expr) => {{
-        let _: bool = $x;
-        $number & !(1 << $n) | ($x as $ty << $n)
-    }};
-}
+// macro_rules! set_bit_to {
+//     ($number:expr, $n:expr, ($ty:ty)$x:expr) => {{
+//         let _: bool = $x;
+//         $number & !(1 << $n) | ($x as $ty << $n)
+//     }};
+// }
 
-macro_rules! clear_bit {
-    ($number:expr, $n:expr) => {
-        $number & !(1 << $n)
-    };
-}
+// macro_rules! clear_bit {
+//     ($number:expr, $n:expr) => {
+//         $number & !(1 << $n)
+//     };
+// }
 
-macro_rules! toggle_bit {
-    ($number:expr, $n:expr) => {
-        $number ^ (1 << $n)
-    };
-}
+// macro_rules! toggle_bit {
+//     ($number:expr, $n:expr) => {
+//         $number ^ (1 << $n)
+//     };
+// }
 
-macro_rules! check_bit {
-    ($number:expr, $n:expr) => {
-        (($number >> $n) & 1) == 1
-    };
-}
-
-use crate::const_helpers::array::ArrayVec;
+// macro_rules! check_bit {
+//     ($number:expr, $n:expr) => {
+//         (($number >> $n) & 1) == 1
+//     };
+// }
 
 #[must_use]
 pub const fn line_len(line: &[u8]) -> usize {

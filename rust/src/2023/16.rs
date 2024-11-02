@@ -160,6 +160,7 @@ impl<'a> Map<'a> {
     }
 
     #[cfg(test)]
+    #[allow(dead_code)]
     fn dbg_input(&self) {
         let col_empty_color = "\u{001b}[30;47m";
         let reset = "\u{001b}[0m";

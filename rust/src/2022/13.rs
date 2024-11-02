@@ -26,8 +26,7 @@ impl Day<2022, 13> {
             .split("\n\n")
             .flat_map(|packets| {
                 packets
-                    .trim()
-                    .split('\n')
+                    .lines()
                     .map(|packet| packet.parse::<PacketData>().unwrap())
             })
             .chain([packet_data_2.clone(), packet_data_6.clone()])

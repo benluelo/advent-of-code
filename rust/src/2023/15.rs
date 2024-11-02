@@ -136,6 +136,7 @@ enum Op {
 }
 
 #[cfg(test)]
+#[allow(dead_code)]
 fn dbg_array_vec(hashmap: &HashMap) {
     use crate::const_helpers::utf8;
 
@@ -152,8 +153,7 @@ fn dbg_array_vec(hashmap: &HashMap) {
                     "Box {box_idx}: {}",
                     slice
                         .iter()
-                        .enumerate()
-                        .map(|(_slot, (label, focal_length))| {
+                        .map(|(label, focal_length)| {
                             format!("[{} {focal_length}]", utf8(label))
                         })
                         .collect::<Vec<_>>()

@@ -50,41 +50,40 @@ impl Day<2022, 7> {
 }
 
 #[derive(Debug)]
-enum FileTree<'a> {
-    Dir(Dir<'a>),
-    File(File<'a>),
+enum FileTree {
+    Dir(Dir),
+    File(File),
 }
 
-impl<'a> FileTree<'a> {
-    fn parse(input: &str) -> FileTree<'_> {
+impl FileTree {
+    fn parse(input: &str) -> FileTree {
         fn from_term_output_lines<'inner>(
-            parent_dir: &'inner str,
             lines: &mut impl Iterator<Item = TermOutputLine<'inner>>,
-        ) -> FileTree<'inner> {
+        ) -> FileTree {
             let mut trees = vec![];
 
             while let Some(line) = lines.next() {
                 match line {
-                    TermOutputLine::CdToParent => return FileTree::Dir(Dir(parent_dir, trees)),
-                    TermOutputLine::CdToDir(dir) => trees.push(from_term_output_lines(dir, lines)),
-                    TermOutputLine::File(size, file) => {
-                        trees.push(FileTree::File(File(size, file)));
+                    TermOutputLine::CdToParent => return FileTree::Dir(Dir(trees)),
+                    TermOutputLine::CdToDir(_dir) => trees.push(from_term_output_lines(lines)),
+                    TermOutputLine::File(file) => {
+                        trees.push(FileTree::File(File(file)));
                     }
                     // these can be ignored since they don't provide any new information
                     TermOutputLine::Ls | TermOutputLine::Dir(_) => {}
                 }
             }
 
-            return FileTree::Dir(Dir(parent_dir, trees));
+            FileTree::Dir(Dir(trees))
         }
 
         let mut lines = input.lines().map(TermOutputLine::from_str);
 
-        let TermOutputLine::CdToDir(dir @ "/") = lines.next().unwrap() else {
+        let TermOutputLine::CdToDir("/") = lines.next().unwrap() else {
             panic!("missing root directory")
         };
 
-        from_term_output_lines(dir, &mut lines)
+        from_term_output_lines(&mut lines)
     }
 
     fn size(&self) -> u32 {
@@ -94,35 +93,35 @@ impl<'a> FileTree<'a> {
         }
     }
 
-    fn post_order<'b>(&'b self, f: &mut impl FnMut(&'b Dir<'a>)) {
+    fn post_order<'b>(&'b self, f: &mut impl FnMut(&'b Dir)) {
         match self {
             FileTree::Dir(dir) => {
                 f(dir);
 
-                for ft in &dir.1 {
+                for ft in &dir.0 {
                     ft.post_order(f);
                 }
             }
-            FileTree::File(File(_, _)) => {}
+            FileTree::File(File(_)) => {}
         }
     }
 }
 
 #[derive(Debug)]
-struct Dir<'a>(&'a str, Vec<FileTree<'a>>);
+struct Dir(Vec<FileTree>);
 
-impl<'a> Dir<'a> {
+impl Dir {
     fn size(&self) -> u32 {
-        self.1.iter().map(FileTree::size).sum()
+        self.0.iter().map(FileTree::size).sum()
     }
 }
 
 #[derive(Debug)]
-struct File<'a>(&'a str, u32);
+struct File(u32);
 
-impl<'a> File<'a> {
+impl File {
     fn size(&self) -> u32 {
-        self.1
+        self.0
     }
 }
 
@@ -131,8 +130,9 @@ enum TermOutputLine<'a> {
     CdToParent,
     CdToDir(&'a str),
     Ls,
-    Dir(&'a str),
-    File(&'a str, u32),
+
+    Dir(#[allow(unused)] &'a str),
+    File(u32),
 }
 
 impl TermOutputLine<'_> {
@@ -146,9 +146,7 @@ impl TermOutputLine<'_> {
                 _ => panic!("bad input"),
             },
             ("dir", dir) => TermOutputLine::Dir(dir),
-            (size, file) if !file.contains(' ') => {
-                TermOutputLine::File(file, size.parse().unwrap())
-            }
+            (size, file) if !file.contains(' ') => TermOutputLine::File(size.parse().unwrap()),
             _ => panic!("bad input"),
         }
     }

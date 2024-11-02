@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 cfg-proc = { path = "cfg-proc" }
+syscalls = { version = "0.6.18", default-features = false }
 
 [lints.clippy]
 # `#[apply(iter)]` triggers this for some reaso
@@ -68,6 +69,7 @@ const = []
 2022-13 = []
 2022-14 = []
 2022-15 = []
+2022-16 = []
 2022-17 = []
 2022-18 = []
 2022-19 = []

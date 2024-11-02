@@ -1,20 +1,17 @@
-use core::{
-    fmt::{Display, Write},
-    mem,
-};
+use core::mem;
 
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{count_segments, iter, max, min, option_try, read_until},
+    const_helpers::{count_segments, iter, min, option_try, read_until},
     day, Day,
 };
 
 #[apply(day)]
 impl Day<2023, 17> {
     pub const fn parse(input: &mut [u8]) -> u32 {
-        // parse(input)
-        todo!()
+        parse(input)
+        // todo!()
     }
     pub const fn parse2(input: &mut [u8]) -> u32 {
         parse2(input)
@@ -23,7 +20,7 @@ impl Day<2023, 17> {
 
 #[test]
 fn parse_test() {
-    let mut input = b"\
+    let _input = b"\
 2413432311323
 3215453535623
 3255245654254
@@ -57,7 +54,7 @@ fn parse_test() {
     println!("{score}");
 }
 
-fn parse(input: &mut [u8]) -> u32 {
+const fn parse(input: &mut [u8]) -> u32 {
     let mut map = Map::new(input);
 
     let mut state = State {
@@ -67,19 +64,19 @@ fn parse(input: &mut [u8]) -> u32 {
         past_directions: PastDirections::None,
     };
 
-    dbg!(&state);
+    // dbg!(&state);
 
     dfs(&mut state, Position { x: 0, y: 0 }, 0);
 
-    dbg!(&state);
+    // dbg!(&state);
 
     state.lowest_heat_loss_so_far.unwrap()
 }
 
-const fn parse2(input: &mut [u8]) -> u32 {
+const fn parse2(_input: &mut [u8]) -> u32 {
     // let mut map = Map::new(input);
 
-    let mut res = 0;
+    // let mut res = 0;
 
     // #[apply(iter)]
     // for i in range(0, map.map.len()) {
@@ -116,7 +113,7 @@ const fn parse2(input: &mut [u8]) -> u32 {
     //     }
     // }
 
-    res
+    0
 }
 
 const VISITED_MASK: u8 = 0b1000_0000;
@@ -135,7 +132,7 @@ struct Map<'a> {
     cols: usize,
 }
 
-impl<'a> core::fmt::Debug for Map<'a> {
+impl core::fmt::Debug for Map<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         // f.write_str(
         //     &self
@@ -169,12 +166,27 @@ enum PastDirections {
 }
 
 impl PastDirections {
+    const fn eq_const(&self, other: &Self) -> bool {
+        match (self, other) {
+            (PastDirections::None, PastDirections::None) => todo!(),
+            (PastDirections::One(lhs), PastDirections::One(rhs)) => lhs.eq_const(*rhs),
+            (PastDirections::Two(lhs_a, lhs_b), PastDirections::Two(rhs_a, rhs_b)) => {
+                lhs_a.eq_const(*rhs_a) && lhs_b.eq_const(*rhs_b)
+            }
+            (
+                PastDirections::Three(lhs_a, lhs_b, lhs_c),
+                PastDirections::Three(rhs_a, rhs_b, rhs_c),
+            ) => lhs_a.eq_const(*rhs_a) && lhs_b.eq_const(*rhs_b) && lhs_c.eq_const(*rhs_c),
+            _ => false,
+        }
+    }
+
     const fn push(&self, new: Direction) -> Self {
         match self {
             Self::None => Self::One(new),
             Self::One(a) => Self::Two(*a, new),
             Self::Two(a, b) => Self::Three(*a, *b, new),
-            Self::Three(a, b, c) => Self::Three(*b, *c, new),
+            Self::Three(_a, b, c) => Self::Three(*b, *c, new),
         }
     }
 }
@@ -187,6 +199,17 @@ enum Direction {
     South,
     West,
 }
+impl Direction {
+    const fn eq_const(self, rhs: Direction) -> bool {
+        matches!(
+            (self, rhs),
+            (Direction::North, Direction::North)
+                | (Direction::East, Direction::East)
+                | (Direction::South, Direction::South)
+                | (Direction::West, Direction::West)
+        )
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 struct Position {
@@ -195,6 +218,10 @@ struct Position {
 }
 
 impl Position {
+    const fn eq_const(&self, other: &Self) -> bool {
+        self.x == other.x && self.y == other.y
+    }
+
     const fn north(self) -> Option<Self> {
         Some(Self {
             x: self.x,
@@ -225,7 +252,7 @@ impl Position {
 }
 
 impl<'a> Map<'a> {
-    fn new(map: &'a mut [u8]) -> Self {
+    const fn new(map: &'a mut [u8]) -> Self {
         let rows = count_segments::<b'\n', true>(map);
         let cols = (read_until(map, 0, b"\n")).len();
 
@@ -234,7 +261,7 @@ impl<'a> Map<'a> {
         Self { map, rows, cols }
     }
 
-    fn read(&self, position: Position) -> u32 {
+    const fn read(&self, position: Position) -> u32 {
         assert!(self.is_valid(position));
         ((self.map[position.x + (position.y * (self.cols + 1))] & (!VISITED_MASK)) - 48) as u32
     }
@@ -295,32 +322,32 @@ impl<'a> Map<'a> {
         }
     }
 
-    #[cfg(test)]
-    fn dbg_input(&self) {
-        // let col_empty_color = "\u{001b}[30;47m";
-        // let reset = "\u{001b}[0m";
+    // #[cfg(test)]
+    // fn dbg_input(&self) {
+    //      let col_empty_color = "\u{001b}[30;47m";
+    //      let reset = "\u{001b}[0m";
 
-        // let formatted = &self
-        //     .map
-        //     .chunks(self.cols + 1)
-        //     .map(|chars| {
-        //         chars
-        //             .iter()
-        //             .take(self.cols)
-        //             .map(|char| {
-        //                 let c = Tile::from_byte(*char).unwrap();
-        //                 (char & !MASK > 0)
-        //
-        // .then_some(format!("{col_empty_color}{c}{reset}"))
-        //                     .unwrap_or(c.to_string())
-        //             })
-        //             .collect::<String>()
-        //     })
-        //     .collect::<Vec<_>>()
-        //     .join("\n");
+    //      let formatted = &self
+    //          .map
+    //          .chunks(self.cols + 1)
+    //          .map(|chars| {
+    //              chars
+    //                  .iter()
+    //                  .take(self.cols)
+    //                  .map(|char| {
+    //                      let c = Tile::from_byte(*char).unwrap();
+    //                      (char & !MASK > 0)
 
-        // println!("{formatted}");
-    }
+    //      .then_some(format!("{col_empty_color}{c}{reset}"))
+    //                          .unwrap_or(c.to_string())
+    //                  })
+    //                  .collect::<String>()
+    //          })
+    //          .collect::<Vec<_>>()
+    //          .join("\n");
+
+    //      println!("{formatted}");
+    // }
 }
 
 // get neighbours
@@ -331,7 +358,8 @@ impl<'a> Map<'a> {
 // - lowest heat loss to end so far (as an Option)
 // - current heat loss + current neighbour's heat loss
 // - past 3 movement directions
-fn dfs(state: &mut State, pos: Position, depth: u32) {
+#[allow(clippy::only_used_in_recursion)]
+const fn dfs(state: &mut State, pos: Position, depth: u32) {
     // dbg!((&state, &pos));
     if let Some(l) = state.lowest_heat_loss_so_far {
         if l < state.current_heat_loss {
@@ -343,16 +371,14 @@ fn dfs(state: &mut State, pos: Position, depth: u32) {
     //     return;
     // }
 
-    if pos
-        == (Position {
-            x: state.map.cols - 1,
-            y: state.map.rows - 1,
-        })
-    {
-        println!(
-            "found end at depth {depth} with heat loss {:?}",
-            state.current_heat_loss
-        );
+    if pos.eq_const(&Position {
+        x: state.map.cols - 1,
+        y: state.map.rows - 1,
+    }) {
+        // println!(
+        //     "found end at depth {depth} with heat loss {:?}",
+        //     state.current_heat_loss
+        // );
         state.lowest_heat_loss_so_far = if let Some(lowest) = state.lowest_heat_loss_so_far {
             Some(min!(lowest, state.current_heat_loss))
         } else {
@@ -373,9 +399,12 @@ fn dfs(state: &mut State, pos: Position, depth: u32) {
         (neighbours.west, Direction::West),
     ];
 
+    #[apply(iter)]
     for (neighbour, dir) in arr {
         if let Some(n) = neighbour
-            && state.past_directions != PastDirections::Three(dir, dir, dir)
+            && !(state
+                .past_directions
+                .eq_const(&PastDirections::Three(dir, dir, dir)))
         {
             // dbg!((n, dir));
 
