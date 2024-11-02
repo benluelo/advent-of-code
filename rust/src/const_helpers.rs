@@ -197,6 +197,17 @@ pub const fn min_u64(a: u64, b: u64) -> u64 {
     }
 }
 
+macro_rules! min {
+    ($a:expr, $b:expr) => {
+        if $a <= $b {
+            $a
+        } else {
+            $b
+        }
+    };
+}
+pub(crate) use min;
+
 #[test]
 fn test_itoa() {
     assert_eq!(itoa!(0).as_str(), "0");
@@ -516,3 +527,13 @@ use crate::const_helpers::array::ArrayVec;
 pub const fn line_len(line: &[u8]) -> usize {
     read_until(line, 0, b"\n").len() + 1
 }
+
+macro_rules! option_try {
+    ($expr:expr) => {
+        match $expr {
+            Some(some) => some,
+            None => return None,
+        }
+    };
+}
+pub(crate) use option_try;

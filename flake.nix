@@ -147,7 +147,7 @@
             default = pkgs.mkShell {
               buildInputs = [ rust-nightly ]
                 ++ (with pkgs; [
-                rnix-lsp
+                nil
                 cargo-flamegraph
               ]);
               nativeBuildInputs = [ config.treefmt.build.wrapper ]

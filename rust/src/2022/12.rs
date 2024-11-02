@@ -6,7 +6,10 @@ use core::{borrow::Borrow, cmp::Reverse};
 
 use cfg_proc::apply;
 
-use crate::{const_helpers::utf8, day, Day};
+use crate::{
+    const_helpers::{array::ArrayVec, utf8},
+    day, Day,
+};
 
 #[apply(day)]
 impl Day<2022, 12> {
@@ -259,3 +262,5 @@ mod test {
         dbg!(dijkstra(start, |pos| pos == end, |pos| edges[&pos].iter()));
     }
 }
+
+// pub struct SortedArrayVec(ArrayVec<>)
