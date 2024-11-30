@@ -1,3 +1,5 @@
+#![allow(clippy::large_stack_arrays)]
+
 use cfg_proc::apply;
 
 use crate::{

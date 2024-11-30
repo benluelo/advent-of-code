@@ -14,7 +14,7 @@ impl Day<2023, 14> {
         parse(input)
     }
 
-    pub const fn parse2(input: &mut [u8]) -> &'static str {
+    pub const fn parse2(_: &mut [u8]) -> &'static str {
         "can't reccomend running this"
     }
 }

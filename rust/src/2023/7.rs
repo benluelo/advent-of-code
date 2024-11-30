@@ -12,6 +12,7 @@ impl Day<2023, 7> {
     pub const fn parse(input: &[u8]) -> u128 {
         parse(input)
     }
+
     pub const fn parse2(input: &[u8]) -> u128 {
         parse2(input)
     }

@@ -8,7 +8,6 @@ edition = "2021"
 
 [dependencies]
 cfg-proc = { path = "cfg-proc" }
-syscalls = { version = "0.6.18", default-features = false }
 
 [lints.clippy]
 # `#[apply(iter)]` triggers this for some reaso
@@ -23,6 +22,9 @@ pedantic = "deny"
 get_unwrap = "deny"
 str_to_string = "deny"
 std_instead_of_core = "deny"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(yolo)'] }
 
 [profile.dev]
 panic = "abort"

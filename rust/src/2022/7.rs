@@ -130,7 +130,6 @@ enum TermOutputLine<'a> {
     CdToParent,
     CdToDir(&'a str),
     Ls,
-
     Dir(#[allow(unused)] &'a str),
     File(u32),
 }

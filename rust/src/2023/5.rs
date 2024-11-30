@@ -5,14 +5,30 @@ use crate::{
     day, Day,
 };
 
+#[cfg(yolo)]
 #[apply(day)]
 impl Day<2023, 5> {
     pub const fn parse(input: &[u8]) -> u64 {
         parse(input)
     }
+
     // technically possible but i can't recommend doing this at compile time
     pub const fn parse2(input: &[u8]) -> u64 {
         parse2(input)
+    }
+}
+
+#[cfg(not(yolo))]
+#[apply(day)]
+impl Day<2023, 5> {
+    pub const fn parse(input: &[u8]) -> u64 {
+        parse(input)
+    }
+
+    pub const fn parse2(_: &[u8]) -> &'static str {
+        let _ = parse2;
+
+        "technically possible but i can't recommend doing this at compile time"
     }
 }
 

@@ -70,7 +70,7 @@ impl<'a> Displayable<&'a str> {
     }
 
     #[must_use]
-    pub fn as_str(&self) -> &str {
+    pub const fn as_str(&self) -> &str {
         self.output
     }
 }

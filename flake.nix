@@ -58,41 +58,6 @@
           years = [ 2022 2023 ];
           days = [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ];
 
-          link-args = [ "-v" ];
-          # ++ (pkgs.lib.optionals pkgs.stdenv.isDarwin [
-          #   "-e"
-          #   "__start"
-          #   "-Z"
-          #   "-pie"
-          #   "-no_eh_labels"
-          #   "-dead_strip"
-          #   "-allow_stack_execute"
-          #   "-S"
-          #   "-no_uuid"
-          # ]) ++ (pkgs.lib.optionals pkgs.stdenv.isLinux [
-          #   "-e"
-          #   "_start"
-          #   "--no-eh-frame-hdr"
-          #   "-z"
-          #   "norelro"
-          #   "-z"
-          #   "nodefaultlib"
-          #   "-z"
-          #   "nognustack"
-          #   "-nostdlib"
-          #   "--disable-new-dtags"
-          #   "--no-dynamic-linker"
-          #   "--hash-style=sysv"
-          #   "--no-rosegment"
-          #   "-N"
-          #   "--icf=all"
-          #   "--ignore-data-address-equality"
-          #   "--ignore-data-address-equality"
-          #   "--noinhibit-exec"
-          #   "--print-gc-sections"
-          #   "--print-icf-sections"
-          # ]);
-
           mkAocDay = year: day: const:
             let
               dayYear = "${toString year}-${toString day}";
@@ -101,7 +66,7 @@
             in
             pkgs.stdenv.mkDerivation {
               name = pname;
-              buildInputs = if pkgs.stdenv.isLinux then [ pkgs.elfkickers ] else [ ];
+              buildInputs = [ ];
               src = pkgs.stdenv.mkDerivation {
                 name = pname;
                 src = crane.lib.cleanCargoSource ./.;
@@ -149,9 +114,6 @@
                     -j1 \
                     -Z build-std=alloc,core \
                     -Z build-std-features=core/panic_immediate_abort,compiler-builtins-mem \
-                    -- \
-                    -C linker=rust-lld \
-                    -C link-args='${pkgs.lib.concatStringsSep "\n" link-args}'
                 '';
               };
               installPhase = pkgs.lib.concatStringsSep "\n" [

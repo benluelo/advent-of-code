@@ -1,11 +1,4 @@
-// #![cfg_attr(not(any(test, target_arch = "aarch64")), no_main)]
-#![cfg_attr(not(test), no_std, no_main)]
-// #![cfg_attr(target_arch = "aarch64", feature(start))]
-// #![cfg_attr(not(any(test, debug_assertions)), no_std)]
 #![feature(
-    naked_functions,
-    start,
-
     // iterator hackery
     iter_array_chunks,
     iter_next_chunk,
@@ -17,12 +10,9 @@
     const_maybe_uninit_write,
     maybe_uninit_slice,
     maybe_uninit_uninit_array,
-    const_maybe_uninit_uninit_array,
-    const_maybe_uninit_assume_init,
 
     // numbers
     int_roundings,
-    isqrt,
 
     // misc
     let_chains,
@@ -32,14 +22,14 @@
 
     // const stuff
     const_slice_flatten,
-    const_option,
     const_swap,
-    const_replace,
 
     stmt_expr_attributes,
     proc_macro_hygiene,
     cfg_match,
 )]
+#![recursion_limit = "256"]
+#![allow(long_running_const_eval)]
 
 #[cfg(windows)]
 compile_error!("windows is not supported");
@@ -49,177 +39,92 @@ mod year_2022;
 #[path = "2023/mod.rs"]
 mod year_2023;
 
-#[cfg(not(feature = "const"))]
-pub mod allocator;
 pub mod const_displayable;
 pub mod const_helpers;
 
-#[cfg(not(feature = "const"))]
 extern crate alloc;
-
-#[cfg(not(feature = "const"))]
-use alloc::vec;
-use core::{
-    self,
-    ffi::{c_char, c_int, CStr},
-    hint::unreachable_unchecked,
-    ptr,
-};
-
-use syscalls::{syscall0, syscall2, syscall3, Sysno};
 
 use crate::{
     const_displayable::Displayable,
-    const_helpers::{arr, Num},
+    const_helpers::{arr, concat_array_const, itoa, utf8},
 };
 
 struct Day<const YEAR: u16, const DAY: u8>;
 
-#[cfg(not(test))]
-#[panic_handler]
-fn panic_handler(_: &core::panic::PanicInfo<'_>) -> ! {
-    loop {}
-}
+#[cfg(not(feature = "const"))]
+fn main() {
+    let mut args = std::env::args();
 
-const NEWLINE: [u8; 1] = *b"\n";
-
-fn print(data: &[u8]) {
-    let len = data.len();
-    let mut total_written = 0;
-
-    while total_written < len {
-        let written = unsafe {
-            syscall3(
-                Sysno::write,
-                1,
-                data[total_written..].as_ptr() as usize,
-                data.len() - total_written,
-            )
-            .unwrap()
-        };
-        total_written += written;
-    }
-}
-
-/// glibc passes argc, argv, and envp to functions in .init_array, as a
-/// non-standard extension. This allows `std::env::args` to work even in a
-/// `cdylib`, as it does on macOS and Windows.
-// #[cfg(all(target_os = "linux", target_env = "gnu"))]
-#[used]
-#[link_section = ".init_array"]
-static ARGV_INIT_ARRAY: extern "C" fn(core::ffi::c_int, *const *const c_char) = {
-    extern "C" fn init_wrapper(argc: core::ffi::c_int, argv: *const *const c_char) {
-        unsafe {
-            // print(Num(argc).to_str().as_str().as_bytes());
-            // panic!();
-
-            ARGC = argc;
-            ARGV = argv;
-        }
-    }
-    init_wrapper
-};
-
-static mut ARGC: c_int = 0;
-static mut ARGV: *const *const c_char = ptr::null();
-// // static LOCK: StaticMutex = StaticMutex::new();
-
-// #[no_mangle]
-// pub unsafe extern "C" fn _start(argc: core::ffi::c_int, argv: *const *const
-// u8) -> ! {     // let mut argc: core::ffi::c_int;
-
-//     // core::arch::asm!("ldr x0, {:x}", out(reg) argc);
-
-//     // print(Num(argc).to_str().as_str().as_bytes());
-
-//     print(Num(ARGC).to_str().as_str().as_bytes());
-
-//     // print(b"\n");
-
-//     // print(Num(argc).to_str().as_str().as_bytes());
-
-//     // print(b"\n");
-
-//     // print(Num(argc + 1).to_str().as_str().as_bytes());
-
-//     exit()
-// }
-
-// // #[naked]
-// extern "C" fn _start() {
-//     unsafe { core::arch::naked_asm!("call main") }
-// }
-
-#[no_mangle]
-// #[start]
-extern "C" fn _start(argc: c_int, argv: *const *const c_char) -> c_int {
-    print(Num(argc).to_str().as_str().as_bytes());
-
-    let mut total: u32 = 0;
-    let mut argv = argv;
-
-    loop {
-        if argv.is_null() {
-            break;
-        }
-
-        unsafe { argv = argv.add(1) };
-
-        total += 1;
-    }
-
-    print(b"\n");
-
-    print(Num(total).to_str().as_str().as_bytes());
-
-    exit()
-}
-
-/// # Safety
-///
-/// This is the entry point, I don't recommend calling this
-// #[cfg(not(test))]
-// #[no_mangle]
-pub unsafe extern "C" fn __start(argc: usize, argv: *const *const u8) -> ! {
-    use core::slice;
-
-    use crate::const_helpers::{concat_array_const, itoa};
-
-    let argv = unsafe { slice::from_raw_parts(argv, argc) };
-
-    for arg in argv {
-        print(unsafe { CStr::from_ptr(arg.cast()) }.to_bytes());
-        print(b"\n");
-    }
-
-    let 3 = argc else {
-        print(b"usage: ");
-        print(unsafe { CStr::from_ptr(argv[0].cast()) }.to_bytes());
-        print(b" <day> <path-to-input>\navailable days:\n");
-
-        // let mut output = alloc::vec![];
+    #[cfg(not(feature = "const"))]
+    let 3 = args.len() else {
+        print!(
+            "usage: {} <day> <path-to-input>\navailable days:\n",
+            args.next().unwrap()
+        );
 
         macro_rules! solution_name {
             ($YEAR:literal, $DAY:literal) => {{
-                concat_array_const! {
-                    const PREFIX: [u8; _] = arr!(itoa!($YEAR as u32).as_str().as_bytes()), *b"/", arr!(itoa!($DAY as u32).as_str().as_bytes()), NEWLINE;
-                }
+                const PREFIX: &'static str = {
+                    concat_array_const! {
+                        const PREFIX: [u8; _] = arr!(itoa!($YEAR as u32).as_str().as_bytes()), *b"/", arr!(itoa!($DAY as u32).as_str().as_bytes());
+                    };
 
-                print(&PREFIX);
+                    utf8(&PREFIX)
+                };
+
+                println!("{PREFIX}");
             }};
         }
 
         for_each_day! { solution_name };
 
-        // print(&output);
-
-        exit()
+        return;
     };
 
-    let day = unsafe { CStr::from_ptr(argv[1].cast()) };
-    let path = unsafe { CStr::from_ptr(argv[2].cast()) };
+    args.next();
 
-    #[cfg(feature = "const")]
+    let day = args.next().unwrap();
+    let path = args.next().unwrap();
+
+    #[cfg(not(feature = "const"))]
+    macro_rules! run_solution {
+        ($YEAR:literal, $DAY:literal) => {{
+            const ID: &'static str = {
+                concat_array_const! {
+                    const ID: [u8; _] = arr!(itoa!($YEAR as u32).as_str().as_bytes()), *b"/", arr!(itoa!($DAY as u32).as_str().as_bytes());
+                }
+
+                utf8(&ID)
+            };
+
+            if &day == ID {
+                let input = std::fs::read_to_string(path).unwrap();
+
+                let part_1 = Day::<$YEAR, $DAY>::parse(&mut input.clone().into_bytes());
+
+                println!("{ID}-1: {}", Displayable::<<Day<$YEAR, $DAY> as SolutionTypes>::Part1>::new(part_1).as_str());
+
+                let part_2 = Day::<$YEAR, $DAY>::parse2(&mut input.into_bytes());
+
+                println!("{ID}-1: {}", Displayable::<<Day<$YEAR, $DAY> as SolutionTypes>::Part2>::new(part_2).as_str());
+
+                return;
+            }
+        }};
+    }
+
+    for_each_day! {
+        run_solution
+    };
+
+    #[cfg(not(feature = "const"))]
+    {
+        println!("day `{day}` not found\n");
+    }
+}
+
+#[cfg(feature = "const")]
+fn main() {
     macro_rules! run_solution {
         ($YEAR:literal, $DAY:literal) => {{
             const SOLUTION_PART_1: &str = const {
@@ -239,96 +144,18 @@ pub unsafe extern "C" fn __start(argc: usize, argv: *const *const u8) -> ! {
 
             concat_array_const! {
                 const PREFIX: [u8; _] = arr!(itoa!($YEAR as u32).as_str().as_bytes()), *b"/", arr!(itoa!($DAY as u32).as_str().as_bytes()), *b"-";
-                const PART_1: [u8; _] = *b"1: ", arr!(SOLUTION_PART_1.as_bytes()), NEWLINE;
-                const PART_2: [u8; _] = *b"2: ", arr!(SOLUTION_PART_2.as_bytes()), NEWLINE;
+                const PART_1: [u8; _] = *b"1: ", arr!(SOLUTION_PART_1.as_bytes()), *b"\n";
+                const PART_2: [u8; _] = *b"2: ", arr!(SOLUTION_PART_2.as_bytes()), *b"\n";
                 const OUTPUT: [u8; _] = PREFIX, PART_1, PREFIX, PART_2;
             }
 
-            print(OUTPUT.as_slice());
-        }};
-    }
-
-    #[cfg(not(feature = "const"))]
-    macro_rules! run_solution {
-        ($YEAR:literal, $DAY:literal) => {{
-            concat_array_const! {
-                const ID: [u8; _] = arr!(itoa!($YEAR as u32).as_str().as_bytes()), *b"/", arr!(itoa!($DAY as u32).as_str().as_bytes());
-                const PREFIX: [u8; _] = ID, *b"-";
-            }
-
-            if &day.to_bytes() == &ID.as_slice() {
-                let mut input = read_all(path);
-
-                let part_1 = Day::<$YEAR, $DAY>::parse(&mut input.clone());
-
-                print(PREFIX.as_slice());
-                print(b"1: ");
-                print(Displayable::<<Day<$YEAR, $DAY> as SolutionTypes>::Part1>::new(part_1).as_str().as_bytes());
-                print(NEWLINE.as_slice());
-
-                let part_2 = Day::<$YEAR, $DAY>::parse2(&mut input);
-
-                print(PREFIX.as_slice());
-                print(b"2: ");
-                print(Displayable::<<Day<$YEAR, $DAY> as SolutionTypes>::Part2>::new(part_2).as_str().as_bytes());
-                print(NEWLINE.as_slice());
-
-                exit();
-            }
+            print!("{}", utf8(&OUTPUT));
         }};
     }
 
     for_each_day! {
         run_solution
     };
-
-    #[cfg(not(feature = "const"))]
-    {
-        print(b"day `");
-        print(day.to_bytes());
-        print(b"` not found\n");
-    }
-
-    exit();
-}
-
-fn exit() -> ! {
-    // SAFETY: exit will terminate the program
-    unsafe {
-        syscall0(syscalls::Sysno::exit).unwrap();
-        unreachable_unchecked()
-    }
-}
-
-#[cfg(not(feature = "const"))]
-fn read_all(path: &CStr) -> alloc::vec::Vec<u8> {
-    // let Ok(stat) = syscall1(Sysno::stat path) else {
-    //     print(b"file not found: ");
-    //     print(path.to_bytes());
-    //     print(&NEWLINE);
-    //     exit();
-    // };
-
-    let fd = match unsafe { syscall2(Sysno::openat, path.as_ptr() as usize, 0) } {
-        Ok(fd) => fd,
-        Err(err) => {
-            panic!("error opening file: {err}")
-        }
-    };
-
-    let mut buf = vec![];
-
-    loop {
-        buf.reserve(100);
-
-        let read = unsafe { syscall3(Sysno::read, fd, buf.as_mut_ptr() as usize, 100).unwrap() };
-
-        if read < 100 {
-            break;
-        }
-    }
-
-    buf
 }
 
 #[cfg(any(feature = "const", test))]
@@ -434,21 +261,48 @@ macro_rules! day {
     // non-const impls
     (
         $(#[cfg($meta:meta)])*
-        impl $Ty:ty {
+        impl Day<$DAY:literal, $YEAR:literal> {
             pub fn parse($($p1_args:tt)*) -> $P1Ret:ty $p1_body:block
             pub fn parse2($($p2_args:tt)*) -> $P2Ret:ty $p2_body:block
         }
     ) => {
+        #[cfg(not(feature = "const"))]
         $(#[cfg($meta)])*
-        impl $Ty {
+        impl Day<$DAY, $YEAR> {
             pub fn parse($($p1_args)*) -> $P1Ret $p1_body
             pub fn parse2($($p2_args)*) -> $P2Ret $p2_body
         }
 
+        #[cfg(not(feature = "const"))]
         $(#[cfg($meta)])*
-        impl $crate::SolutionTypes for $Ty {
+        impl $crate::SolutionTypes for Day<$DAY, $YEAR> {
             type Part1 = $P1Ret;
             type Part2 = $P2Ret;
+        }
+
+        #[cfg(feature = "const")]
+        $(#[cfg($meta)])*
+        impl Day<$DAY, $YEAR> {
+            #[allow(unused_variables)]
+            pub const fn parse($($p1_args)*) -> &'static str {
+                let _ = || $p1_body;
+
+                "no const solution"
+            }
+
+            #[allow(unused_variables)]
+            pub const fn parse2($($p2_args)*) -> &'static str {
+                let _ = || $p2_body;
+
+                "no const solution"
+            }
+        }
+
+        #[cfg(feature = "const")]
+        $(#[cfg($meta)])*
+        impl $crate::SolutionTypes for Day<$DAY, $YEAR> {
+            type Part1 =  &'static str;
+            type Part2 =  &'static str;
         }
     };
 }
