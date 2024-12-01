@@ -30,6 +30,12 @@ impl<T, const N: usize> ArrayVec<T, N> {
         self.len += 1;
     }
 
+    // pub const fn len(&self) -> usize {
+    //     N
+    // }
+
+    // pub const fn swap(&mut self, i: usize, j: usize) {}
+
     pub const fn push(&mut self, t: T) {
         assert!(self.len < self.arr.len());
         if self.len == 0 {

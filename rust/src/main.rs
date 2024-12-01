@@ -11,6 +11,9 @@
     maybe_uninit_slice,
     maybe_uninit_uninit_array,
 
+    // slices
+    slice_split_once,
+
     // numbers
     int_roundings,
 
@@ -38,6 +41,8 @@ compile_error!("windows is not supported");
 mod year_2022;
 #[path = "2023/mod.rs"]
 mod year_2023;
+#[path = "2024/mod.rs"]
+mod year_2024;
 
 pub mod const_displayable;
 pub mod const_helpers;
@@ -186,7 +191,7 @@ macro_rules! for_each_day {
     ) => {
         for_each_day! {
             $f
-            @YEARS (2022,2023)
+            @YEARS (2022,2023,2024)
         }
     };
 
