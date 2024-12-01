@@ -162,6 +162,7 @@
             default = pkgs.mkShell {
               buildInputs = [ rust-nightly ]
                 ++ (with pkgs; [
+                marksman
                 nil
                 cargo-flamegraph
                 strace
