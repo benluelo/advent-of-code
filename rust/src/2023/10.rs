@@ -1,7 +1,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{iter, opt_unwrap, read_until},
+    const_helpers::{iter, read_until},
     day, Day,
 };
 
@@ -93,31 +93,25 @@ const fn parse(input: &mut [u8]) -> u32 {
                 if input[next.1 - line_len] == b'S' {
                     break;
                 }
-                next = (
-                    opt_unwrap!(north(input[next.1 - line_len])),
-                    next.1 - line_len,
-                );
+                next = (north(input[next.1 - line_len]).unwrap(), next.1 - line_len);
             }
             Direction::East => {
                 if input[next.1 + 1] == b'S' {
                     break;
                 }
-                next = (opt_unwrap!(east(input[next.1 + 1])), next.1 + 1);
+                next = (east(input[next.1 + 1]).unwrap(), next.1 + 1);
             }
             Direction::South => {
                 if input[next.1 + line_len] == b'S' {
                     break;
                 }
-                next = (
-                    opt_unwrap!(south(input[next.1 + line_len])),
-                    next.1 + line_len,
-                );
+                next = (south(input[next.1 + line_len]).unwrap(), next.1 + line_len);
             }
             Direction::West => {
                 if input[next.1 - 1] == b'S' {
                     break;
                 }
-                next = (opt_unwrap!(west(input[next.1 - 1])), next.1 - 1);
+                next = (west(input[next.1 - 1]).unwrap(), next.1 - 1);
             }
         }
     }

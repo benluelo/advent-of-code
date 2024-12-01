@@ -483,16 +483,6 @@ pub const fn slice_eq(a: &[u8], b: &[u8]) -> bool {
     }
 }
 
-macro_rules! opt_unwrap {
-    ($opt:expr) => {
-        match $opt {
-            Some(t) => t,
-            None => panic!(),
-        }
-    };
-}
-pub(crate) use opt_unwrap;
-
 // macro_rules! set_bit {
 //     ($number:expr, $n:expr) => {
 //         $number | (1 << $n)
