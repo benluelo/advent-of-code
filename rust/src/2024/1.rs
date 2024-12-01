@@ -1,10 +1,13 @@
 //! NOTE: This solution does not work with inputs > 1000 lines. For larger
 //! inputs, increase [`LEN`].
+//!
+//! A possible non-constrained solution would do a full scan and re-parse of the
+//! entire raw input for every line, which I really don't feel like doing.
 
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{iter, parse_int, read_until, slice},
+    const_helpers::{iter, parse_int, read_until, slice, slice_mut},
     day, Day,
 };
 
@@ -24,8 +27,8 @@ const LEN: usize = 1000;
 const fn parse(input: &[u8]) -> u32 {
     let (mut left, mut right) = parse_lists::<LEN>(input);
 
-    sort_array(&mut left);
-    sort_array(&mut right);
+    quicksort(&mut left);
+    quicksort(&mut right);
 
     let mut total = 0;
 
@@ -40,11 +43,16 @@ const fn parse(input: &[u8]) -> u32 {
 const fn parse2(input: &[u8]) -> u32 {
     let (left, mut right) = parse_lists::<LEN>(input);
 
-    // sorting the array improves the performance by ~16 seconds (~50%)
-    sort_array(&mut right);
+    // sorting the array improves the performance by ~2 seconds (~28%)
+    quicksort(&mut right);
 
     let mut total = 0;
 
+    // if the left column contained duplicates, it may be advantageous to sort the
+    // left array and only calculate the occurrences once for each number (i.e. if 3
+    // existed twice in the list and it was sorted, then the occurrences would
+    // already be known when we hit the second 3). however, my input does not
+    // contain any duplicates, so I did not include this optimization.
     #[apply(iter)]
     for elem in left {
         let mut occurrences: u32 = 0;
@@ -89,18 +97,27 @@ const fn parse_lists<const N: usize>(input: &[u8]) -> ([u32; N], [u32; N]) {
     (left, right)
 }
 
-const fn sort_array<const N: usize>(arr: &mut [u32; N]) {
-    let mut swapped = true;
+const fn partition(a: &mut [u32]) -> usize {
+    let mut i = 0;
+    let right = a.len() - 1;
 
-    while swapped {
-        swapped = false;
-        #[apply(iter)]
-        for i in range(0, arr.len() - 1) {
-            if arr[i] > arr[i + 1] {
-                arr.swap(i, i + 1);
-                swapped = true;
-            }
+    #[apply(iter)]
+    for j in range(0, right) {
+        if a[j] <= a[right] {
+            a.swap(j, i);
+            i += 1;
         }
+    }
+
+    a.swap(i, right);
+    i
+}
+
+const fn quicksort(a: &mut [u32]) {
+    if a.len() > 1 {
+        let q = partition(a);
+        quicksort(slice_mut(a, 0, q));
+        quicksort(slice_mut(a, q + 1, a.len()));
     }
 }
 
