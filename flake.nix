@@ -140,7 +140,7 @@
         {
           _module.args.pkgs = import nixpkgs {
             inherit system;
-            overlays = with inputs; [
+            overlays = [
               rust-overlay.overlays.default
             ];
           };
@@ -174,11 +174,23 @@
 
           treefmt = {
             projectRootFile = "flake.nix";
-            programs.nixpkgs-fmt.enable = true;
-            programs.taplo.enable = true;
-            programs.rustfmt = {
-              enable = true;
-              package = rust-nightly;
+            programs = {
+              nixpkgs-fmt.enable = true;
+              taplo.enable = true;
+              dprint = {
+                enable = true;
+                settings = {
+                  lineWidth = 80;
+                  includes = [ "*.md" ];
+                  plugins = [
+                    "https://plugins.dprint.dev/markdown-0.15.2.wasm"
+                  ];
+                };
+              };
+              rustfmt = {
+                enable = true;
+                package = rust-nightly;
+              };
             };
           };
         };

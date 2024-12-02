@@ -130,6 +130,7 @@ pub const fn bytes_to_array<const LEN: usize>(bz: &[u8]) -> [u8; LEN] {
 
 #[allow(clippy::cast_possible_truncation)]
 #[must_use]
+#[track_caller]
 pub const fn parse_int(bz: &[u8]) -> u32 {
     let mut res = 0;
 
@@ -144,6 +145,7 @@ pub const fn parse_int(bz: &[u8]) -> u32 {
 
 #[must_use]
 #[allow(clippy::cast_possible_truncation)]
+#[track_caller]
 pub const fn parse_sint(bz: &[u8]) -> i32 {
     let mut res = 0;
 
@@ -365,7 +367,7 @@ macro_rules! iter {
         $body:block
     ) => {
         iter! {
-            for $line in split($slice, b"\n") $body
+            $($label:)? for $line in split($slice, b"\n") $body
         }
     };
 
