@@ -182,8 +182,11 @@
                 settings = {
                   lineWidth = 80;
                   includes = [ "*.md" ];
+                  markdown = {
+                    textWrap = "always";
+                  };
                   plugins = [
-                    "https://plugins.dprint.dev/markdown-0.15.2.wasm"
+                    "https://plugins.dprint.dev/markdown-0.17.8.wasm"
                   ];
                 };
               };
