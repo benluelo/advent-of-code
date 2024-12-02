@@ -3,7 +3,7 @@ use core::fmt::{Display, Write};
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{count_segments, iter, max, read_until},
+    utils::{count_segments, iter, max, read_until},
     day, Day,
 };
 

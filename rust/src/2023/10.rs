@@ -1,7 +1,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{iter, read_until},
+    utils::{iter, read_until},
     day, Day,
 };
 
@@ -18,7 +18,7 @@ impl Day<2023, 10> {
 #[test]
 #[cfg(test)]
 fn parse_test() {
-    use crate::const_helpers::utf8;
+    use crate::utils::utf8;
 
     //     let input = *b"\
     // ..F7.

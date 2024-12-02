@@ -3,7 +3,7 @@ use core::cmp::Ordering;
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{cmp, count_segments, iter, parse_int, utf8},
+    utils::{cmp, count_segments, iter, parse_u32, utf8},
     day, Day,
 };
 
@@ -53,7 +53,7 @@ const fn parse_generic<const WITH_JOKERS: bool>(input: &[u8]) -> u128 {
 
     #[apply(iter)]
     for line in lines(input) {
-        let bet = parse_int(line.split_at(5).1.trim_ascii_start()) as u128;
+        let bet = parse_u32(line.split_at(5).1.trim_ascii_start()) as u128;
         let hand = parse_hand_from_line(line);
 
         if let Some(m) = &max {
@@ -79,7 +79,7 @@ const fn parse_generic<const WITH_JOKERS: bool>(input: &[u8]) -> u128 {
 
         #[apply(iter)]
         for line in lines(input) {
-            let bet = parse_int(line.split_at(5).1.trim_ascii_start()) as u128;
+            let bet = parse_u32(line.split_at(5).1.trim_ascii_start()) as u128;
             let hand = parse_hand_from_line(line);
 
             match hand.cmp(max) {

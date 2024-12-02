@@ -3,7 +3,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{count_segments, iter, line_len},
+    utils::{count_segments, iter, line_len},
     day, Day,
 };
 
@@ -34,7 +34,7 @@ impl Day<2023, 14> {
 #[test]
 #[cfg(test)]
 fn parse_test() {
-    use crate::const_helpers::utf8;
+    use crate::utils::utf8;
 
     //     let input = *b"\
     // O....#....

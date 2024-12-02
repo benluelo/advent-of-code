@@ -3,7 +3,7 @@ use core::str::FromStr;
 
 use cfg_proc::apply;
 
-use crate::{const_helpers::utf8, day, Day};
+use crate::{utils::utf8, day, Day};
 
 #[apply(day)]
 impl Day<2022, 2> {

@@ -2,7 +2,7 @@ use core::mem::{self, MaybeUninit};
 
 use cfg_proc::apply;
 
-use crate::const_helpers::{iter, slice, slice_mut, utf8};
+use crate::utils::{iter, slice, slice_mut, utf8};
 
 pub struct ArrayVec<T, const N: usize> {
     len: usize,
@@ -29,12 +29,6 @@ impl<T, const N: usize> ArrayVec<T, N> {
         self.arr[self.len].write(t);
         self.len += 1;
     }
-
-    // pub const fn len(&self) -> usize {
-    //     N
-    // }
-
-    // pub const fn swap(&mut self, i: usize, j: usize) {}
 
     pub const fn push(&mut self, t: T) {
         assert!(self.len < self.arr.len());

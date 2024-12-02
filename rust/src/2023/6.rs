@@ -1,7 +1,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{iter, parse_int, read_until, slice},
+    utils::{iter, parse_u32, read_until, slice},
     day, Day,
 };
 
@@ -42,8 +42,8 @@ const fn parse(input: &[u8]) -> u128 {
         let slice = slice(distances, idx, idx + padded_time_len);
         let distance = slice.trim_ascii_start();
         idx += padded_time_len;
-        let time = parse_int(raw_time);
-        let distance = parse_int(distance);
+        let time = parse_u32(raw_time);
+        let distance = parse_u32(distance);
 
         let (min, max) = roots(time as u64, distance as u64);
 

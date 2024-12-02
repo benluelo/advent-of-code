@@ -1,7 +1,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{count_segments, iter, parse_sint},
+    utils::{count_segments, iter, parse_i32},
     day, Day,
 };
 
@@ -83,7 +83,7 @@ const fn read_n<const READ_LEFT: bool>(mut i: usize, line: Line) -> i32 {
     #[apply(iter)]
     for segment in split(bz, b" ") {
         if i == 0 {
-            return parse_sint(segment);
+            return parse_i32(segment);
         }
         i -= 1;
     }

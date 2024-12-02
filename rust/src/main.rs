@@ -44,14 +44,14 @@ mod year_2023;
 #[path = "2024/mod.rs"]
 mod year_2024;
 
-pub mod const_displayable;
-pub mod const_helpers;
+pub mod displayable;
+pub mod utils;
 
 extern crate alloc;
 
 use crate::{
-    const_displayable::Displayable,
-    const_helpers::{arr, concat_array_const, itoa, utf8},
+    displayable::Displayable,
+    utils::{arr, concat_array_const, itoa, utf8},
 };
 
 struct Day<const YEAR: u16, const DAY: u8>;
@@ -261,6 +261,9 @@ macro_rules! day {
             type Part1 = $P1Ret;
             type Part2 = $P2Ret;
         }
+
+        #[allow(unused)]
+        type Today = $Ty;
     };
 
     // non-const impls
@@ -309,5 +312,8 @@ macro_rules! day {
             type Part1 =  &'static str;
             type Part2 =  &'static str;
         }
+
+        #[allow(unused)]
+        type Today = Day<$DAY, $YEAR>;
     };
 }

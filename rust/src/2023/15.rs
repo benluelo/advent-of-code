@@ -3,7 +3,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{array::ArrayVec, iter, slice_eq},
+    utils::{array::ArrayVec, iter, slice_eq},
     day, Day,
 };
 
@@ -140,7 +140,7 @@ enum Op {
 #[cfg(test)]
 #[allow(dead_code)]
 fn dbg_array_vec(hashmap: &HashMap) {
-    use crate::const_helpers::utf8;
+    use crate::utils::utf8;
 
     let formatted = hashmap
         .iter()

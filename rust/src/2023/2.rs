@@ -1,7 +1,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{iter, max, parse_int, read_until, slice},
+    utils::{iter, max, parse_u32, read_until, slice},
     day, Day,
 };
 
@@ -90,13 +90,13 @@ const fn parse_line(input: &[u8]) -> (u32, Game) {
 
             match colour {
                 b"red" => {
-                    game.red = max(game.red, parse_int(count));
+                    game.red = max(game.red, parse_u32(count));
                 }
                 b"green" => {
-                    game.green = max(game.green, parse_int(count));
+                    game.green = max(game.green, parse_u32(count));
                 }
                 b"blue" => {
-                    game.blue = max(game.blue, parse_int(count));
+                    game.blue = max(game.blue, parse_u32(count));
                 }
                 _ => panic!(),
             }
@@ -108,5 +108,5 @@ const fn parse_line(input: &[u8]) -> (u32, Game) {
         idx += round.len() + 1;
     }
 
-    (parse_int(game_number), game)
+    (parse_u32(game_number), game)
 }

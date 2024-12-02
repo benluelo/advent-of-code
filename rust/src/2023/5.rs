@@ -1,7 +1,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{iter, min_u64, parse_int, read_until, split_with_len, strip_prefix},
+    utils::{iter, min_u64, parse_u32, read_until, split_with_len, strip_prefix},
     day, Day,
 };
 
@@ -119,7 +119,7 @@ const fn parse(input: &[u8]) -> u64 {
 
     #[apply(iter)]
     for num in split(seeds, b" ") {
-        let soil_id = map_id::<false>(parse_int(num) as u64, seed_to_soil_map);
+        let soil_id = map_id::<false>(parse_u32(num) as u64, seed_to_soil_map);
         // dbg!(soil_id);
         let fertilizer_id = map_id::<false>(soil_id, soil_to_fertilizer_map);
         // dbg!(fertilizer_id);
@@ -180,12 +180,12 @@ const fn parse2(input: &[u8]) -> u64 {
         for num in split(seeds, b" ") {
             let (seed_id, range) = match seed {
                 None => {
-                    seed = Some(parse_int(num) as u64);
+                    seed = Some(parse_u32(num) as u64);
                     continue;
                 }
                 Some(id) => {
                     seed = None;
-                    (id, parse_int(num))
+                    (id, parse_u32(num))
                 }
             };
 
@@ -267,16 +267,16 @@ const fn map_id<const REVERSE: bool>(id: u64, map: &[u8]) -> u64 {
         let [dst_range_start_bz, src_range_start_bz, range_len] =
             split_with_len::<3, b' ', false>(line);
         let dst_range_start = if REVERSE {
-            parse_int(src_range_start_bz) as u64
+            parse_u32(src_range_start_bz) as u64
         } else {
-            parse_int(dst_range_start_bz) as u64
+            parse_u32(dst_range_start_bz) as u64
         };
         let src_range_start = if REVERSE {
-            parse_int(dst_range_start_bz) as u64
+            parse_u32(dst_range_start_bz) as u64
         } else {
-            parse_int(src_range_start_bz) as u64
+            parse_u32(src_range_start_bz) as u64
         };
-        let range_len = parse_int(range_len) as u64;
+        let range_len = parse_u32(range_len) as u64;
 
         if id >= src_range_start && id < src_range_start + range_len {
             return if src_range_start > dst_range_start {

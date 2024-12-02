@@ -7,7 +7,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{iter, parse_int, read_until, slice, slice_mut},
+    utils::{iter, parse_u32, read_until, slice, slice_mut},
     day, Day,
 };
 
@@ -86,8 +86,8 @@ const fn parse_lists<const N: usize>(input: &[u8]) -> ([u32; N], [u32; N]) {
         let l = read_until(line, 0, b"   ");
         let r = slice(line, l.len() + 3, line.len());
 
-        let l = parse_int(l) as u32;
-        let r = parse_int(r) as u32;
+        let l = parse_u32(l) as u32;
+        let r = parse_u32(r) as u32;
 
         left[line_num] = l;
         right[line_num] = r;

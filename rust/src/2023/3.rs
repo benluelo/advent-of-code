@@ -1,8 +1,9 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{iter, min_usize, parse_int, read_until, slice},
-    day, Day,
+    day,
+    utils::{iter, min_usize, parse_u32, read_until, slice},
+    Day,
 };
 
 #[apply(day)]
@@ -77,7 +78,7 @@ const fn parse(input: &[u8]) -> u32 {
                     if is_part_number {
                         let bz =
                             slice(input, number_start_idx + (y * line_len), x + (y * line_len));
-                        res += parse_int(bz);
+                        res += parse_u32(bz);
                     }
 
                     in_number = false;
@@ -254,7 +255,7 @@ const fn find_number_in_line(idx: usize, line_len: usize, input: &[u8]) -> u32 {
 
     let bz = slice(input, idx - (x - left), idx + right);
 
-    parse_int(bz)
+    parse_u32(bz)
 }
 
 #[derive(Debug)]

@@ -1,8 +1,13 @@
+//! My input only has numbers within 1..=99, so we parse as an i8 for some extra
+//! performance (about a 10-15% improvement over using i32, although it is
+//! inconsistent).
+
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{count_segments, iter, parse_sint},
-    day, Day,
+    day,
+    utils::{count_segments, iter},
+    Day,
 };
 
 #[apply(day)]
@@ -16,6 +21,12 @@ impl Day<2024, 2> {
     }
 }
 
+type Int = i8;
+
+const fn parse_int(bz: &[u8]) -> Int {
+    crate::utils::parse_i8(bz)
+}
+
 const fn parse(input: &[u8]) -> u32 {
     let mut safe_count = 0;
 
@@ -23,12 +34,12 @@ const fn parse(input: &[u8]) -> u32 {
 
     #[apply(iter)]
     'lines: for line in lines(input) {
-        let mut prev_diff = None::<i32>;
-        let mut prev_n = None::<i32>;
+        let mut prev_diff = None::<Int>;
+        let mut prev_n = None::<Int>;
 
         #[apply(iter)]
         for num in split(line, b" ") {
-            let n = parse_sint(num.trim_ascii());
+            let n = parse_int(num.trim_ascii());
 
             if let Some(prev_n) = prev_n.replace(n) {
                 let diff = prev_n - n;
@@ -62,8 +73,8 @@ const fn parse2(input: &[u8]) -> u32 {
             Some(n) => n < len,
             None => true,
         } {
-            let mut prev_diff = None::<i32>;
-            let mut prev_n = None::<i32>;
+            let mut prev_diff = None::<Int>;
+            let mut prev_n = None::<Int>;
 
             let mut idx = 0;
 
@@ -77,7 +88,7 @@ const fn parse2(input: &[u8]) -> u32 {
                     continue;
                 }
 
-                let n = parse_sint(num.trim_ascii());
+                let n = parse_int(num.trim_ascii());
 
                 if let Some(prev_n) = prev_n.replace(n) {
                     let diff = prev_n - n;
@@ -103,7 +114,7 @@ const fn parse2(input: &[u8]) -> u32 {
     safe_count
 }
 
-const fn is_safe(prev_diff: &mut Option<i32>, diff: i32) -> bool {
+const fn is_safe(prev_diff: &mut Option<Int>, diff: Int) -> bool {
     if let Some(prev_diff) = prev_diff.replace(diff) {
         // both diffs must be the same "direction", and the new diff must be within
         // 1..=3
@@ -114,7 +125,7 @@ const fn is_safe(prev_diff: &mut Option<i32>, diff: i32) -> bool {
     }
 }
 
-const fn is_valid_diff(diff: i32) -> bool {
+const fn is_valid_diff(diff: Int) -> bool {
     diff.abs() >= 1 && diff.abs() <= 3
 }
 
@@ -129,8 +140,6 @@ fn test() {
 1 3 6 7 9
     ";
 
-    // let input = "1 3 2 4 5";
-
-    // dbg!(parse2(input.as_bytes()));
-    dbg!(parse2(Day::<2024, 2>::INPUT.as_bytes()));
+    dbg!(parse2(input.as_bytes()));
+    // dbg!(parse2(Today::INPUT.as_bytes()));
 }

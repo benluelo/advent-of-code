@@ -1,7 +1,7 @@
 use cfg_proc::apply;
 
 use crate::{
-    const_helpers::{iter, max, parse_int},
+    utils::{iter, max, parse_u32},
     day, Day,
 };
 
@@ -64,7 +64,7 @@ const fn parse_and_sum_calories(bz: &[u8]) -> u32 {
 
     #[apply(iter)]
     for arr in lines(bz) {
-        res += parse_int(arr);
+        res += parse_u32(arr);
     }
 
     res

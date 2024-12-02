@@ -1,6 +1,6 @@
 use cfg_proc::apply;
 
-use crate::const_helpers::array::ArrayVec;
+use crate::utils::array::ArrayVec;
 
 pub mod array;
 
@@ -128,50 +128,78 @@ pub const fn bytes_to_array<const LEN: usize>(bz: &[u8]) -> [u8; LEN] {
     out
 }
 
-#[allow(clippy::cast_possible_truncation)]
-#[must_use]
-#[track_caller]
-pub const fn parse_int(bz: &[u8]) -> u32 {
-    let mut res = 0;
+macro_rules! parse_uint {
+    ($($f:ident $ty:ident,)*) => {
+        $(
+            #[allow(clippy::cast_possible_truncation)]
+            #[must_use]
+            #[track_caller]
+            pub const fn $f(bz: &[u8]) -> $ty {
+                let mut res = 0;
 
-    #[apply(iter)]
-    for (i, digit) in enumerate(bz) {
-        assert!(digit.is_ascii_digit());
-        res += (digit - 48) as usize * 10_usize.pow((bz.len() - i - 1) as u32);
-    }
+                #[apply(iter)]
+                for (i, digit) in enumerate(bz) {
+                    assert!(digit.is_ascii_digit());
+                    res += (digit - 48) as usize * 10_usize.pow((bz.len() - i - 1) as u32);
+                }
 
-    res as u32
+                res as $ty
+            }
+        )*
+    };
 }
 
-#[must_use]
-#[allow(clippy::cast_possible_truncation)]
-#[track_caller]
-pub const fn parse_sint(bz: &[u8]) -> i32 {
-    let mut res = 0;
+parse_uint!(
+    parse_u8 u8,
+    parse_u16 u16,
+    parse_u32 u32,
+    parse_u64 u64,
+    parse_u128 u128,
+);
 
-    let is_negative = bz[0] == b'-';
-    let bz = if is_negative { bz.split_at(1).1 } else { bz };
+macro_rules! parse_int {
+    ($($f:ident $ty:ident,)*) => {
+        $(
+            #[must_use]
+            #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap)]
+            #[track_caller]
+            pub const fn $f(bz: &[u8]) -> $ty {
+                let mut res = 0;
 
-    #[apply(iter)]
-    for (i, digit) in enumerate(bz) {
-        assert!(digit.is_ascii_digit());
-        res += (digit - 48) as i32
-            * (if is_negative { -1 } else { 1 })
-            * 10_i32.pow((bz.len() - i - 1) as u32);
-    }
+                let is_negative = bz[0] == b'-';
+                let bz = if is_negative { bz.split_at(1).1 } else { bz };
 
-    res
+                #[apply(iter)]
+                for (i, digit) in enumerate(bz) {
+                    assert!(digit.is_ascii_digit());
+                    res += (digit - 48) as $ty
+                        * (if is_negative { -1 } else { 1 })
+                        * (10 as $ty).pow((bz.len() - i - 1) as u32);
+                }
+
+                res
+            }
+        )*
+    };
 }
+
+parse_int!(
+    parse_i8 i8,
+    parse_i16 i16,
+    parse_i32 i32,
+    parse_i64 i64,
+    parse_i128 i128,
+);
 
 #[test]
 fn parse_sint_works() {
-    assert_eq!(parse_sint(b"0"), 0);
-    assert_eq!(parse_sint(b"1"), 1);
-    assert_eq!(parse_sint(b"12345"), 12345);
-    assert_eq!(parse_sint(b"-1"), -1);
-    assert_eq!(parse_sint(b"-1234"), -1234);
-    assert_eq!(parse_sint(i32::MAX.to_string().as_bytes()), i32::MAX);
-    assert_eq!(parse_sint(i32::MIN.to_string().as_bytes()), i32::MIN);
+    assert_eq!(parse_i32(b"0"), 0);
+    assert_eq!(parse_i32(b"1"), 1);
+    assert_eq!(parse_i32(b"12345"), 12345);
+    assert_eq!(parse_i32(b"-1"), -1);
+    assert_eq!(parse_i32(b"-1234"), -1234);
+    assert_eq!(parse_i32(i32::MAX.to_string().as_bytes()), i32::MAX);
+    assert_eq!(parse_i32(i32::MIN.to_string().as_bytes()), i32::MIN);
 }
 
 #[must_use]
@@ -298,15 +326,14 @@ impl_num!(u8 u16 u32 u64 u128 usize i8 i16 i32 i64 i128 isize);
 
 macro_rules! itoa {
     ($i:expr) => {
-        $crate::const_helpers::Num($i as u128).to_str()
+        $crate::utils::Num($i as u128).to_str()
     };
 }
 pub(crate) use itoa;
 
 macro_rules! arr {
     ($i:expr) => {{
-        const ARR: [u8; { ($i).len() }] =
-            $crate::const_helpers::bytes_to_array::<{ ($i).len() }>($i);
+        const ARR: [u8; { ($i).len() }] = $crate::utils::bytes_to_array::<{ ($i).len() }>($i);
         ARR
     }};
 }
@@ -377,7 +404,7 @@ macro_rules! iter {
         let mut i = 0;
         let __delimiter = $delimiter;
         $($label:)? while i < $slice.len() {
-            let $segment = $crate::const_helpers::read_until($slice, i, __delimiter);
+            let $segment = $crate::utils::read_until($slice, i, __delimiter);
             i += $segment.len() + __delimiter.len();
             $body;
         }
@@ -404,7 +431,7 @@ macro_rules! concat_array_const {
     (@concat [$a:expr; $a_len:expr] [$b:expr; $b_len:expr] $($tail:tt)*) => {
         concat_array_const!(
             @concat
-            [$crate::const_helpers::array_concat::<{ $a_len }, { $b_len }, { $a_len + $b_len }>($a, $b); $a_len + $b_len]
+            [$crate::utils::array_concat::<{ $a_len }, { $b_len }, { $a_len + $b_len }>($a, $b); $a_len + $b_len]
             $($tail)*
         )
     };

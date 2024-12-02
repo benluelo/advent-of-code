@@ -17,7 +17,7 @@ macro_rules! displayable_num {
                 pub const fn new(t: $T) -> Self {
                     Self {
                         t: PhantomData,
-                        output: $crate::const_helpers::Num(t).to_str(),
+                        output: $crate::utils::Num(t).to_str(),
                     }
                 }
 
@@ -28,7 +28,7 @@ macro_rules! displayable_num {
             }
 
             impl ConstDisplayable for $T {
-                type Output = $crate::const_helpers::array::ArrayVec<u8, { $crate::const_helpers::Num::<$T>::STR_LEN }>;
+                type Output = $crate::utils::array::ArrayVec<u8, { $crate::utils::Num::<$T>::STR_LEN }>;
             }
         )+
     };
