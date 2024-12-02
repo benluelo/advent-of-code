@@ -5,8 +5,9 @@ use core::fmt::Write;
 use cfg_proc::apply;
 
 use crate::{
+    day,
     utils::{iter, read_until, slice},
-    day, Day,
+    Day,
 };
 
 #[apply(day)]

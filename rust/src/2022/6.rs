@@ -1,6 +1,6 @@
 use cfg_proc::apply;
 
-use crate::{utils::utf8, day, Day};
+use crate::{day, utils::utf8, Day};
 
 const START_OF_PACKET_MARKER_LENGTH: usize = 4;
 const START_OF_MESSAGE_MARKER_LENGTH: usize = 14;

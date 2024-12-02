@@ -7,7 +7,7 @@ use core::{
 
 use cfg_proc::apply;
 
-use crate::{utils::utf8, day, Day};
+use crate::{day, utils::utf8, Day};
 
 #[apply(day)]
 impl Day<2022, 5> {

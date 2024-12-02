@@ -3,8 +3,9 @@ use core::cmp::Ordering;
 use cfg_proc::apply;
 
 use crate::{
+    day,
     utils::{cmp, count_segments, iter, parse_u32, utf8},
-    day, Day,
+    Day,
 };
 
 #[apply(day)]

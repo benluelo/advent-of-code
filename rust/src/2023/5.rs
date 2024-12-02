@@ -1,8 +1,9 @@
 use cfg_proc::apply;
 
 use crate::{
+    day,
     utils::{iter, min_u64, parse_u32, read_until, split_with_len, strip_prefix},
-    day, Day,
+    Day,
 };
 
 #[cfg(yolo)]
