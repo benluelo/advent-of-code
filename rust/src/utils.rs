@@ -4,6 +4,7 @@ use crate::utils::array::ArrayVec;
 
 pub mod array;
 
+#[track_caller]
 pub const fn slice<T>(bytes: &[T], idx_start: usize, idx_curr: usize) -> &[T] {
     let first_split = &bytes.split_at(idx_start).1;
     let line = first_split.split_at(idx_curr - idx_start).0;
@@ -64,7 +65,10 @@ pub const fn read_until<'bz>(bytes: &'bz [u8], start: usize, separator: &[u8]) -
     let sep_len = separator.len();
     let bytes_len = bytes.len();
 
-    assert!(sep_len <= bytes_len, "separator is longer than input");
+    if sep_len > bytes_len {
+        return bytes;
+    }
+
     assert!(sep_len > 0, "separator must be > 0");
 
     let mut i = start;
