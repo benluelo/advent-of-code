@@ -16,6 +16,7 @@
 
     // numbers
     int_roundings,
+    strict_overflow_ops,
 
     // misc
     let_chains,
