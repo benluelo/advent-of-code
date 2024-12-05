@@ -132,6 +132,32 @@ pub const fn bytes_to_array<const LEN: usize>(bz: &[u8]) -> [u8; LEN] {
     out
 }
 
+#[must_use]
+pub const fn split_once<'a>(bz: &'a [u8], delimiter: &[u8]) -> Option<(&'a [u8], &'a [u8])> {
+    let l = read_until(bz, 0, delimiter);
+
+    if l.len() == bz.len() {
+        None
+    } else {
+        Some((l, slice(bz, l.len() + delimiter.len(), bz.len())))
+    }
+}
+
+#[must_use]
+pub const fn split_once_mut<'a>(
+    bz: &'a mut [u8],
+    delimiter: &[u8],
+) -> Option<(&'a mut [u8], &'a mut [u8])> {
+    let l = read_until(bz, 0, delimiter);
+
+    if l.len() == bz.len() {
+        None
+    } else {
+        let (l, r) = bz.split_at_mut(l.len());
+        Some((l, slice_mut(r, delimiter.len(), r.len())))
+    }
+}
+
 macro_rules! parse_uint {
     ($($f:ident $ty:ident,)*) => {
         $(
