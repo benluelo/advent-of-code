@@ -1,5 +1,3 @@
-//! Mega hackery
-//!
 //! This problem is quite simple, however due to the constraints of const it is
 //! also quite a pain. All state must be kept in the input itself (hence `&mut
 //! [u8]`), which is accomplished through some fancy bit twiddling:
@@ -16,6 +14,13 @@
 //!   [`POSSIBLE_OBSTACLE_LOCATION`]. this reduces the amount of tiles that need
 //!   to be checked by about 3.3x (there are 16040 empty tiles in my input, and
 //!   4778 are visited during the part 1 solution)
+//!
+//! A faster solution would be to solve part 1, and then backtrace through the
+//! solution, placing an obstacle at the end of the path at each step backwards,
+//! and then continuing stepping forwards with the obstacle there. Upon either
+//! exiting the map (no loop found) or encountering a loop, step backwards to
+//! the obstacle, then step back one more on the original path, and repeat until
+//! having stepped back through the entire traversed path.
 
 use cfg_proc::apply;
 
@@ -29,12 +34,10 @@ use crate::{
 impl Day<2024, 6> {
     pub const fn parse(input: &mut [u8]) -> u32 {
         parse(input)
-        // 0
     }
 
     pub const fn parse2(input: &mut [u8]) -> u32 {
         parse2(input)
-        // 0
     }
 }
 
@@ -108,6 +111,14 @@ const fn parse2(input: &mut [u8]) -> u32 {
     total
 }
 
+const VISITED_MASK: u8 = 0b1111_0000;
+const MASK: u8 = 0b0000_0001;
+// this is explicitly chosen so as to not have any overlap with the bit pattern
+// of b'\n'
+const POSSIBLE_OBSTACLE_LOCATION: u8 = 0b0000_0100;
+const WALL: u8 = b'#' & MASK;
+const TILE: u8 = b'.' & MASK;
+
 #[derive(Debug)]
 struct Map<'a> {
     map: &'a mut [u8],
@@ -116,32 +127,6 @@ struct Map<'a> {
     guard_pos: (usize, usize),
     direction: Direction,
 }
-
-#[derive(Debug, Clone, Copy)]
-#[repr(u8)]
-#[rustfmt::skip]
-enum Direction {
-    North = 0b1000_0000,
-    East  = 0b0100_0000,
-    South = 0b0010_0000,
-    West  = 0b0001_0000,
-}
-impl Direction {
-    const fn turn_right(self) -> Direction {
-        match self {
-            Self::North => Self::East,
-            Self::East => Self::South,
-            Self::South => Self::West,
-            Self::West => Self::North,
-        }
-    }
-}
-
-const VISITED_MASK: u8 = 0b1111_0000;
-const MASK: u8 = 0b0000_0001;
-const POSSIBLE_OBSTACLE_LOCATION: u8 = 0b0000_0100;
-const WALL: u8 = b'#' & MASK;
-const TILE: u8 = b'.' & MASK;
 
 impl<'a> Map<'a> {
     const fn new(map: &'a mut [u8]) -> Self {
@@ -265,6 +250,27 @@ impl<'a> Map<'a> {
             .collect::<String>();
 
         println!("{s}\n");
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+#[repr(u8)]
+#[rustfmt::skip]
+enum Direction {
+    North = 0b1000_0000,
+    East  = 0b0100_0000,
+    South = 0b0010_0000,
+    West  = 0b0001_0000,
+}
+
+impl Direction {
+    const fn turn_right(self) -> Direction {
+        match self {
+            Self::North => Self::East,
+            Self::East => Self::South,
+            Self::South => Self::West,
+            Self::West => Self::North,
+        }
     }
 }
 
