@@ -15,9 +15,7 @@ impl Day<2024, 2> {
     }
 }
 
-const fn parse(input: &[u8]) -> u32 {
-    todo!()
-}
+fn parse(input: &[u8]) -> u32 {}
 
 fn parse2(input: &[u8]) -> u32 {
     todo!()
