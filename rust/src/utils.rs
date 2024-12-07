@@ -587,3 +587,17 @@ macro_rules! option_try {
     };
 }
 pub(crate) use option_try;
+
+pub const fn trim_ascii_mut(bz: &mut [u8]) -> &mut [u8] {
+    let start = bz.trim_ascii_start().len();
+    let end = bz.trim_ascii_end().len();
+
+    slice_mut(bz, bz.len() - start, end)
+}
+
+#[test]
+fn test_trim_ascii_mut() {
+    assert_eq!("hi", utf8(trim_ascii_mut(&mut b"\n  hi \n ".to_owned())));
+    assert_eq!("hi", utf8(trim_ascii_mut(&mut b"hi \n ".to_owned())));
+    assert_eq!("hi", utf8(trim_ascii_mut(&mut b" \n hi".to_owned())));
+}
