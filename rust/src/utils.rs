@@ -3,6 +3,7 @@ use cfg_proc::apply;
 use crate::utils::array::ArrayVec;
 
 pub mod array;
+pub mod grid;
 
 #[track_caller]
 pub const fn slice<T>(bytes: &[T], idx_start: usize, idx_curr: usize) -> &[T] {
@@ -370,14 +371,27 @@ macro_rules! arr {
 pub(crate) use arr;
 
 macro_rules! iter {
-    ($($label:lifetime:)? for $item:pat in $slice:ident
+    ($($label:lifetime:)? for $item:pat in iter($slice:expr)
         $body:block
     ) => {
     #[allow(clippy::semicolon_if_nothing_returned)]
     {
         let mut __i = 0;
         $($label:)? while __i < $slice.len() {
-            let $item = $slice[__i];
+            let $item = &$slice[__i];
+            __i += 1;
+            $body;
+        }
+    }};
+
+    ($($label:lifetime:)? for $item:pat in iter_mut($slice:expr)
+        $body:block
+    ) => {
+    #[allow(clippy::semicolon_if_nothing_returned)]
+    {
+        let mut __i = 0;
+        $($label:)? while __i < $slice.len() {
+            let $item = &mut $slice[__i];
             __i += 1;
             $body;
         }

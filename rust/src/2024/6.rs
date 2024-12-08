@@ -26,7 +26,10 @@ use cfg_proc::apply;
 
 use crate::{
     day,
-    utils::{count_segments, iter, read_until, trim_ascii_mut},
+    utils::{
+        grid::{GridMut, Position},
+        iter, read_until,
+    },
     Day,
 };
 
@@ -42,8 +45,6 @@ impl Day<2024, 6> {
 }
 
 const fn parse(input: &mut [u8]) -> u32 {
-    let input = trim_ascii_mut(input);
-
     let mut total = 0;
 
     let mut map = Map::new(input);
@@ -51,9 +52,9 @@ const fn parse(input: &mut [u8]) -> u32 {
     while !matches!(map.step(), StepResult::Exit) {}
 
     #[apply(iter)]
-    for pos in input {
+    for pos in iter(input) {
         // if this tile was visited in any direction, consider it visited
-        if pos & VISITED_MASK > 0 {
+        if *pos & VISITED_MASK > 0 {
             total += 1;
         }
     }
@@ -62,8 +63,6 @@ const fn parse(input: &mut [u8]) -> u32 {
 }
 
 const fn parse2(input: &mut [u8]) -> u32 {
-    let input = trim_ascii_mut(input);
-
     // first, solve the normal case to see which tiles the guard will traverse. only
     // obstacles placed on these tiles will have an effect on the guard's path, so
     // there's no point in checking *every* tile - only check these ones.
@@ -73,11 +72,11 @@ const fn parse2(input: &mut [u8]) -> u32 {
     while !matches!(map.step(), StepResult::Exit) {}
 
     #[apply(iter)]
-    for i in range(0, map.map.len()) {
+    for c in iter_mut(map.grid.raw_mut()) {
         // if this tile was visited in any direction, consider it visited and mark it as
         // a possible obstacle location
-        if map.map[i] & VISITED_MASK > 0 {
-            map.map[i] = TILE | POSSIBLE_OBSTACLE_LOCATION;
+        if *c & VISITED_MASK > 0 {
+            *c = TILE | POSSIBLE_OBSTACLE_LOCATION;
         }
     }
 
@@ -86,9 +85,9 @@ const fn parse2(input: &mut [u8]) -> u32 {
     let mut total = 0;
 
     #[apply(iter)]
-    for i in range(0, map.map.len()) {
-        if map.map[i] == POSSIBLE_OBSTACLE_LOCATION {
-            map.map[i] = WALL;
+    for i in range(0, map.grid.raw().len()) {
+        if map.grid.raw()[i] == POSSIBLE_OBSTACLE_LOCATION {
+            map.grid.raw_mut()[i] = WALL;
 
             loop {
                 match map.step() {
@@ -103,7 +102,7 @@ const fn parse2(input: &mut [u8]) -> u32 {
 
             // no need to set it as a possible obstacle location as it's already been
             // visited
-            map.map[i] = TILE;
+            map.grid.raw_mut()[i] = TILE;
             map.reset(start_pos);
         }
     }
@@ -121,37 +120,35 @@ const TILE: u8 = b'.' & MASK;
 
 #[derive(Debug)]
 struct Map<'a> {
-    map: &'a mut [u8],
-    rows: usize,
-    cols: usize,
-    guard_pos: (usize, usize),
+    grid: GridMut<'a>,
+    guard_pos: Position,
     direction: Direction,
 }
 
 impl<'a> Map<'a> {
     const fn new(map: &'a mut [u8]) -> Self {
-        let rows = count_segments::<b'\n', true>(map);
-        let cols = read_until(map, 0, b"\n").len();
+        let mut grid = GridMut::new(map);
 
-        let guard_pos = read_until(map, 0, b"^").len();
+        let guard_pos_raw = read_until(grid.raw(), 0, b"^").len();
 
         // apply the mask to all non-newline positions
         #[apply(iter)]
-        for i in range(0, map.len()) {
-            if map[i] != b'\n' {
-                map[i] &= MASK;
+        for c in iter_mut(grid.raw_mut()) {
+            if *c != b'\n' {
+                *c &= MASK;
             }
         }
 
         let mut this = Self {
-            map,
-            rows,
-            cols,
-            guard_pos: ((guard_pos / rows) - 1, guard_pos % (cols + 1)),
+            guard_pos: Position::new(
+                guard_pos_raw / grid.rows() - 1,
+                guard_pos_raw % (grid.cols() + 1),
+            ),
+            grid,
             direction: Direction::North,
         };
 
-        *this.get(this.guard_pos.0, this.guard_pos.1).unwrap() = TILE | this.direction as u8;
+        *this.grid.get_mut(this.guard_pos).unwrap() = TILE | this.direction as u8;
 
         this
     }
@@ -166,10 +163,10 @@ impl<'a> Map<'a> {
 
         let mut new_pos = {
             match (
-                self.guard_pos.0.checked_add_signed(delta.0),
-                self.guard_pos.1.checked_add_signed(delta.1),
+                self.guard_pos.row().checked_add_signed(delta.0),
+                self.guard_pos.col().checked_add_signed(delta.1),
             ) {
-                (Some(row), Some(col)) => (row, col),
+                (Some(row), Some(col)) => Position::new(row, col),
                 _ => return StepResult::Exit,
             }
         };
@@ -178,7 +175,7 @@ impl<'a> Map<'a> {
 
         let dir_mask = self.direction as u8;
 
-        let res = match self.get(new_pos.0, new_pos.1) {
+        let res = match self.grid.get_mut(new_pos) {
             Some(&mut WALL) => {
                 self.direction = self.direction.turn_right();
                 new_pos = self.guard_pos;
@@ -202,54 +199,39 @@ impl<'a> Map<'a> {
         res
     }
 
-    #[track_caller]
-    const fn get(&mut self, row: usize, col: usize) -> Option<&mut u8> {
-        if row <= self.rows && col <= self.cols {
-            Some(&mut self.map[(row * (self.cols + 1)) + col])
-        } else {
-            None
-        }
-    }
-
-    const fn reset(&mut self, guard_pos: (usize, usize)) {
+    const fn reset(&mut self, guard_pos: Position) {
         // un-visit all positions by unsetting the top 4 bits of every byte (where the
         // direction information is stored)
         #[apply(iter)]
-        for i in range(0, self.map.len()) {
+        for c in iter_mut(self.grid.raw_mut()) {
             // newline is 0b00001010, so no need to check here as none of it's bits will get
             // overwritten by the mask; it's more efficient to just unconditinally apply the
             // mask (almost 10% faster than branching)
-            self.map[i] &= (!VISITED_MASK) | (self.map[i] & POSSIBLE_OBSTACLE_LOCATION);
+            *c &= (!VISITED_MASK) | (*c & POSSIBLE_OBSTACLE_LOCATION);
         }
 
         self.guard_pos = guard_pos;
         self.direction = Direction::North;
-        *self.get(guard_pos.0, guard_pos.1).unwrap() = TILE | Direction::North as u8;
+        *self.grid.get_mut(guard_pos).unwrap() = TILE | Direction::North as u8;
     }
 
     #[allow(unused, reason = "only used in debugging")]
     fn debug(&self) {
-        let s = self
-            .map
-            .iter()
-            .map(|b| {
-                if *b == b'\n' {
-                    *b as char
-                } else if *b == POSSIBLE_OBSTACLE_LOCATION {
-                    'O'
-                } else if b & MASK == TILE {
-                    if b & VISITED_MASK > 0 {
-                        'X'
-                    } else {
-                        '.'
-                    }
+        self.grid.debug(|b| {
+            if b == b'\n' {
+                b as char
+            } else if b == POSSIBLE_OBSTACLE_LOCATION {
+                'O'
+            } else if b & MASK == TILE {
+                if b & VISITED_MASK > 0 {
+                    'X'
                 } else {
-                    '#'
+                    '.'
                 }
-            })
-            .collect::<String>();
-
-        println!("{s}\n");
+            } else {
+                '#'
+            }
+        });
     }
 }
 
@@ -298,12 +280,7 @@ fn test() {
 #.........
 ......#...";
 
-    //     let input = b"123456789
-    // abcdefghi
-    // ABCDEFGHI";
-
-    // dbg!(input[83] as char);
-
-    // dbg!(parse2(&mut input.to_owned()));
+    dbg!(parse2(&mut input.to_owned()));
+    dbg!(parse(&mut Today::INPUT.as_bytes().to_owned()));
     dbg!(parse2(&mut Today::INPUT.as_bytes().to_owned()));
 }

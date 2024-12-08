@@ -62,7 +62,7 @@ const fn calculate_score(input: &[u8], total_rows: usize) -> usize {
     let mut score = 0;
 
     #[apply(iter)]
-    for char in input {
+    for char in iter(input) {
         match char {
             b'O' => score += total_rows - row,
             b'\n' => row += 1,

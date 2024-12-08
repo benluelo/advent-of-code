@@ -2,52 +2,33 @@ use cfg_proc::apply;
 
 use crate::{
     day,
-    utils::{array::ArrayVec, count_segments, iter, option_try, read_until, trim_ascii_mut},
+    utils::{
+        array::ArrayVec,
+        grid::{GridMut, Position},
+        iter, option_try,
+    },
     Day,
 };
 
 #[apply(day)]
 impl Day<2024, 8> {
-    pub const fn parse(input: &[u8]) -> u32 {
-        todo!()
-        // parse(input)
+    pub const fn parse(input: &mut [u8]) -> u32 {
+        parse(input)
     }
 
-    pub const fn parse2(input: &[u8]) -> u32 {
-        todo!()
-        // parse2(input)
+    pub const fn parse2(input: &mut [u8]) -> u32 {
+        parse2(input)
     }
 }
 
-fn parse(input: &mut [u8]) -> u32 {
-    let input = trim_ascii_mut(input);
-
-    let rows = count_segments::<b'\n', false>(input);
-    let cols = read_until(input, 0, b"\n").len();
-
-    let mut antennas = AntennaPositions::new();
-
-    dbg!(rows, cols);
-
-    #[apply(iter)]
-    for row in range(0, rows) {
-        #[apply(iter)]
-        for col in range(0, cols) {
-            let letter = input[Position { row, col }.mk_idx(cols)];
-            if letter != b'.' {
-                antennas.push_antenna(letter, Position { row, col });
-            }
-        }
-    }
-
-    dbg!(&antennas);
+const fn parse(input: &mut [u8]) -> u32 {
+    let (mut grid, antennas) = setup(input);
 
     let mut total = 0;
 
-    for antenna_type in &antennas.locations {
+    #[apply(iter)]
+    for antenna_type in iter(&antennas.locations) {
         let len = antenna_type.len();
-
-        // debug_input(input);
 
         #[apply(iter)]
         for i in range(0, len) {
@@ -55,154 +36,108 @@ fn parse(input: &mut [u8]) -> u32 {
             for j in range(i + 1, len) {
                 let i = antenna_type.get(i);
                 let j = antenna_type.get(j);
-                println!("{:?}", (i, j));
 
-                let slope = i.slope(*j);
-                // dbg!(slope);
+                let slope = Slope::from_positions(*i, *j);
 
-                if let Some(antinode_1) = i.add_slope(slope)
-                    && antinode_1.col < cols
-                    && antinode_1.row < rows
+                if let Some(pos) = slope.apply_to_position(*i)
+                    && let Some(c) = grid.get_mut(pos)
                 {
-                    let c = &mut input[antinode_1.mk_idx(cols)];
-
-                    assert!(*c != b'\n');
-
-                    if *c < ANTINODE_MASK {
-                        total += 1;
-                        *c |= ANTINODE_MASK;
-                    }
+                    apply_mask(c, &mut total);
                 }
 
-                if let Some(antinode_2) = j.add_slope(slope.neg())
-                    && antinode_2.col < cols
-                    && antinode_2.row < rows
+                if let Some(pos) = slope.neg().apply_to_position(*j)
+                    && let Some(c) = grid.get_mut(pos)
                 {
-                    let c = &mut input[antinode_2.mk_idx(cols)];
-
-                    assert!(*c != b'\n');
-
-                    if *c < ANTINODE_MASK {
-                        total += 1;
-                        *c |= ANTINODE_MASK;
-                    }
+                    apply_mask(c, &mut total);
                 }
             }
         }
     }
-
-    let total2 = input.iter().filter(|b| **b > ANTINODE_MASK).count();
-
-    dbg!(total2);
-
-    debug_input(input);
 
     total
 }
 
-fn parse2(input: &mut [u8]) -> u32 {
-    let input = trim_ascii_mut(input);
-
-    let rows = count_segments::<b'\n', false>(input);
-    let cols = read_until(input, 0, b"\n").len();
-
-    let mut antennas = AntennaPositions::new();
-
-    dbg!(rows, cols);
-
-    #[apply(iter)]
-    for row in range(0, rows) {
-        #[apply(iter)]
-        for col in range(0, cols) {
-            let letter = input[Position { row, col }.mk_idx(cols)];
-            if letter != b'.' {
-                antennas.push_antenna(letter, Position { row, col });
-            }
-        }
-    }
-
-    dbg!(&antennas);
+const fn parse2(input: &mut [u8]) -> u32 {
+    let (mut grid, antennas) = setup(input);
 
     let mut total = 0;
 
-    for antenna_type in &antennas.locations {
+    #[apply(iter)]
+    for antenna_type in iter(&antennas.locations) {
         let len = antenna_type.len();
 
-        // debug_input(input);
         #[apply(iter)]
         for i in range(0, len) {
             #[apply(iter)]
             for j in range(i + 1, len) {
                 let mut i = *antenna_type.get(i);
                 let mut j = *antenna_type.get(j);
-                println!("{:?}", (i, j));
 
-                let slope = i.slope(j);
-                // dbg!(slope);
+                let slope = Slope::from_positions(i, j);
 
                 {
-                    let c = &mut input[i.mk_idx(cols)];
+                    let c = grid.get_mut(i).unwrap();
 
-                    if *c < ANTINODE_MASK {
-                        total += 1;
-                        *c |= ANTINODE_MASK;
-                    }
+                    apply_mask(c, &mut total);
                 }
                 {
-                    let c = &mut input[j.mk_idx(cols)];
+                    let c = grid.get_mut(j).unwrap();
 
-                    if *c < ANTINODE_MASK {
-                        total += 1;
-                        *c |= ANTINODE_MASK;
-                    }
+                    apply_mask(c, &mut total);
                 }
 
-                while let Some(antinode_1) = i.add_slope(slope)
-                    && antinode_1.col < cols
-                    && antinode_1.row < rows
+                while let Some(pos) = slope.apply_to_position(i)
+                    && let Some(c) = grid.get_mut(pos)
                 {
-                    i = antinode_1;
-
-                    let c = &mut input[antinode_1.mk_idx(cols)];
-
-                    assert!(*c != b'\n');
-
-                    if *c < ANTINODE_MASK {
-                        total += 1;
-                        *c |= ANTINODE_MASK;
-                    }
+                    i = pos;
+                    apply_mask(c, &mut total);
                 }
 
-                while let Some(antinode_2) = j.add_slope(slope.neg())
-                    && antinode_2.col < cols
-                    && antinode_2.row < rows
+                while let Some(pos) = slope.neg().apply_to_position(j)
+                    && let Some(c) = grid.get_mut(pos)
                 {
-                    j = antinode_2;
+                    j = pos;
 
-                    let c = &mut input[antinode_2.mk_idx(cols)];
-
-                    assert!(*c != b'\n');
-
-                    if *c < ANTINODE_MASK {
-                        total += 1;
-                        *c |= ANTINODE_MASK;
-                    }
+                    apply_mask(c, &mut total);
                 }
             }
         }
     }
 
-    let total2 = input.iter().filter(|b| **b > ANTINODE_MASK).count();
-
-    dbg!(total2);
-
-    debug_input(input);
-
     total
+}
+
+const fn setup(input: &mut [u8]) -> (GridMut<'_>, AntennaPositions) {
+    let grid = GridMut::new(input);
+
+    let mut antennas = AntennaPositions::new();
+
+    #[apply(iter)]
+    for row in range(0, grid.rows()) {
+        #[apply(iter)]
+        for col in range(0, grid.cols()) {
+            let pos = Position::new(row, col);
+            let letter = *grid.get(pos).unwrap();
+            if letter != b'.' {
+                antennas.push_antenna(letter, pos);
+            }
+        }
+    }
+
+    (grid, antennas)
 }
 
 pub const LOCATIONS_COUNT: usize = 26 + 26 + 10;
 pub const ANTINODE_MASK: u8 = 0b1000_0000;
+
+const fn apply_mask(c: &mut u8, total: &mut u32) {
+    assert!(*c != b'\n');
+
+    if *c < ANTINODE_MASK {
+        *total += 1;
+        *c |= ANTINODE_MASK;
+    }
+}
 
 #[derive(Debug)]
 struct AntennaPositions {
@@ -210,13 +145,13 @@ struct AntennaPositions {
 }
 
 impl AntennaPositions {
-    fn new() -> Self {
+    const fn new() -> Self {
         Self {
             locations: [const { ArrayVec::new() }; LOCATIONS_COUNT],
         }
     }
 
-    fn push_antenna(&mut self, letter: u8, position: Position) {
+    const fn push_antenna(&mut self, letter: u8, position: Position) {
         let idx = match letter {
             b'0'..=b'9' => letter - 48,
             b'A'..=b'Z' => letter - 55,
@@ -229,44 +164,27 @@ impl AntennaPositions {
 }
 
 #[derive(Clone, Copy)]
-struct Position {
-    row: usize,
-    col: usize,
-}
-
-impl Position {
-    const fn slope(&self, other: Position) -> Slope {
-        Slope {
-            row: self.row as isize - other.row as isize,
-            col: self.col as isize - other.col as isize,
-        }
-    }
-
-    const fn add_slope(&self, slope: Slope) -> Option<Position> {
-        let row = option_try!(self.row.checked_add_signed(slope.row));
-        let col = option_try!(self.col.checked_add_signed(slope.col));
-
-        Some(Position { row, col })
-    }
-
-    const fn mk_idx(&self, cols: usize) -> usize {
-        (self.row * (cols + 1)) + self.col
-    }
-}
-
-impl core::fmt::Debug for Position {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        write!(f, "({},{})", self.row, self.col)
-    }
-}
-
-#[derive(Clone, Copy)]
 struct Slope {
     row: isize,
     col: isize,
 }
 
 impl Slope {
+    #[allow(clippy::cast_possible_wrap)]
+    const fn from_positions(i: Position, j: Position) -> Slope {
+        Slope {
+            row: i.row() as isize - j.row() as isize,
+            col: i.col() as isize - j.col() as isize,
+        }
+    }
+
+    const fn apply_to_position(&self, pos: Position) -> Option<Position> {
+        let row = option_try!(pos.row().checked_add_signed(self.row));
+        let col = option_try!(pos.col().checked_add_signed(self.col));
+
+        Some(Position::new(row, col))
+    }
+
     const fn neg(self) -> Self {
         Self {
             row: -self.row,
@@ -281,19 +199,13 @@ impl core::fmt::Debug for Slope {
     }
 }
 
-fn debug_input(input: &[u8]) {
-    let s = input
-        .iter()
-        .map(|c| {
-            if *c & ANTINODE_MASK == ANTINODE_MASK {
-                format!("\x1B[7m{}\x1B[0m", (c & !ANTINODE_MASK) as char)
-            } else {
-                (*c as char).to_string()
-            }
-        })
-        .collect::<String>();
-
-    println!("{s}\n");
+#[allow(unused)]
+fn debug_grid(c: u8) -> String {
+    if c & ANTINODE_MASK == ANTINODE_MASK {
+        format!("\x1B[7m{}\x1B[0m", (c & !ANTINODE_MASK) as char)
+    } else {
+        (c as char).to_string()
+    }
 }
 
 #[cfg(test)]
@@ -314,21 +226,7 @@ fn test() {
 ............
 ";
 
-    //     let input = "
-    // abyz........
-    // ABYZ....0...
-    // .....012789.
-    // .......0....
-    // ....0.......
-    // ......A.....
-    // ............
-    // ............
-    // ........A...
-    // .........A..
-    // ............
-    // ............
-    // ";
-
-    // dbg!(parse2(&mut input.as_bytes().to_owned()));
+    dbg!(parse(&mut input.as_bytes().to_owned()));
+    dbg!(parse(&mut Today::INPUT.as_bytes().to_owned()));
     dbg!(parse2(&mut Today::INPUT.as_bytes().to_owned()));
 }

@@ -107,18 +107,18 @@ impl<'a> WordSearch<'a> {
         ];
 
         #[apply(iter)]
-        for (dx, dy) in directions {
+        for (dx, dy) in iter(directions) {
             do_! {
-                Some(row) = row.checked_add_signed(dx);
-                Some(col) = col.checked_add_signed(dy);
+                Some(row) = row.checked_add_signed(*dx);
+                Some(col) = col.checked_add_signed(*dy);
                 Some('M') = self.get(row, col);
 
-                Some(row) = row.checked_add_signed(dx);
-                Some(col) = col.checked_add_signed(dy);
+                Some(row) = row.checked_add_signed(*dx);
+                Some(col) = col.checked_add_signed(*dy);
                 Some('A') = self.get(row, col);
 
-                Some(row) = row.checked_add_signed(dx);
-                Some(col) = col.checked_add_signed(dy);
+                Some(row) = row.checked_add_signed(*dx);
+                Some(col) = col.checked_add_signed(*dy);
                 Some('S') = self.get(row, col);
 
                 { else continue }

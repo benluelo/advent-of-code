@@ -55,21 +55,21 @@ const fn parse2(input: &[u8]) -> u32 {
     // already be known when we hit the second 3). however, my input does not
     // contain any duplicates, so I did not include this optimization.
     #[apply(iter)]
-    for elem in left {
+    for elem in iter(left) {
         let mut occurrences: u32 = 0;
 
         #[apply(iter)]
-        for item in right {
-            if item > elem {
+        for item in iter(right) {
+            if *item > *elem {
                 break;
             }
 
-            if item == elem {
+            if *item == *elem {
                 occurrences += 1;
             }
         }
 
-        total += occurrences * elem;
+        total += occurrences * *elem;
     }
 
     total

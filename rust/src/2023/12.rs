@@ -219,7 +219,7 @@ impl<'a> MultiSlice<'a> {
     const fn new(slice: &'a [&'a [u8]]) -> Self {
         let mut len = 0;
         #[apply(iter)]
-        for s in slice {
+        for s in iter(slice) {
             len += s.len();
         }
 
@@ -247,7 +247,7 @@ impl<'a> MultiSlice<'a> {
             let slice = self.slice;
 
             #[apply(iter)]
-            for s in slice {
+            for s in iter(slice) {
                 if i >= s.len() {
                     i -= s.len();
                 } else {

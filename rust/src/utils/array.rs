@@ -29,6 +29,10 @@ impl<T, const N: usize> ArrayVec<T, N> {
         self.len
     }
 
+    pub const fn is_empty(&self) -> bool {
+        self.len == 0
+    }
+
     pub const fn append(&mut self, t: T) {
         self.arr[self.len].write(t);
         self.len += 1;

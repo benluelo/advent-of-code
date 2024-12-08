@@ -56,7 +56,7 @@ const fn parse(input: &[u8]) -> u32 {
     let mut res = 0;
 
     #[apply(iter)]
-    for char in input {
+    for char in iter(input) {
         match char {
             b'0'..=b'9' => {
                 if !in_number {
@@ -109,7 +109,7 @@ const fn parse2(input: &[u8]) -> u32 {
     let mut res = 0;
 
     #[apply(iter)]
-    for char in input {
+    for char in iter(input) {
         match char {
             b'*' => {
                 let mut gn = GearNumbers::None;

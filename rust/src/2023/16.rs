@@ -43,11 +43,7 @@ fn parse_test() {
 const fn parse(input: &mut [u8]) -> u32 {
     let mut map = Map::new(input);
 
-    // map.dbg_input();
-
     traverse(&mut map, 0, Direction::East);
-
-    // map.dbg_input();
 
     map.count_energized()
 }
@@ -203,8 +199,8 @@ impl<'a> Map<'a> {
         let map = &self.map;
 
         #[apply(iter)]
-        for char in map {
-            res += (Tile::from_byte(char).is_some() && char & !MASK > 0) as u32;
+        for char in iter(map) {
+            res += (Tile::from_byte(*char).is_some() && *char & !MASK > 0) as u32;
         }
 
         res

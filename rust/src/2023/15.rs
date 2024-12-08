@@ -104,8 +104,8 @@ const fn hash(bz: &[u8]) -> u8 {
     let mut res: u8 = 0;
 
     #[apply(iter)]
-    for char in bz {
-        res = res.wrapping_add(char);
+    for char in iter(bz) {
+        res = res.wrapping_add(*char);
         res = res.wrapping_mul(17);
     }
 
@@ -116,12 +116,12 @@ const fn hash2(bz: &[u8]) -> (Op, u8) {
     let mut res: u8 = 0;
 
     #[apply(iter)]
-    for char in bz {
+    for char in iter(bz) {
         match char {
             b'-' => return (Op::Remove, res),
             b'=' => return (Op::Add(*bz.last().unwrap() - 48), res),
             _ => {
-                res = res.wrapping_add(char);
+                res = res.wrapping_add(*char);
                 res = res.wrapping_mul(17);
             }
         }

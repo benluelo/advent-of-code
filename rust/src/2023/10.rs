@@ -171,9 +171,9 @@ const fn parse2(input: &mut [u8]) -> u32 {
         let mut in_shape = false;
 
         #[apply(iter)]
-        for char in line {
-            if (char & PATH_MASK) == PATH_MASK {
-                match char & !PATH_MASK {
+        for char in iter(line) {
+            if (*char & PATH_MASK) == PATH_MASK {
+                match *char & !PATH_MASK {
                     b'7' => {
                         // either an F or L has been hit
                         assert!(north || south);

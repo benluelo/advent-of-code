@@ -401,22 +401,20 @@ const fn dfs(state: &mut State, pos: Position, depth: u32) {
     ];
 
     #[apply(iter)]
-    for (neighbour, dir) in arr {
+    for (neighbour, dir) in iter(arr) {
         if let Some(n) = neighbour
             && !(state
                 .past_directions
-                .eq_const(&PastDirections::Three(dir, dir, dir)))
+                .eq_const(&PastDirections::Three(*dir, *dir, *dir)))
         {
-            // dbg!((n, dir));
-
-            let new_past_directions = state.past_directions.push(dir);
-            state.map.visit(n);
-            state.current_heat_loss += state.map.read(n);
+            let new_past_directions = state.past_directions.push(*dir);
+            state.map.visit(*n);
+            state.current_heat_loss += state.map.read(*n);
             let old_past_directions = mem::replace(&mut state.past_directions, new_past_directions);
-            dfs(state, n, depth + 1);
+            dfs(state, *n, depth + 1);
 
-            state.map.unvisit(n);
-            state.current_heat_loss -= state.map.read(n);
+            state.map.unvisit(*n);
+            state.current_heat_loss -= state.map.read(*n);
             state.past_directions = old_past_directions;
         }
     }

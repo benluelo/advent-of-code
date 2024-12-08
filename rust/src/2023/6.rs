@@ -94,12 +94,12 @@ pub const fn parse_int_with_spaces(bz: &[u8]) -> u64 {
     let mut res = 0;
 
     #[apply(iter)]
-    for digit in bz {
-        if digit != b' ' {
+    for digit in iter(bz) {
+        if *digit != b' ' {
             assert!(digit.is_ascii_digit());
 
             res *= 10;
-            res += (digit - 48) as u64;
+            res += (*digit - 48) as u64;
         }
     }
 

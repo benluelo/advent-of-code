@@ -55,7 +55,7 @@ const fn check(target: u64, current: u64, nums: &[u8], ops: &[Op]) -> bool {
     let next = parse_u64(next);
 
     #[apply(iter)]
-    for op in ops {
+    for op in iter(ops) {
         let res = op.apply(current, next);
         let res_valid = if let Some(nums) = nums
             && res <= target
@@ -105,6 +105,6 @@ fn test() {
 292: 11 6 16 20
 ";
 
-    // dbg!(parse(input.as_bytes()));
+    dbg!(parse(input.as_bytes()));
     dbg!(parse2(Today::INPUT.as_bytes()));
 }
