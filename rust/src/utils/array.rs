@@ -25,6 +25,10 @@ impl<T, const N: usize> ArrayVec<T, N> {
         }
     }
 
+    pub const fn len(&self) -> usize {
+        self.len
+    }
+
     pub const fn append(&mut self, t: T) {
         self.arr[self.len].write(t);
         self.len += 1;
@@ -53,7 +57,7 @@ impl<T, const N: usize> ArrayVec<T, N> {
         self.len += 1;
     }
 
-    pub const fn get(&mut self, idx: usize) -> &T {
+    pub const fn get(&self, idx: usize) -> &T {
         assert!(idx < self.len);
         unsafe { self.arr[idx].assume_init_ref() }
     }
