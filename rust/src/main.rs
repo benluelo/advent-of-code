@@ -7,7 +7,6 @@
     // arrays
     array_windows,
     as_array_of_cells,
-    const_maybe_uninit_write,
     maybe_uninit_slice,
     maybe_uninit_uninit_array,
 

@@ -33,7 +33,6 @@
       perSystem = { config, self', inputs', pkgs, system, ... }:
         let
           crane = rec {
-
             lib = self.inputs.crane.mkLib pkgs;
             nightly = lib.overrideToolchain rust-nightly;
           };
@@ -55,7 +54,7 @@
             else if system == "x86_64-darwin" then "x86_64-apple-darwin"
             else throw "unsupported system `${system}`";
 
-          years = [ 2022 2023 ];
+          years = [ 2022 2023 2024 ];
           days = [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ];
 
           mkAocDay = year: day: const:
