@@ -38,6 +38,7 @@ impl<T, const N: usize> ArrayVec<T, N> {
         self.len += 1;
     }
 
+    #[track_caller]
     pub const fn push(&mut self, t: T) {
         assert!(self.len < self.arr.len());
         if self.len == 0 {
@@ -61,11 +62,20 @@ impl<T, const N: usize> ArrayVec<T, N> {
         self.len += 1;
     }
 
+    #[track_caller]
+    pub const fn pop(&mut self) -> T {
+        let t = unsafe { self.arr[self.len - 1].assume_init_read() };
+        self.len -= 1;
+        t
+    }
+
+    #[track_caller]
     pub const fn get(&self, idx: usize) -> &T {
         assert!(idx < self.len);
         unsafe { self.arr[idx].assume_init_ref() }
     }
 
+    #[track_caller]
     pub const fn get_mut(&mut self, idx: usize) -> &mut T {
         assert!(idx < self.len);
         unsafe { self.arr[idx].assume_init_mut() }
@@ -79,6 +89,16 @@ impl<T, const N: usize> ArrayVec<T, N> {
         unsafe { MaybeUninit::slice_assume_init_mut(slice_mut(&mut self.arr, 0, self.len)) }
     }
 
+    pub const fn reverse(&mut self) {
+        let half = self.len / 2;
+
+        #[apply(iter)]
+        for i in range(0, half) {
+            self.arr.swap(i, (self.len - 1) - i);
+        }
+    }
+
+    #[track_caller]
     pub const fn remove(&mut self, idx: usize) -> T {
         assert!(idx < self.len);
 
@@ -200,5 +220,21 @@ mod tests {
 
         av.append(1);
         av.append(2);
+    }
+
+    #[test]
+    fn reverse() {
+        let mut av = ArrayVec::<u8, 10>::new();
+        av.push(1);
+        av.reverse();
+        assert_eq!(av.as_slice(), [1]);
+
+        let mut av = ArrayVec::<u8, 10>::new();
+        av.push(1);
+        av.push(2);
+        av.push(3);
+        av.push(4);
+        av.reverse();
+        // assert_eq!(av.as_slice(), [4, 3, 2, 1]);
     }
 }

@@ -1,5 +1,7 @@
 use core::marker::PhantomData;
 
+use crate::utils::{array::ArrayVec, utf8};
+
 pub struct Displayable<T: ConstDisplayable> {
     t: PhantomData<fn() -> T>,
     output: T::Output,
@@ -72,5 +74,24 @@ impl<'a> Displayable<&'a str> {
     #[must_use]
     pub const fn as_str(&self) -> &str {
         self.output
+    }
+}
+
+impl<const N: usize> ConstDisplayable for ArrayVec<u8, N> {
+    type Output = ArrayVec<u8, N>;
+}
+
+impl<const N: usize> Displayable<ArrayVec<u8, N>> {
+    #[must_use]
+    pub const fn new(t: ArrayVec<u8, N>) -> Self {
+        Self {
+            t: PhantomData,
+            output: t,
+        }
+    }
+
+    #[must_use]
+    pub const fn as_str(&self) -> &str {
+        utf8(self.output.as_slice())
     }
 }

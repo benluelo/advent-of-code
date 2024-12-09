@@ -1,51 +1,77 @@
-use alloc::{collections::BTreeMap, string::String, vec::Vec};
-use core::{
-    convert::Infallible,
-    iter::Peekable,
-    str::{Chars, FromStr},
-};
-
 use cfg_proc::apply;
 
-use crate::{day, utils::utf8, Day};
+use crate::{
+    day,
+    utils::{array::ArrayVec, iter, parse_u8, read_until, slice, split_once},
+    Day,
+};
 
 #[apply(day)]
 impl Day<2022, 5> {
-    pub fn parse(input: &[u8]) -> String {
-        parse(utf8(input), |mut crates, Action { mov, from, to }| {
-            for _ in 0..mov {
-                let moved = crates.get_mut(&from).unwrap().pop().unwrap();
-                crates.get_mut(&to).unwrap().push(moved);
-            }
-            crates
-        })
+    pub const fn parse(input: &[u8]) -> ArrayVec<u8, MAX_CRATES_LEN> {
+        parse(input)
     }
 
-    pub fn parse2(input: &[u8]) -> String {
-        parse(utf8(input), |mut crates, Action { mov, from, to }| {
-            let from_stack = crates.get_mut(&from).unwrap();
-
-            let moved = from_stack.split_off(from_stack.len() - mov as usize);
-
-            let to_stack = crates.get_mut(&to).unwrap();
-
-            to_stack.extend(moved);
-
-            crates
-        })
+    pub const fn parse2(input: &[u8]) -> ArrayVec<u8, MAX_CRATES_LEN> {
+        parse2(input)
     }
 }
 
-fn parse(input: &str, actions_fn: fn(CrateStacks, Action) -> CrateStacks) -> String {
-    let [crates, actions] = input.split("\n\n").next_chunk().unwrap();
-    let crates = parse_crate_stack(crates);
+const fn parse(input: &[u8]) -> ArrayVec<u8, MAX_CRATES_LEN> {
+    let (crates, actions) = split_once(input, b"\n\n").unwrap();
+    let mut crates = parse_crate_stack(crates);
 
-    let crates = actions
-        .lines()
-        .map(|s| str::parse::<Action>(s).unwrap())
-        .fold(crates, actions_fn);
+    let mut output = ArrayVec::<u8, MAX_CRATES_LEN>::new();
 
-    crates.into_values().map(|mut v| v.pop().unwrap()).collect()
+    #[apply(iter)]
+    for line in lines(actions) {
+        let action = Action::parse(line);
+        #[apply(iter)]
+        for _ in range(0, action.mov) {
+            let moved = crates.get_mut(action.from as usize - 1).pop();
+            crates.get_mut(action.to as usize - 1).append(moved);
+        }
+    }
+
+    #[apply(iter)]
+    for v in iter_mut(crates.as_slice_mut()) {
+        output.append(v.pop());
+    }
+
+    output
+}
+
+const fn parse2(input: &[u8]) -> ArrayVec<u8, MAX_CRATES_LEN> {
+    let (crates, actions) = split_once(input, b"\n\n").unwrap();
+    let mut crates = parse_crate_stack(crates);
+
+    let mut output = ArrayVec::<u8, MAX_CRATES_LEN>::new();
+
+    #[apply(iter)]
+    for line in lines(actions) {
+        let action = Action::parse(line);
+
+        // 31 is the largest move action in my input
+        let mut stack = ArrayVec::<u8, 31>::new();
+
+        #[apply(iter)]
+        for _ in range(0, action.mov) {
+            let moved = crates.get_mut(action.from as usize - 1).pop();
+            stack.push(moved);
+        }
+
+        #[apply(iter)]
+        for c in iter(stack.as_slice()) {
+            crates.get_mut(action.to as usize - 1).append(*c);
+        }
+    }
+
+    #[apply(iter)]
+    for v in iter_mut(crates.as_slice_mut()) {
+        output.append(v.pop());
+    }
+
+    output
 }
 
 #[derive(Debug)]
@@ -55,56 +81,82 @@ struct Action {
     to: u8,
 }
 
-impl FromStr for Action {
-    type Err = Infallible;
+impl Action {
+    const fn parse(action: &[u8]) -> Self {
+        let (b"move", rest) = split_once(action, b" ").unwrap() else {
+            panic!()
+        };
+        let (mov, rest) = split_once(rest, b" ").unwrap();
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let ["move", mov, "from", from, "to", to] = s.split(' ').next_chunk().unwrap() else {
+        let (b"from", rest) = split_once(rest, b" ").unwrap() else {
+            panic!()
+        };
+        let (from, rest) = split_once(rest, b" ").unwrap();
+
+        let (b"to", to) = split_once(rest, b" ").unwrap() else {
             panic!()
         };
 
-        Ok(Action {
-            mov: mov.parse().unwrap(),
-            from: from.parse().unwrap(),
-            to: to.parse().unwrap(),
-        })
+        Action {
+            mov: parse_u8(mov),
+            from: parse_u8(from),
+            to: parse_u8(to),
+        }
     }
 }
 
-type CrateStacks = BTreeMap<u8, Vec<char>>;
+const MAX_CRATES_LEN: usize = 9;
 
-fn parse_crate_stack(crates: &str) -> CrateStacks {
-    let mut output = BTreeMap::new();
+// 48 is the maximum crate stack size given my input
+type CrateStacks = ArrayVec<ArrayVec<u8, 48>, MAX_CRATES_LEN>;
 
-    let mut chars = crates.chars().peekable();
+const fn parse_crate_stack(crates: &[u8]) -> CrateStacks {
+    let mut output = ArrayVec::new();
 
-    let mut column = 1;
+    let mut cursor = 0;
 
-    let next_column = |iter: &mut Peekable<Chars>, column: &mut _| {
-        if iter.peek().unwrap() == &'\n' {
-            *column = 1;
-        } else {
-            // eat whitespace between crate stacks
-            *column += 1;
-        }
+    let crates_len = (read_until(crates, 0, b"\n").len() + 1) / 4;
 
-        iter.next();
-    };
+    #[apply(iter)]
+    for _ in range(0, crates_len) {
+        output.push(ArrayVec::new())
+    }
 
     loop {
-        match chars.next_chunk().unwrap() {
-            ['[', c, ']'] => {
-                output.entry(column).or_insert_with(Vec::new).push(c);
-                next_column(&mut chars, &mut column);
+        match slice(crates, cursor, cursor + 4) {
+            [b'[', c, b']', _] => {
+                output.get_mut((cursor % (crates_len * 4)) / 4).append(*c);
+                cursor += 4;
             }
-            [' ', ' ', ' '] => next_column(&mut chars, &mut column),
-            [' ', '1', ' '] => {
-                for v in output.values_mut() {
+            [b' ', b' ', b' ', _] => {
+                cursor += 4;
+            }
+            // the last row has been hit, reverse all of the stacks and return
+            [b' ', b'1', b' ', _] => {
+                #[apply(iter)]
+                for v in iter_mut(output.as_slice_mut()) {
                     v.reverse();
                 }
                 return output;
             }
-            bad => panic!("bad input: {bad:?}"),
+            _ => panic!(),
         }
     }
+}
+
+#[test]
+fn test() {
+    let input = "    [D]    
+[N] [C]    
+[Z] [M] [P]
+ 1   2   3 
+
+move 1 from 2 to 1
+move 3 from 1 to 3
+move 2 from 2 to 1
+move 1 from 1 to 2
+";
+
+    dbg!(parse2(input.as_bytes()).as_str());
+    dbg!(parse2(Today::INPUT.as_bytes()).as_str());
 }
