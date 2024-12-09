@@ -434,7 +434,7 @@ macro_rules! iter {
         }
     }};
 
-    ($($label:lifetime:)? for $line:ident in lines($slice:ident)
+    ($($label:lifetime:)? for $line:ident in lines($slice:expr)
         $body:block
     ) => {
         iter! {
@@ -442,7 +442,7 @@ macro_rules! iter {
         }
     };
 
-    ($($label:lifetime:)? for $segment:ident in split($slice:ident, $delimiter:expr)
+    ($($label:lifetime:)? for $segment:ident in split($slice:expr, $delimiter:expr)
         $body:block
     ) => {{
         let mut i = 0;

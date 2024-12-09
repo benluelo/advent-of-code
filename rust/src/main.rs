@@ -60,7 +60,6 @@ struct Day<const YEAR: u16, const DAY: u8>;
 fn main() {
     let mut args = std::env::args();
 
-    #[cfg(not(feature = "const"))]
     let 3 = args.len() else {
         print!(
             "usage: {} <day> <path-to-input>\navailable days:\n",

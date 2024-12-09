@@ -3,25 +3,43 @@ use core::str::FromStr;
 
 use cfg_proc::apply;
 
-use crate::{day, utils::utf8, Day};
+use crate::{
+    day,
+    utils::{iter, split_once},
+    Day,
+};
 
 #[apply(day)]
 impl Day<2022, 2> {
-    pub fn parse(input: &[u8]) -> u32 {
-        utf8(input)
-            .trim()
-            .lines()
-            .map(|s| s.parse::<Round>().unwrap())
-            .fold(0, |acc, curr| acc + curr.score())
+    pub const fn parse(input: &[u8]) -> u32 {
+        parse(input)
     }
 
-    pub fn parse2(input: &[u8]) -> u32 {
-        utf8(input)
-            .trim()
-            .lines()
-            .map::<Round, _>(|s| s.parse::<IncompleteRound>().unwrap().into())
-            .fold(0, |acc, curr| acc + curr.score())
+    pub const fn parse2(input: &[u8]) -> u32 {
+        parse2(input)
     }
+}
+
+const fn parse(input: &[u8]) -> u32 {
+    let mut total = 0;
+
+    #[apply(iter)]
+    for line in lines(input.trim_ascii()) {
+        total += Round::parse(line).score();
+    }
+
+    total
+}
+
+const fn parse2(input: &[u8]) -> u32 {
+    let mut total = 0;
+
+    #[apply(iter)]
+    for line in lines(input.trim_ascii()) {
+        total += IncompleteRound::parse(line).into_round().score();
+    }
+
+    total
 }
 
 enum Rps {
@@ -73,34 +91,27 @@ struct Round {
 }
 
 impl Round {
-    const fn score(self) -> u32 {
-        self.you.points() + self.you.outcome(&self.opponent).points()
-    }
-}
+    const fn parse(s: &[u8]) -> Self {
+        let (opponent, you) = split_once(s, b" ").unwrap();
 
-impl FromStr for Round {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let [opponent, you] = s
-            .split(' ')
-            .next_chunk()
-            .map_err(Iterator::collect::<String>)?;
-
-        Ok(Round {
+        Round {
             opponent: match opponent {
-                "A" => Rps::Rock,
-                "B" => Rps::Paper,
-                "C" => Rps::Scissors,
-                c => return Err(c.to_owned()),
+                b"A" => Rps::Rock,
+                b"B" => Rps::Paper,
+                b"C" => Rps::Scissors,
+                _ => panic!(),
             },
             you: match you {
-                "X" => Rps::Rock,
-                "Y" => Rps::Paper,
-                "Z" => Rps::Scissors,
-                c => return Err(c.to_owned()),
+                b"X" => Rps::Rock,
+                b"Y" => Rps::Paper,
+                b"Z" => Rps::Scissors,
+                _ => panic!(),
             },
-        })
+        }
+    }
+
+    const fn score(self) -> u32 {
+        self.you.points() + self.you.outcome(&self.opponent).points()
     }
 }
 
@@ -109,46 +120,39 @@ struct IncompleteRound {
     desired_outcome: RpsOutcome,
 }
 
-impl From<IncompleteRound> for Round {
-    fn from(value: IncompleteRound) -> Self {
+impl IncompleteRound {
+    const fn parse(s: &[u8]) -> Self {
+        let (opponent, you) = split_once(s, b" ").unwrap();
+
+        IncompleteRound {
+            opponent: match opponent {
+                b"A" => Rps::Rock,
+                b"B" => Rps::Paper,
+                b"C" => Rps::Scissors,
+                _ => panic!(),
+            },
+            desired_outcome: match you {
+                b"X" => RpsOutcome::Loss,
+                b"Y" => RpsOutcome::Draw,
+                b"Z" => RpsOutcome::Win,
+                _ => panic!(),
+            },
+        }
+    }
+
+    const fn into_round(self) -> Round {
         use Rps::{Paper, Rock, Scissors};
         use RpsOutcome::{Draw, Loss, Win};
 
-        let you = match (&value.opponent, value.desired_outcome) {
+        let you = match (&self.opponent, self.desired_outcome) {
             (Rock, Loss) | (Paper, Win) | (Scissors, Draw) => Scissors,
             (Rock, Draw) | (Paper, Loss) | (Scissors, Win) => Rock,
             (Paper, Draw) | (Rock, Win) | (Scissors, Loss) => Paper,
         };
 
         Round {
-            opponent: value.opponent,
+            opponent: self.opponent,
             you,
         }
-    }
-}
-
-impl FromStr for IncompleteRound {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let [opponent, you] = s
-            .split(' ')
-            .next_chunk()
-            .map_err(Iterator::collect::<String>)?;
-
-        Ok(IncompleteRound {
-            opponent: match opponent {
-                "A" => Rps::Rock,
-                "B" => Rps::Paper,
-                "C" => Rps::Scissors,
-                c => return Err(c.to_owned()),
-            },
-            desired_outcome: match you {
-                "X" => RpsOutcome::Loss,
-                "Y" => RpsOutcome::Draw,
-                "Z" => RpsOutcome::Win,
-                c => return Err(c.to_owned()),
-            },
-        })
     }
 }
