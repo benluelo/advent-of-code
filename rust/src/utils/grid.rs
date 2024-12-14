@@ -1,10 +1,29 @@
-use crate::utils::{count_segments, read_until, trim_ascii_mut};
+use crate::utils::{count_segments, option_try, read_until, trim_ascii_mut};
 
 #[derive(Debug)]
 pub struct GridMut<'a> {
     grid: &'a mut [u8],
     rows: usize,
     cols: usize,
+}
+
+#[derive(Debug)]
+pub struct Grid<'a> {
+    grid: &'a [u8],
+    rows: usize,
+    cols: usize,
+}
+
+macro_rules! impl_ref_grid {
+    ($($tt:tt)*) => {
+        impl<'a> Grid<'a> {
+            $($tt)*
+        }
+
+        impl<'a> GridMut<'a> {
+            $($tt)*
+        }
+    };
 }
 
 impl<'a> GridMut<'a> {
@@ -17,16 +36,6 @@ impl<'a> GridMut<'a> {
         Self { grid, rows, cols }
     }
 
-    #[must_use]
-    pub const fn rows(&self) -> usize {
-        self.rows
-    }
-
-    #[must_use]
-    pub const fn cols(&self) -> usize {
-        self.cols
-    }
-
     #[track_caller]
     pub const fn get_mut(&mut self, pos: Position) -> Option<&mut u8> {
         if pos.row < self.rows && pos.col < self.cols {
@@ -35,6 +44,34 @@ impl<'a> GridMut<'a> {
         } else {
             None
         }
+    }
+
+    #[must_use]
+    pub const fn raw_mut(&mut self) -> &mut [u8] {
+        self.grid
+    }
+}
+
+impl<'a> Grid<'a> {
+    pub const fn new(grid: &'a [u8]) -> Self {
+        let grid = grid.trim_ascii();
+
+        let rows = count_segments::<b'\n', false>(grid);
+        let cols = read_until(grid, 0, b"\n").len();
+
+        Self { grid, rows, cols }
+    }
+}
+
+impl_ref_grid! {
+    #[must_use]
+    pub const fn rows(&self) -> usize {
+        self.rows
+    }
+
+    #[must_use]
+    pub const fn cols(&self) -> usize {
+        self.cols
     }
 
     #[track_caller]
@@ -50,11 +87,6 @@ impl<'a> GridMut<'a> {
 
     #[must_use]
     pub const fn raw(&self) -> &[u8] {
-        self.grid
-    }
-
-    #[must_use]
-    pub const fn raw_mut(&mut self) -> &mut [u8] {
         self.grid
     }
 
@@ -89,6 +121,38 @@ impl Position {
     #[must_use]
     pub const fn col(&self) -> usize {
         self.col
+    }
+
+    #[must_use]
+    pub const fn north(self) -> Option<Self> {
+        Some(Self {
+            row: option_try!(self.row.checked_sub(1)),
+            col: self.col,
+        })
+    }
+
+    #[must_use]
+    pub const fn south(self) -> Option<Self> {
+        Some(Self {
+            row: option_try!(self.row.checked_add(1)),
+            col: self.col,
+        })
+    }
+
+    #[must_use]
+    pub const fn west(self) -> Option<Self> {
+        Some(Self {
+            row: self.row,
+            col: option_try!(self.col.checked_sub(1)),
+        })
+    }
+
+    #[must_use]
+    pub const fn east(self) -> Option<Self> {
+        Some(Self {
+            row: self.row,
+            col: option_try!(self.col.checked_add(1)),
+        })
     }
 }
 
