@@ -182,6 +182,20 @@ const _: () = {
     for_each_day! { static_input }
 };
 
+#[cfg(not(any(feature = "const", test)))]
+const _: () = {
+    macro_rules! static_input {
+        ($YEAR:literal, $DAY:literal) => {
+            impl Day<$YEAR, $DAY> {
+                #[allow(unused)]
+                const INPUT: &'static str = "";
+            }
+        };
+    }
+
+    for_each_day! { static_input }
+};
+
 /// Calls `$f` for every (year, day) pair that's feature is enabled.
 #[macro_export]
 macro_rules! for_each_day {

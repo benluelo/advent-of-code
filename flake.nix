@@ -144,7 +144,7 @@
             ];
           };
 
-          packages = builtins.listToAttrs (
+          packages = (builtins.listToAttrs (
             map
               ({ year, day, const }: {
                 name = "rust-${toString year}-${toString day}${if const then "-const" else ""}";
@@ -155,7 +155,19 @@
                 day = days;
                 const = [ true false ];
               })
-          );
+          )) // {
+            rust-full =
+              let
+                crateInfo = crane.nightly.crateNameFromCargoToml { cargoToml = ./rust/Cargo.toml; };
+              in
+              crane.nightly.buildPackage (
+                crateInfo
+                  // {
+                  src = crane.nightly.cleanCargoSource ./rust;
+                  doCheck = false;
+                }
+              );
+          };
 
           devShells = {
             default = pkgs.mkShell {
