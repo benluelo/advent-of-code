@@ -53,6 +53,7 @@ impl<'a> GridMut<'a> {
 }
 
 impl<'a> Grid<'a> {
+    #[must_use]
     pub const fn new(grid: &'a [u8]) -> Self {
         let grid = grid.trim_ascii();
 
