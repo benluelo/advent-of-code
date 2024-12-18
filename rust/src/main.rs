@@ -31,7 +31,7 @@
     proc_macro_hygiene,
     cfg_match,
 )]
-#![recursion_limit = "256"]
+#![recursion_limit = "512"]
 #![allow(long_running_const_eval)]
 
 #[cfg(windows)]

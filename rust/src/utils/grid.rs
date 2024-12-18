@@ -155,11 +155,51 @@ impl Position {
             col: option_try!(self.col.checked_add(1)),
         })
     }
+
+    #[must_use]
+    pub const fn direction(self, direction: Direction) -> Option<Self> {
+        match direction {
+            Direction::North => self.north(),
+            Direction::East => self.east(),
+            Direction::South => self.south(),
+            Direction::West => self.west(),
+        }
+    }
 }
 
 impl core::fmt::Debug for Position {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "({},{})", self.row, self.col)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum Direction {
+    North,
+    East,
+    South,
+    West,
+}
+
+impl Direction {
+    #[must_use]
+    pub const fn clockwise(self) -> Self {
+        match self {
+            Self::North => Self::East,
+            Self::East => Self::South,
+            Self::South => Self::West,
+            Self::West => Self::North,
+        }
+    }
+
+    #[must_use]
+    pub const fn counterclockwise(self) -> Self {
+        match self {
+            Self::North => Self::West,
+            Self::East => Self::North,
+            Self::South => Self::East,
+            Self::West => Self::South,
+        }
     }
 }
 
