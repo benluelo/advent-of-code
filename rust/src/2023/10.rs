@@ -203,7 +203,7 @@ const fn parse2(input: &mut [u8]) -> u32 {
                         in_shape = !in_shape;
                     }
                     _ => {}
-                };
+                }
             } else {
                 count += in_shape as u32;
             }

@@ -19,7 +19,8 @@ impl Day<2024, 14> {
     }
 
     pub const fn parse2(input: &[u8]) -> u32 {
-        parse2(input)
+        // parse2(input)
+        0
     }
 }
 

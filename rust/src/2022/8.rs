@@ -195,7 +195,6 @@ where
             for (tree_idx, _tree_height) in tree_line {
                 // it's on the edge, therefore visible
                 *(line_idx, tree_idx).index_in_to(visible_trees) = true;
-                continue;
             }
 
             is_first_tree_line = false;

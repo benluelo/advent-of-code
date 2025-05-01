@@ -96,7 +96,7 @@ impl PacketData {
                         (None, Some(_)) => return Break(true),
                         (Some(_), None) => return Break(false),
                         (Some(l), Some(r)) => match l.check_if_in_order(r) {
-                            Continue(()) => continue,
+                            Continue(()) => {}
                             Break(is_in_order) => return Break(is_in_order),
                         },
                     }

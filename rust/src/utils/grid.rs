@@ -40,7 +40,7 @@ impl<'a> GridMut<'a> {
     pub const fn get_mut(&mut self, pos: Position) -> Option<&mut u8> {
         if pos.row < self.rows && pos.col < self.cols {
             // +1 for newline
-            Some(&mut self.grid[(pos.row * (self.cols + 1)) + pos.col])
+            Some(&mut self.grid[self.pos_to_raw_idx(pos)])
         } else {
             None
         }
@@ -49,6 +49,13 @@ impl<'a> GridMut<'a> {
     #[must_use]
     pub const fn raw_mut(&mut self) -> &mut [u8] {
         self.grid
+    }
+
+    pub const fn swap(&mut self, a: Position, b: Position) {
+        let a_idx = self.pos_to_raw_idx(a);
+        let b_idx = self.pos_to_raw_idx(b);
+
+        self.raw_mut().swap(a_idx, b_idx);
     }
 }
 
@@ -84,6 +91,11 @@ impl_ref_grid! {
         } else {
             None
         }
+    }
+
+    #[must_use]
+    pub const fn pos_to_raw_idx(&self, pos: Position) -> usize {
+        (pos.row * (self.cols + 1)) + pos.col
     }
 
     #[must_use]
@@ -165,11 +177,22 @@ impl Position {
             Direction::West => self.west(),
         }
     }
+
+    #[must_use]
+    pub const fn eq(self, other: Position) -> bool {
+        self.row == other.row && self.col == other.col
+    }
 }
 
 impl core::fmt::Debug for Position {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "({},{})", self.row, self.col)
+    }
+}
+
+impl core::fmt::Display for Position {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{self:?}")
     }
 }
 
@@ -199,6 +222,16 @@ impl Direction {
             Self::East => Self::North,
             Self::South => Self::East,
             Self::West => Self::South,
+        }
+    }
+
+    #[must_use]
+    pub const fn opposite(self) -> Self {
+        match self {
+            Self::North => Self::South,
+            Self::East => Self::West,
+            Self::South => Self::North,
+            Self::West => Self::East,
         }
     }
 }

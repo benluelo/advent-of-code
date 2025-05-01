@@ -259,7 +259,7 @@ const fn traverse(map: &mut Map, mut cursor: usize, mut direction: Direction) {
             }
         } else {
             return;
-        };
+        }
 
         cursor = match cursor.checked_add_signed(map.cursor_delta(direction)) {
             Some(c) => c,

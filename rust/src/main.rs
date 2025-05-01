@@ -8,7 +8,6 @@
     array_windows,
     as_array_of_cells,
     maybe_uninit_slice,
-    maybe_uninit_uninit_array,
 
     // slices
     slice_split_once,
@@ -22,10 +21,6 @@
 
     // cool and handy
     trace_macros,
-
-    // const stuff
-    const_slice_flatten,
-    const_swap,
 
     stmt_expr_attributes,
     proc_macro_hygiene,

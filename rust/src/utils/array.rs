@@ -21,7 +21,7 @@ impl<T, const N: usize> ArrayVec<T, N> {
     pub const fn new() -> Self {
         Self {
             len: 0,
-            arr: MaybeUninit::uninit_array(),
+            arr: [const { MaybeUninit::uninit() }; N],
         }
     }
 
@@ -82,11 +82,11 @@ impl<T, const N: usize> ArrayVec<T, N> {
     }
 
     pub const fn as_slice(&self) -> &[T] {
-        unsafe { MaybeUninit::slice_assume_init_ref(slice(self.arr.as_slice(), 0, self.len)) }
+        unsafe { (slice(self.arr.as_slice(), 0, self.len)).assume_init_ref() }
     }
 
     pub const fn as_slice_mut(&mut self) -> &mut [T] {
-        unsafe { MaybeUninit::slice_assume_init_mut(slice_mut(&mut self.arr, 0, self.len)) }
+        unsafe { (slice_mut(&mut self.arr, 0, self.len)).assume_init_mut() }
     }
 
     pub const fn reverse(&mut self) {

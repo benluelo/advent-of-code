@@ -362,10 +362,10 @@ impl<'a> Map<'a> {
 #[allow(clippy::only_used_in_recursion)]
 const fn dfs(state: &mut State, pos: Position, depth: u32) {
     // dbg!((&state, &pos));
-    if let Some(l) = state.lowest_heat_loss_so_far {
-        if l < state.current_heat_loss {
-            return;
-        }
+    if let Some(l) = state.lowest_heat_loss_so_far
+        && l < state.current_heat_loss
+    {
+        return;
     }
 
     // if depth > 35 {
