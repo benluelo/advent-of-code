@@ -21,7 +21,7 @@
     proc_macro_hygiene,
 )]
 #![recursion_limit = "512"]
-#![allow(long_running_const_eval)]
+#![allow(long_running_const_eval, clippy::too_many_lines)]
 
 #[cfg(windows)]
 compile_error!("windows is not supported");

@@ -246,6 +246,11 @@ pub const fn min_u64(a: u64, b: u64) -> u64 {
     if a <= b { a } else { b }
 }
 
+#[must_use]
+pub const fn min_u32(a: u32, b: u32) -> u32 {
+    if a <= b { a } else { b }
+}
+
 macro_rules! min {
     ($a:expr, $b:expr) => {
         if $a <= $b { $a } else { $b }
@@ -262,6 +267,7 @@ fn test_itoa() {
 }
 
 #[must_use]
+#[track_caller]
 pub const fn utf8(bz: &[u8]) -> &str {
     match core::str::from_utf8(bz) {
         Ok(ok) => ok,
@@ -358,7 +364,7 @@ macro_rules! iter {
     ) => {
     #[allow(clippy::semicolon_if_nothing_returned)]
     {
-        let mut __i = 0;
+        let mut __i: usize = 0;
         $($label:)? while __i < $slice.len() {
             let $item = &$slice[__i];
             __i += 1;
@@ -371,7 +377,7 @@ macro_rules! iter {
     ) => {
     #[allow(clippy::semicolon_if_nothing_returned)]
     {
-        let mut __i = 0;
+        let mut __i: usize = 0;
         $($label:)? while __i < $slice.len() {
             let $item = &mut $slice[__i];
             __i += 1;
@@ -383,12 +389,12 @@ macro_rules! iter {
         $body:block
     ) => {{
         let __slice = $slice;
-        let mut __i = 0;
+        let mut __i: usize = 0;
         $($label:)? while __i < __slice.len() {
             #[allow(clippy::toplevel_ref_arg)]
             let $item = __slice[__i];
             __i += 1;
-            let $i = __i - 1;
+            let $i: usize = __i - 1;
             $body;
         }
     }};

@@ -182,6 +182,22 @@ impl Position {
     pub const fn eq(self, other: Position) -> bool {
         self.row == other.row && self.col == other.col
     }
+
+    #[must_use]
+    pub const fn abs_diff(self, other: Position) -> Position {
+        Self {
+            row: self.row.abs_diff(other.row),
+            col: self.col.abs_diff(other.col),
+        }
+    }
+
+    #[must_use]
+    pub const fn pair(self) -> usize {
+        let x = self.row;
+        let y = self.col;
+
+        (((x + y) * (x + y + 1)) / 2) + y
+    }
 }
 
 impl core::fmt::Debug for Position {
@@ -196,7 +212,8 @@ impl core::fmt::Display for Position {
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[repr(u8)]
 pub enum Direction {
     North,
     East,
@@ -232,6 +249,27 @@ impl Direction {
             Self::East => Self::West,
             Self::South => Self::North,
             Self::West => Self::East,
+        }
+    }
+
+    #[must_use]
+    pub const fn eq(self, other: Self) -> bool {
+        matches!(
+            (self, other),
+            (Direction::North, Direction::North)
+                | (Direction::East, Direction::East)
+                | (Direction::South, Direction::South)
+                | (Direction::West, Direction::West)
+        )
+    }
+
+    #[must_use]
+    pub const fn as_byte(self) -> u8 {
+        match self {
+            Direction::North => b'^',
+            Direction::East => b'>',
+            Direction::South => b'v',
+            Direction::West => b'<',
         }
     }
 }

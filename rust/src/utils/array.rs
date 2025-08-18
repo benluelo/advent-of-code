@@ -9,6 +9,26 @@ pub struct ArrayVec<T, const N: usize> {
     arr: [MaybeUninit<T>; N],
 }
 
+macro_rules! clone {
+    ($this:ident; |$t:pat_param| $e:expr) => {{
+        let mut av = ArrayVec::new();
+
+        #[apply(iter)]
+        for $t in iter($this.as_slice()) {
+            av.push($e);
+        }
+
+        av
+    }};
+}
+pub(crate) use clone;
+
+impl<T: Clone, const N: usize> Clone for ArrayVec<T, N> {
+    fn clone(&self) -> Self {
+        clone!(self; |t| t.clone())
+    }
+}
+
 impl<T: core::fmt::Debug, const N: usize> core::fmt::Debug for ArrayVec<T, N> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         self.as_slice().fmt(f)
@@ -70,6 +90,17 @@ impl<T, const N: usize> ArrayVec<T, N> {
     }
 
     #[track_caller]
+    pub const fn try_pop(&mut self) -> Option<T> {
+        if self.len == 0 {
+            None
+        } else {
+            let t = unsafe { self.arr[self.len - 1].assume_init_read() };
+            self.len -= 1;
+            Some(t)
+        }
+    }
+
+    #[track_caller]
     pub const fn get(&self, idx: usize) -> &T {
         assert!(idx < self.len);
         unsafe { self.arr[idx].assume_init_ref() }
@@ -109,8 +140,8 @@ impl<T, const N: usize> ArrayVec<T, N> {
                 // removed
             }
             2 => self.arr.swap(idx, self.len - 1),
-            _ =>
-            {
+            _ => {
+                // copy_within is not const :(
                 #[apply(iter)]
                 for i in range(idx, self.len - 1) {
                     self.arr.swap(i, i + 1);
