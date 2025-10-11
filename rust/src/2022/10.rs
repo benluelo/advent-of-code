@@ -3,7 +3,7 @@ use core::{convert::Infallible, iter, str::FromStr};
 
 use cfg_proc::apply;
 
-use crate::{day, utils::utf8, Day};
+use crate::{Day, day, utils::utf8};
 
 #[apply(day)]
 impl Day<2022, 10> {

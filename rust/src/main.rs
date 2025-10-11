@@ -6,7 +6,6 @@
 
     // arrays
     array_windows,
-    as_array_of_cells,
     maybe_uninit_slice,
 
     // slices
@@ -14,17 +13,12 @@
 
     // numbers
     int_roundings,
-    strict_overflow_ops,
-
-    // misc
-    let_chains,
 
     // cool and handy
     trace_macros,
 
     stmt_expr_attributes,
     proc_macro_hygiene,
-    cfg_match,
 )]
 #![recursion_limit = "512"]
 #![allow(long_running_const_eval)]
@@ -43,6 +37,7 @@ pub mod displayable;
 pub mod utils;
 
 extern crate alloc;
+extern crate core;
 
 use crate::{
     displayable::Displayable,

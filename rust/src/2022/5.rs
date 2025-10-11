@@ -1,9 +1,8 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{array::ArrayVec, iter, parse_u8, read_until, slice, split_once},
-    Day,
 };
 
 #[apply(day)]

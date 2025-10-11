@@ -3,7 +3,7 @@ use core::{cmp::Ordering, ops::Rem};
 
 use cfg_proc::apply;
 
-use crate::{day, utils::utf8, Day};
+use crate::{Day, day, utils::utf8};
 
 #[apply(day)]
 impl Day<2022, 11> {
@@ -179,7 +179,7 @@ struct Test {
 
 impl Test {
     fn throw_to(&self, x: u128) -> MonkeyId {
-        if x % self.divisible_by == 0 {
+        if x.is_multiple_of(self.divisible_by) {
             self.if_true
         } else {
             self.if_false

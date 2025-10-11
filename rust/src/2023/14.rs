@@ -3,9 +3,8 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{count_segments, iter, line_len},
-    Day,
 };
 
 #[apply(day)]

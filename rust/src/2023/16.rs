@@ -3,9 +3,8 @@ use core::fmt::{Display, Write};
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{count_segments, iter, max, read_until},
-    Day,
 };
 
 #[apply(day)]

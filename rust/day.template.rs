@@ -1,6 +1,6 @@
 use cfg_proc::apply;
 
-use crate::{day, Day};
+use crate::{Day, day};
 
 #[apply(day)]
 impl Day<2024, DAY> {

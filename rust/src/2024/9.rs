@@ -1,9 +1,8 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{array::ArrayVec, iter, min_usize},
-    Day,
 };
 
 #[apply(day)]
@@ -59,7 +58,7 @@ const fn parse(input: &[u8]) -> usize {
         } else {
             // otherwise, the head pointer is pointing to an empty space. if the tail
             // pointer is pointing to a file, then attempt to move that file to the head
-            if tail % 2 == 0 {
+            if tail.is_multiple_of(2) {
                 let empty_space_size = (input[head] - 48) as usize;
 
                 let file_size = (input[tail] - 48) as usize;

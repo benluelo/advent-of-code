@@ -3,8 +3,8 @@ members = ["cfg-proc"]
 
 [package]
 name = "advent-of-code"
-version = "0.1.0"
-edition = "2021"
+version = "0.0.0"
+edition = "2024"
 
 [dependencies]
 cfg-proc = { path = "cfg-proc" }
@@ -27,13 +27,11 @@ std_instead_of_core = "deny"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(yolo)'] }
 
 [profile.dev]
-panic = "abort"
 
 [profile.release]
 # TODO: Use PGO
 lto = "fat"
 opt-level = 3
-panic = "abort"
 strip = "symbols"
 overflow-checks = false
 

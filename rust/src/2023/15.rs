@@ -3,9 +3,8 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{array::ArrayVec, iter, slice_eq},
-    Day,
 };
 
 #[apply(day)]

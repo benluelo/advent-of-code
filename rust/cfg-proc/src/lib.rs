@@ -1,8 +1,8 @@
 use std::iter::Peekable;
 
 use proc_macro::{
-    token_stream::IntoIter, Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream,
-    TokenTree,
+    Delimiter, Group, Ident, Literal, Punct, Spacing, Span, TokenStream, TokenTree,
+    token_stream::IntoIter,
 };
 
 #[proc_macro_attribute]
@@ -231,10 +231,11 @@ fn separated<T>(
 
     let mut output = vec![];
 
-    if let Some(last) = tts.last() {
-        if is_punct(last) && !allow_trailing {
-            return Err(CfgParseError::UnexpectedToken(last.span(), vec![punct]));
-        }
+    if let Some(last) = tts.last()
+        && is_punct(last)
+        && !allow_trailing
+    {
+        return Err(CfgParseError::UnexpectedToken(last.span(), vec![punct]));
     }
 
     for ts in tts.split(is_punct) {

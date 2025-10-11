@@ -3,9 +3,8 @@ use core::mem;
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{count_segments, iter, min, option_try, read_until},
-    Day,
 };
 
 #[apply(day)]

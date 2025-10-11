@@ -1,12 +1,11 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{
         grid::{Direction, GridMut, Position},
         iter, split_once_mut,
     },
-    Day,
 };
 
 #[apply(day)]
@@ -178,7 +177,11 @@ impl<'a> WideWarehouse<'a> {
         match self.grid.get(pos) {
             Some(tile) => {
                 let (top, bottom) = TileNibble::from_byte(*tile);
-                Some(if position.col() % 2 == 0 { top } else { bottom })
+                Some(if position.col().is_multiple_of(2) {
+                    top
+                } else {
+                    bottom
+                })
             }
             None => None,
         }
@@ -190,7 +193,7 @@ impl<'a> WideWarehouse<'a> {
 
         let (top, bottom) = TileNibble::from_byte(*val);
 
-        *val = if position.col() % 2 == 0 {
+        *val = if position.col().is_multiple_of(2) {
             full_tile(tile, bottom)
         } else {
             full_tile(top, tile)

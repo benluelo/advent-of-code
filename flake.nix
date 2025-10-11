@@ -32,15 +32,12 @@
 
       perSystem = { config, self', inputs', pkgs, system, ... }:
         let
-          crane = rec {
-            lib = self.inputs.crane.mkLib pkgs;
-            nightly = lib.overrideToolchain rust-nightly;
-          };
+          craneLib = (self.inputs.crane.mkLib pkgs).overrideToolchain rust-nightly;
 
           rust-nightly = pkgs.rust-bin.fromRustupToolchainFile ./rust/rust-toolchain.toml;
 
-          vendored = crane.lib.vendorMultipleCargoDeps {
-            inherit (crane.lib.findCargoFiles ./rust) cargoConfigs;
+          cargoVendorDir = craneLib.vendorMultipleCargoDeps {
+            inherit (craneLib.findCargoFiles ./rust) cargoConfigs;
             cargoLockList = [
               ./rust/Cargo.lock
               "${rust-nightly.passthru.availableComponents.rust-src}/lib/rustlib/src/rust/library/Cargo.lock"
@@ -54,43 +51,44 @@
             else if system == "x86_64-darwin" then "x86_64-apple-darwin"
             else throw "unsupported system `${system}`";
 
+          fs = pkgs.lib.fileset;
+
+          filteredSrc =
+            fs.toSource {
+              root = ./.;
+              fileset = fs.unions [
+                ./rust/Cargo.toml
+                ./rust/Cargo.lock
+                ./rust/src
+                (craneLib.fileset.commonCargoSources ./.)
+              ];
+            };
+
           years = [ 2022 2023 2024 ];
-          days = [ 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 ];
+          days = builtins.genList (builtins.add 1) 25;
 
           mkAocDay = year: day: const:
             let
               dayYear = "${toString year}-${toString day}";
               suffix = "${if const then "-const" else ""}";
               pname = "advent-of-code-${dayYear}${suffix}";
-            in
-            pkgs.stdenv.mkDerivation {
-              name = pname;
-              buildInputs = [ ];
-              src = pkgs.stdenv.mkDerivation {
-                name = pname;
-                src = crane.lib.cleanCargoSource ./.;
+
+              attrs = {
+                inherit pname;
+                version = "0.0.0";
+
+                src = builtins.trace "${filteredSrc}" filteredSrc;
+
                 buildInputs = [ rust-nightly ] ++ (
                   pkgs.lib.optionals pkgs.stdenv.isDarwin [ pkgs.darwin.apple_sdk.MacOSX-SDK ]
                 );
                 nativeBuildInputs = pkgs.lib.optionals pkgs.stdenv.isDarwin [ ];
-                buildPhase = ''
-                  echo $PATH
-                  cp -r --no-preserve=mode . $out
 
-                  cp ${crane.lib.configureCargoVendoredDepsHook}/nix-support/setup-hook $out/setup-hook
-                  source $out/setup-hook
+                inherit cargoVendorDir;
 
-                  mkdir $out/.cargo
-                  touch "$out/.cargo/config.toml"
-
-                  configureCargoVendoredDepsHook ${vendored} "$out/.cargo/config.toml"
-
-                  ls -al ${aoc-inputs}/*
-
-                  cp -r ${aoc-inputs} $out/inputs
-                  # schrodinger's directory: this only exists if i print it's contents
-                  ls $out/inputs/*
-                  cd $out/rust
+                preBuild = ''
+                  cp -r ${aoc-inputs} inputs
+                  cd rust
 
                   ${
                     if pkgs.stdenv.isDarwin
@@ -101,40 +99,22 @@
                     ''
                     else ""
                   }
-                  export RUSTC_LOG=rustc_codegen_ssa::back::link=info
-
-                  cargo \
-                    rustc \
-                    -vvv \
-                    --release \
-                    --no-default-features \
-                    -F ${if const then "const" else ""},${dayYear} \
-                    --target ${CARGO_BUILD_TARGET} \
-                    -j1 \
-                    -Z build-std=alloc,core \
-                    -Z build-std-features=core/panic_immediate_abort,compiler-builtins-mem \
+                  # export RUSTC_LOG=rustc_codegen_ssa::back::link=info
                 '';
+
+                cargoCheckExtraArgs = "--no-default-features -F ${if const then "const," else ""}${dayYear}";
+                cargoTestExtraArgs = "--no-default-features -F ${if const then "const," else ""}${dayYear}";
+
+                cargoBuildCommand = "cargo rustc --release --no-default-features -F ${if const then "const" else ""},${dayYear} --target ${CARGO_BUILD_TARGET} -j1 -Z build-std=std,alloc,core -Z build-std-features=compiler-builtins-mem";
+
+                meta.mainProgram = pname;
               };
-              installPhase = pkgs.lib.concatStringsSep "\n" [
-                ''
-                  mkdir -p $out/bin
-
-                  cp --no-preserve=mode $src/rust/target/${CARGO_BUILD_TARGET}/release/advent-of-code "$out/bin/${pname}"
-                ''
-                # (pkgs.lib.optionalString pkgs.stdenv.isLinux ''
-                #   ls -l $out/bin
-
-                #   strip "$out/bin/${pname}"
-                # '')
-                ''
-                  ls -l $out/bin
-
-                  chmod +x "$out/bin/${pname}"
-                ''
-              ];
-
-              meta.mainProgram = pname;
-            };
+            in
+            craneLib.buildPackage (attrs // {
+              cargoArtifacts = craneLib.buildDepsOnly ((builtins.removeAttrs attrs [ "src" ]) // {
+                dummySrc = attrs.src;
+              });
+            });
         in
         {
           _module.args.pkgs = import nixpkgs {
@@ -158,12 +138,12 @@
           )) // {
             rust-full =
               let
-                crateInfo = crane.nightly.crateNameFromCargoToml { cargoToml = ./rust/Cargo.toml; };
+                crateInfo = craneLib.crateNameFromCargoToml { cargoToml = ./rust/Cargo.toml; };
               in
-              crane.nightly.buildPackage (
+              craneLib.buildPackage (
                 crateInfo
                   // {
-                  src = crane.nightly.cleanCargoSource ./rust;
+                  src = craneLib.cleanCargoSource ./rust;
                   doCheck = false;
                 }
               );
@@ -204,6 +184,7 @@
               rustfmt = {
                 enable = true;
                 package = rust-nightly;
+                edition = "2024";
               };
             };
           };

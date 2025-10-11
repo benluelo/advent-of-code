@@ -1,9 +1,8 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{iter, line_len},
-    Day,
 };
 
 #[apply(day)]
@@ -207,8 +206,8 @@ const fn row_cmp(map: Map, a: usize, b: usize) -> LineDiff {
     //     .#.#.#. <-+
 
     assert!(a < b);
-    assert!(a % map.line_len == 0);
-    assert!(b % map.line_len == 0);
+    assert!(a.is_multiple_of(map.line_len));
+    assert!(b.is_multiple_of(map.line_len));
     // not sure how to get this assertion to work but i got the right answer so
     // ¯\_(ツ)_/¯
     // assert!(a < map.map.len() - (line_len * 2) - 1);

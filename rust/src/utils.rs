@@ -8,14 +8,12 @@ pub mod grid;
 #[track_caller]
 pub const fn slice<T>(bytes: &[T], idx_start: usize, idx_curr: usize) -> &[T] {
     let first_split = &bytes.split_at(idx_start).1;
-    let line = first_split.split_at(idx_curr - idx_start).0;
-    line
+    first_split.split_at(idx_curr - idx_start).0
 }
 
 pub const fn slice_mut<T>(bytes: &mut [T], idx_start: usize, idx_curr: usize) -> &mut [T] {
     let first_split = bytes.split_at_mut(idx_start).1;
-    let line = first_split.split_at_mut(idx_curr - idx_start).0;
-    line
+    first_split.split_at_mut(idx_curr - idx_start).0
 }
 
 #[must_use]
@@ -235,38 +233,22 @@ fn parse_sint_works() {
 
 #[must_use]
 pub const fn max(a: u32, b: u32) -> u32 {
-    if a >= b {
-        a
-    } else {
-        b
-    }
+    if a >= b { a } else { b }
 }
 
 #[must_use]
 pub const fn min_usize(a: usize, b: usize) -> usize {
-    if a <= b {
-        a
-    } else {
-        b
-    }
+    if a <= b { a } else { b }
 }
 
 #[must_use]
 pub const fn min_u64(a: u64, b: u64) -> u64 {
-    if a <= b {
-        a
-    } else {
-        b
-    }
+    if a <= b { a } else { b }
 }
 
 macro_rules! min {
     ($a:expr, $b:expr) => {
-        if $a <= $b {
-            $a
-        } else {
-            $b
-        }
+        if $a <= $b { $a } else { $b }
     };
 }
 pub(crate) use min;

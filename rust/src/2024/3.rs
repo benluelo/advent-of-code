@@ -3,9 +3,8 @@ use core::ops::ControlFlow;
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{iter, read_until, slice},
-    Day,
 };
 
 #[apply(day)]
@@ -73,6 +72,10 @@ const fn parse2(mut input: &[u8]) -> u32 {
             let new_input_dont = try_read_until(input, 0, DONT);
 
             // either no don't() was found, or it was but a mul( was found first
+            #[expect(
+                clippy::unnecessary_unwrap,
+                reason = "this is the most concise way to do this check in a const context currently"
+            )]
             if new_input_dont.is_none() || new_input_mul.len() < new_input_dont.unwrap().len() {
                 input = slice(
                     input,

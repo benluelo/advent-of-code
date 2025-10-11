@@ -1,12 +1,11 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{
         grid::{GridMut, Position},
         iter,
     },
-    Day,
 };
 
 #[apply(day)]

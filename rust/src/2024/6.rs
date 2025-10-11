@@ -25,12 +25,11 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{
         grid::{GridMut, Position},
         iter, read_until,
     },
-    Day,
 };
 
 #[apply(day)]
@@ -223,11 +222,7 @@ impl<'a> Map<'a> {
             } else if b == POSSIBLE_OBSTACLE_LOCATION {
                 'O'
             } else if b & MASK == TILE {
-                if b & VISITED_MASK > 0 {
-                    'X'
-                } else {
-                    '.'
-                }
+                if b & VISITED_MASK > 0 { 'X' } else { '.' }
             } else {
                 '#'
             }

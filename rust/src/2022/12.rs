@@ -6,7 +6,7 @@ use core::{borrow::Borrow, cmp::Reverse};
 
 use cfg_proc::apply;
 
-use crate::{day, utils::utf8, Day};
+use crate::{Day, day, utils::utf8};
 
 #[apply(day)]
 impl Day<2022, 12> {
@@ -134,7 +134,7 @@ fn find_char(grid: &[Vec<char>], char: char) -> Position {
         .find_map(|(col_idx, row)| {
             row.iter()
                 .enumerate()
-                .find(|(_, &c)| c == char)
+                .find(|(_, c)| **c == char)
                 .map(|opt| (col_idx, opt))
         })
         .map(|(row, (col, _))| Position { x: col, y: row })

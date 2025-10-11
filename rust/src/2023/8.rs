@@ -1,9 +1,8 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{iter, read_until, slice, slice_eq, utf8},
-    Day,
 };
 
 #[apply(day)]
@@ -62,7 +61,25 @@ impl core::fmt::Debug for MapInstruction {
 }
 
 const fn parse_line(bz: &[u8]) -> MapInstruction {
-    let [k, e, y, b' ', b'=', b' ', b'(', le, f, t, b',', b' ', r, ig, ht, b')'] = bz else {
+    let [
+        k,
+        e,
+        y,
+        b' ',
+        b'=',
+        b' ',
+        b'(',
+        le,
+        f,
+        t,
+        b',',
+        b' ',
+        r,
+        ig,
+        ht,
+        b')',
+    ] = bz
+    else {
         panic!()
     };
 

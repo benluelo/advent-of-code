@@ -7,9 +7,8 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{iter, parse_i32, split_once},
-    Day,
 };
 
 #[apply(day)]

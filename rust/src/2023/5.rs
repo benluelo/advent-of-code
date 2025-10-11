@@ -1,9 +1,8 @@
 use cfg_proc::apply;
 
 use crate::{
-    day,
+    Day, day,
     utils::{iter, min_u64, parse_u32, read_until, split_with_len, strip_prefix},
-    Day,
 };
 
 #[cfg(yolo)]
@@ -210,7 +209,7 @@ struct ParseMapsResult<'a> {
     humidity_to_location_map: &'a [u8],
 }
 
-const fn parse_maps(input: &[u8]) -> ParseMapsResult {
+const fn parse_maps(input: &'_ [u8]) -> ParseMapsResult<'_> {
     let mut idx = 0;
     let seeds_line = read_until(input, idx, DOUBLE_NEWLINE);
     idx += seeds_line.len() + DOUBLE_NEWLINE.len();
