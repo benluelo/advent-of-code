@@ -23,6 +23,16 @@ macro_rules! clone {
 }
 pub(crate) use clone;
 
+impl<const N: usize, T: Copy> ArrayVec<T, N> {
+    #[must_use]
+    pub const fn copied(&self) -> Self {
+        let mut dst = [const { core::mem::MaybeUninit::uninit() }; N];
+        let (len, src) = self.as_raw();
+        slice_mut(&mut dst, 0, len).copy_from_slice(slice(src, 0, len));
+        unsafe { Self::from_raw(self.len(), dst) }
+    }
+}
+
 impl<T: Clone, const N: usize> Clone for ArrayVec<T, N> {
     fn clone(&self) -> Self {
         clone!(self; |t| t.clone())
@@ -154,6 +164,14 @@ impl<T, const N: usize> ArrayVec<T, N> {
         self.len -= 1;
 
         unsafe { t.assume_init() }
+    }
+
+    pub const fn as_raw(&self) -> (usize, &[MaybeUninit<T>; N]) {
+        (self.len, &self.arr)
+    }
+
+    pub const unsafe fn from_raw(len: usize, arr: [MaybeUninit<T>; N]) -> Self {
+        Self { len, arr }
     }
 }
 

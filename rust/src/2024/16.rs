@@ -3,7 +3,7 @@ use cfg_proc::apply;
 use crate::{
     Day, day,
     utils::{
-        array::{self, ArrayVec},
+        array::ArrayVec,
         grid::{Direction, GridMut, Position},
         iter,
     },
@@ -13,6 +13,7 @@ use crate::{
 impl Day<2024, 16> {
     pub const fn parse(input: &mut [u8]) -> u32 {
         parse(input)
+        // 0
     }
 
     pub const fn parse2(input: &mut [u8]) -> u32 {
@@ -70,9 +71,7 @@ const fn find_shortest_path(grid: &mut GridMut, start: Position) -> u32 {
         }
     }
 
-    let mut queue = BinaryHeap::<512, Entry>::new();
-
-    let mut path = ArrayVec::<_, 25000>::new();
+    let mut queue = BinaryHeap::<79, Entry>::new();
 
     queue.insert(Entry {
         score: 0,
@@ -86,12 +85,6 @@ const fn find_shortest_path(grid: &mut GridMut, start: Position) -> u32 {
         direction,
     }) = queue.pop()
     {
-        path.push(Entry {
-            score,
-            position,
-            direction,
-        });
-
         let position = position.into_position();
 
         if *grid.get(position).unwrap() == b'E' {
@@ -157,6 +150,7 @@ const fn find_all_shortest_paths<const N: usize>(grid: &mut GridMut, start: Posi
         }
     }
 
+    // first find the score of the cheapest path
     let min_score = find_shortest_path(grid, start);
 
     #[apply(iter)]
@@ -164,7 +158,18 @@ const fn find_all_shortest_paths<const N: usize>(grid: &mut GridMut, start: Posi
         un_visit(tile);
     }
 
-    let mut queue = BinaryHeap::<30000, EntryWithPath<512>>::new();
+    let mut queue = BinaryHeap::<5004, EntryWithPath<505>>::new();
+
+    // given how the cost function works, all cheapest paths will also have the same
+    // length
+    let mut solution_len = None;
+
+    // map from position.pair() to whether or not the tile is on one of the shortest
+    // paths
+    let mut min_paths = [false; N];
+
+    // map from position.pair() to the lowest cost so far for that tile & direction
+    let mut visited = [[0_u32; 4]; N];
 
     queue.insert(EntryWithPath {
         score: 0,
@@ -172,10 +177,6 @@ const fn find_all_shortest_paths<const N: usize>(grid: &mut GridMut, start: Posi
         direction: Direction::East,
         path: ArrayVec::new(),
     });
-
-    let mut min_paths = [false; N];
-
-    let mut visited = [[0_u32; 4]; N];
 
     while let Some(EntryWithPath {
         score,
@@ -188,12 +189,20 @@ const fn find_all_shortest_paths<const N: usize>(grid: &mut GridMut, start: Posi
             break;
         }
 
+        if let Some(solution_len) = solution_len
+            && path.len() > solution_len
+        {
+            continue;
+        }
+
         path.push(position);
 
         let position = position.into_position();
 
         if *grid.get(position).unwrap() == b'E' {
             assert!(score == min_score);
+
+            solution_len = Some(path.len());
 
             #[apply(iter)]
             for position in iter(path.as_slice()) {
@@ -215,7 +224,7 @@ const fn find_all_shortest_paths<const N: usize>(grid: &mut GridMut, start: Posi
                     score: new_score,
                     position: MiniPosition::from_position(new_position),
                     direction: new_direction,
-                    path: array::clone!(path; |x| *x),
+                    path: path.copied(),
                 });
             }
         }
@@ -232,7 +241,7 @@ const fn find_all_shortest_paths<const N: usize>(grid: &mut GridMut, start: Posi
                     score: new_score,
                     position: MiniPosition::from_position(new_position),
                     direction: new_direction,
-                    path: array::clone!(path; |x| *x),
+                    path: path.copied(),
                 });
             }
         }
@@ -466,5 +475,6 @@ fn test() {
 
     // dbg!(parse(&mut input));
     // dbg!(parse2(&mut input));
+    // dbg!(parse(&mut Today::INPUT.as_bytes().to_owned()));
     dbg!(parse2(&mut Today::INPUT.as_bytes().to_owned()));
 }

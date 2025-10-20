@@ -2,7 +2,7 @@ use cfg_proc::apply;
 
 use crate::{
     Day, day,
-    utils::{iter, max, read_until, slice, slice_mut},
+    utils::{iter, max_u32, read_until, slice, slice_mut},
 };
 
 #[apply(day)]
@@ -117,7 +117,7 @@ const fn parse2(input: &mut [u8]) -> u64 {
         #[expect(clippy::cast_possible_truncation, reason = "false positive")]
         {
             highest_line_reached =
-                max(highest_line_reached as u32, (i + 1) as u32 + matches) as usize;
+                max_u32(highest_line_reached as u32, (i + 1) as u32 + matches) as usize;
         };
 
         i += 1;

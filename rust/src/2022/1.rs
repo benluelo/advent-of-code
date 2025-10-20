@@ -2,7 +2,7 @@ use cfg_proc::apply;
 
 use crate::{
     Day, day,
-    utils::{iter, max, parse_u32},
+    utils::{iter, max_u32, parse_u32},
 };
 
 #[apply(day)]
@@ -20,7 +20,7 @@ const fn parse(input: &[u8]) -> u32 {
 
     #[apply(iter)]
     for section in split(input, b"\n\n") {
-        res = max(res, parse_and_sum_calories(input));
+        res = max_u32(res, parse_and_sum_calories(input));
     }
 
     res

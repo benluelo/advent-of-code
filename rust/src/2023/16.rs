@@ -4,7 +4,7 @@ use cfg_proc::apply;
 
 use crate::{
     Day, day,
-    utils::{count_segments, iter, max, read_until},
+    utils::{count_segments, iter, max_u32, read_until},
 };
 
 #[apply(day)]
@@ -61,28 +61,28 @@ const fn parse2(input: &mut [u8]) -> u32 {
         if map.col(i) == 0 {
             traverse(&mut map, i, Direction::East);
 
-            res = max(res, map.count_energized());
+            res = max_u32(res, map.count_energized());
             map.reset();
         }
 
         if map.col(i) == map.cols - 1 {
             traverse(&mut map, i, Direction::West);
 
-            res = max(res, map.count_energized());
+            res = max_u32(res, map.count_energized());
             map.reset();
         }
 
         if map.row(i) == 0 {
             traverse(&mut map, i, Direction::South);
 
-            res = max(res, map.count_energized());
+            res = max_u32(res, map.count_energized());
             map.reset();
         }
 
         if map.row(i) == map.rows - 1 {
             traverse(&mut map, i, Direction::North);
 
-            res = max(res, map.count_energized());
+            res = max_u32(res, map.count_energized());
             map.reset();
         }
     }
