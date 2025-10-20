@@ -1,3 +1,7 @@
+//! Takes ~36 minutes to compile both parts together, with the majority of that
+//! time being in part 2. The runtime in release mode is ~0.2 seconds, so I'm
+//! not quite sure what the slowdown is in the const evaluator.
+
 use cfg_proc::apply;
 
 use crate::{
@@ -13,7 +17,6 @@ use crate::{
 impl Day<2024, 16> {
     pub const fn parse(input: &mut [u8]) -> u32 {
         parse(input)
-        // 0
     }
 
     pub const fn parse2(input: &mut [u8]) -> u32 {
