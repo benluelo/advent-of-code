@@ -13,6 +13,7 @@
 
     // numbers
     int_roundings,
+    int_from_ascii,
 
     // cool and handy
     trace_macros,

@@ -18,10 +18,10 @@ struct_field_names = { level = "allow", priority = 1 }
 module_name_repetitions = { level = "allow", priority = 1 }
 missing_panics_doc = { level = "allow", priority = 1 }
 
-pedantic = "deny"
-get_unwrap = "deny"
-str_to_string = "deny"
-std_instead_of_core = "deny"
+pedantic = "warn"
+get_unwrap = "warn"
+str_to_string = "warn"
+std_instead_of_core = "warn"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(yolo)'] }
@@ -150,7 +150,7 @@ const = []
   "2024-14",
   "2024-15",
   "2024-16",
-  # "2024-17",
+  "2024-17",
   # "2024-18",
   # "2024-19",
   # "2024-20",

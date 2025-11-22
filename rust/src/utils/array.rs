@@ -63,6 +63,7 @@ impl<T, const N: usize> ArrayVec<T, N> {
         self.len == 0
     }
 
+    #[track_caller]
     pub const fn append(&mut self, t: T) {
         self.arr[self.len].write(t);
         self.len += 1;
