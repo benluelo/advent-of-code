@@ -4,6 +4,8 @@
     iter_next_chunk,
     iter_intersperse,
 
+    int_from_ascii,
+
     // arrays
     array_windows,
     maybe_uninit_slice,
@@ -26,6 +28,8 @@
 #[cfg(windows)]
 compile_error!("windows is not supported");
 
+#[path = "2021/mod.rs"]
+mod year_2021;
 #[path = "2022/mod.rs"]
 mod year_2022;
 #[path = "2023/mod.rs"]
@@ -194,7 +198,7 @@ macro_rules! for_each_day {
     ) => {
         for_each_day! {
             $f
-            @YEARS (2022,2023,2024)
+            @YEARS (2021,2022,2023,2024)
         }
     };
 

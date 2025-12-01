@@ -64,7 +64,7 @@
               ];
             };
 
-          years = [ 2022 2023 2024 ];
+          years = [ 2021 2022 2023 2024 ];
           days = builtins.genList (builtins.add 1) 25;
 
           mkAocDay = year: day: const:
