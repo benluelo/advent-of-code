@@ -36,6 +36,8 @@ mod year_2022;
 mod year_2023;
 #[path = "2024/mod.rs"]
 mod year_2024;
+#[path = "2025/mod.rs"]
+mod year_2025;
 
 pub mod displayable;
 pub mod utils;
@@ -198,7 +200,7 @@ macro_rules! for_each_day {
     ) => {
         for_each_day! {
             $f
-            @YEARS (2021,2022,2023,2024)
+            @YEARS (2021,2022,2023,2024,2025)
         }
     };
 

@@ -64,7 +64,8 @@
               ];
             };
 
-          years = [ 2021 2022 2023 2024 ];
+          # TODO: Filter out days >12 for years >=2025
+          years = [ 2021 2022 2023 2024 2025 ];
           days = builtins.genList (builtins.add 1) 25;
 
           mkAocDay = year: day: const:
