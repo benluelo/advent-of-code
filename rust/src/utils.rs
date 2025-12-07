@@ -446,9 +446,9 @@ macro_rules! iter {
         $body:block
     ) => {{
         #[apply(iter)]
-        $($label:)? for __row in range(0, $grid.rows()) {
+        for __row in range(0, $grid.rows()) {
             #[apply(iter)]
-            for __col in range(0, $grid.cols()) {
+            $($label:)? for __col in range(0, $grid.cols()) {
                 let __pos = $crate::utils::grid::Position::new(__row, __col);
                 let $pos: $crate::utils::grid::Position = __pos;
                 let $val: u8 = *$grid.get(__pos).unwrap();
@@ -461,9 +461,9 @@ macro_rules! iter {
         $body:block
     ) => {{
         #[apply(iter)]
-        $($label:)? for __row in range(0, $grid.rows()) {
+        for __row in range(0, $grid.rows()) {
             #[apply(iter)]
-            for __col in range(0, $grid.cols()) {
+            $($label:)? for __col in range(0, $grid.cols()) {
                 let __pos = $crate::utils::grid::Position::new(__row, __col);
                 let $pos: $crate::utils::grid::Position = __pos;
                 let $val: &mut u8 = $grid.get_mut(__pos).unwrap();
