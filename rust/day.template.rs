@@ -3,7 +3,7 @@ use cfg_proc::apply;
 use crate::{Day, day};
 
 #[apply(day)]
-impl Day<2024, DAY> {
+impl Day<2025, DAY> {
     pub const fn parse(input: &[u8]) -> u32 {
         // parse(input)
         0
